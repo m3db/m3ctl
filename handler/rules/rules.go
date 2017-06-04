@@ -18,33 +18,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// GET/POST /rules/namespace
-// GET/PUT/DELETE /rules/namespace/:Name
-
 package rules
 
 import "net/http"
 import "fmt"
 
 var (
-	globalLevel    = "/rules/namespace"
+	globalLevel    = "/rules/namespaces"
 	namespaceLevel = "/rules/namespace/"
 )
 
 // Controller sets up the handlers for rules
-type Controller struct {
-}
+type Controller struct{}
 
 func handleGlobals(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "In global handler")
+	// fmt.Fprintf(w, "%v: In global handler. ", r.Method)
+	switch r.Method {
+	case http.MethodGet:
+		getNamespaces(w, r)
+	case http.MethodPut:
+		createNamespace(w, r)
+	case http.MethodDelete:
+		deleteNamespace(w, r)
+	default:
+		fmt.Fprintf(w, "Not defined")
+	}
 }
 
 func handleNamespace(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "In namespace handler")
+	// fmt.Fprintf(w, "%v: In namespace handler", r.Method)
+	switch r.Method {
+	case http.MethodGet:
+		getRulesInNamespace(w, r)
+	case http.MethodPut:
+		setRulesInNamespace(w, r)
+	default:
+		fmt.Fprintf(w, "Not defined")
+	}
 }
 
-// RegisterHandlers register rules handlers
-func (Controller) RegisterHandlers(mux *http.ServeMux) error {
+// RegisterHandlers registers namespace level handlers
+func (r Controller) RegisterHandlers(mux *http.ServeMux) error {
 	mux.HandleFunc(globalLevel, handleGlobals)
 	mux.HandleFunc(namespaceLevel, handleNamespace)
 	return nil

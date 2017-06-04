@@ -35,7 +35,6 @@ const (
 
 type health struct {
 	Host         string        `json:"host"`
-	Pid          int           `json:"pid"`
 	Timestamp    time.Time     `json:"timestamp"`
 	ResponseTime time.Duration `json:"response_time"`
 	Status       string        `json:"status"`
@@ -46,21 +45,19 @@ func healthCheck() string {
 	return ok
 }
 
-func gatherHostInfo() (string, int) {
+func gatherHostInfo() string {
 	host, err := os.Hostname()
 	if err != nil {
 		host = "unknown"
 	}
-	pid := os.Getpid()
-
-	return host, pid
+	return host
 }
 
 // M3CtlHealthCheck is a health check for the m3ctl server
 func M3CtlHealthCheck(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	host, pid := gatherHostInfo()
-	h := health{Host: host, Pid: pid, Timestamp: start}
+	host := gatherHostInfo()
+	h := health{Host: host, Timestamp: start}
 	status := healthCheck()
 	h.ResponseTime = time.Since(start)
 

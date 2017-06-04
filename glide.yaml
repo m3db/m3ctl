@@ -1,0 +1,10 @@
+package: github.com/m3db/m3ctl
+
+import:
+- package: github.com/m3db/m3cluster
+  version: d64606edb68599677fd335ceed86d990d13d2991
+- package: github.com/m3db/m3metrics
+  version: 18bc01a7057d55b78e528236e0e9db297bcd4fa3
+- package: github.com/m3db/m3x
+  version: bd6be18ffb184691512eb442561b16a59c15d797
+

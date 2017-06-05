@@ -52,7 +52,7 @@ func NewServer(address string, opts Options) Server {
 
 func (s *server) ListenAndServe() error {
 	mux := http.NewServeMux()
-	if err := registerHandlers(mux); err != nil {
+	if err := registerHandlers(mux, s.opts.InstrumentOptions()); err != nil {
 		return err
 	}
 

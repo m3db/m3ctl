@@ -17,7 +17,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 package server
 
 import (
@@ -45,10 +44,10 @@ type Options interface {
 	// WriteTimeout returns the write timeout
 	WriteTimeout() time.Duration
 
-	// WriteTimeout returns the write timeout
+	// SetInstrumentOptions returns the write timeout
 	SetInstrumentOptions(value instrument.Options) Options
 
-	// WriteTimeout returns the write timeout
+	// InstrumentOptions returns the write timeout
 	InstrumentOptions() instrument.Options
 }
 

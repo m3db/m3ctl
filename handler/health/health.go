@@ -18,19 +18,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package handler
+package health
 
 import (
 	"encoding/json"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3x/instrument"
 )
 
 const (
-	ok                      = "OK"
-	fail                    = "FAIL"
-	mimeTypeApplicationJSON = "application/json"
+	ok   = "OK"
+	fail = "FAIL"
+)
+
+var (
+	healthURL = "/health"
 )
 
 type health struct {
@@ -39,6 +45,9 @@ type health struct {
 	ResponseTime time.Duration `json:"response_time"`
 	Status       string        `json:"status"`
 }
+
+// Controller sets up the handlers for health endpoint
+type Controller struct{}
 
 // Returns health check status msg plus additional message
 func healthCheck() string {
@@ -54,7 +63,8 @@ func gatherHostInfo() string {
 }
 
 // M3CtlHealthCheck is a health check for the m3ctl server
-func M3CtlHealthCheck(w http.ResponseWriter, r *http.Request) {
+func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
+	handler.InitJSONResponse(w)
 	start := time.Now()
 	host := gatherHostInfo()
 	h := health{Host: host, Timestamp: start}
@@ -67,6 +77,13 @@ func M3CtlHealthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	body, _ := json.Marshal(h)
 
-	w.Header().Set("Content-Type", mimeTypeApplicationJSON)
 	w.Write(body)
+}
+
+// RegisterHandlers registers health handlers
+func (c Controller) RegisterHandlers(mux *http.ServeMux, inst instrument.Options) error {
+	log := inst.Logger()
+	mux.HandleFunc(healthURL, m3ctlHealthCheck)
+	log.Infof("Registered health endpoints")
+	return nil
 }

@@ -20,46 +20,62 @@
 
 package rules
 
-import "net/http"
-import "fmt"
+import (
+	"net/http"
+
+	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3x/instrument"
+)
 
 var (
-	globalLevel    = "/rules/namespaces"
-	namespaceLevel = "/rules/namespace/"
+	getAllURL          = "/rules/namespaces"
+	createOrDeleteURL  = "/rules/namespace"
+	modifyNamespaceURL = "/rules/namespace/"
 )
 
 // Controller sets up the handlers for rules
 type Controller struct{}
 
-func handleGlobals(w http.ResponseWriter, r *http.Request) {
-	// fmt.Fprintf(w, "%v: In global handler. ", r.Method)
+// RegisterHandlers registers rule handlers
+func (c Controller) RegisterHandlers(mux *http.ServeMux, inst instrument.Options) error {
+	log := inst.Logger()
+	mux.HandleFunc(getAllURL, handleGetAll)
+	mux.HandleFunc(createOrDeleteURL, handleCreateDelete)
+	mux.HandleFunc(modifyNamespaceURL, handleModify)
+	log.Infof("Registered rules endpoints")
+	return nil
+}
+
+func handleGetAll(w http.ResponseWriter, r *http.Request) {
+	handler.InitJSONResponse(w)
 	switch r.Method {
 	case http.MethodGet:
 		getNamespaces(w, r)
-	case http.MethodPut:
+	default:
+		handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet})
+	}
+}
+
+func handleCreateDelete(w http.ResponseWriter, r *http.Request) {
+	handler.InitJSONResponse(w)
+	switch r.Method {
+	case http.MethodPost:
 		createNamespace(w, r)
 	case http.MethodDelete:
 		deleteNamespace(w, r)
 	default:
-		fmt.Fprintf(w, "Not defined")
+		handler.MethodNotSupportedResponse(w, r, []string{http.MethodPost, http.MethodDelete})
 	}
 }
 
-func handleNamespace(w http.ResponseWriter, r *http.Request) {
-	// fmt.Fprintf(w, "%v: In namespace handler", r.Method)
+func handleModify(w http.ResponseWriter, r *http.Request) {
+	handler.InitJSONResponse(w)
 	switch r.Method {
 	case http.MethodGet:
 		getRulesInNamespace(w, r)
 	case http.MethodPut:
 		setRulesInNamespace(w, r)
 	default:
-		fmt.Fprintf(w, "Not defined")
+		handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet, http.MethodPut})
 	}
-}
-
-// RegisterHandlers registers namespace level handlers
-func (r Controller) RegisterHandlers(mux *http.ServeMux) error {
-	mux.HandleFunc(globalLevel, handleGlobals)
-	mux.HandleFunc(namespaceLevel, handleNamespace)
-	return nil
 }

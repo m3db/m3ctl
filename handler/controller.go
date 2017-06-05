@@ -20,14 +20,10 @@
 
 package handler
 
-import (
-	"net/http"
-
-	"github.com/m3db/m3x/instrument"
-)
+import "net/http"
 
 // Controller defines functions around a controllable entity
 type Controller interface {
 	// Registers the handlers for this controll with the given ServeMux
-	RegisterHandlers(*http.ServeMux, instrument.Options) error
+	RegisterHandlers(*http.ServeMux) error
 }

@@ -20,8 +20,10 @@
 
 package rules
 
-import "net/http"
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 func getNamespaces(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)

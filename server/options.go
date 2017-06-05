@@ -58,6 +58,15 @@ type options struct {
 	writeTimeout   time.Duration
 }
 
+// NewOptions creates a new set of server options
+func NewOptions() Options {
+	return &options{
+		readTimeout:    defaultReadTimeout,
+		writeTimeout:   defaultWriteTimeout,
+		instrumentOpts: instrument.NewOptions(),
+	}
+}
+
 func (o *options) SetInstrumentOptions(value instrument.Options) Options {
 	opts := *o
 	opts.instrumentOpts = value
@@ -66,15 +75,6 @@ func (o *options) SetInstrumentOptions(value instrument.Options) Options {
 
 func (o *options) InstrumentOptions() instrument.Options {
 	return o.instrumentOpts
-}
-
-// NewOptions creates a new set of server options
-func NewOptions() Options {
-	return &options{
-		readTimeout:    defaultReadTimeout,
-		writeTimeout:   defaultWriteTimeout,
-		instrumentOpts: instrument.NewOptions(),
-	}
 }
 
 func (o *options) SetReadTimeout(value time.Duration) Options {

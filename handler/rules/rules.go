@@ -23,40 +23,55 @@ package rules
 import (
 	"net/http"
 
-	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3x/instrument"
+
+	"github.com/m3db/m3ctl/handler"
 )
 
-var (
+const (
 	getAllURL          = "/rules/namespaces"
 	createOrDeleteURL  = "/rules/namespace"
 	modifyNamespaceURL = "/rules/namespace/"
 )
 
 // Controller sets up the handlers for rules
-type Controller struct{}
+type controller struct {
+	instruments instrument.Options
+}
+
+// NewController creates a new rules controller
+func NewController(instrument instrument.Options) handler.Controller {
+	return &controller{instruments: instrument}
+}
+
+func (c *controller) handleNotSupported(w http.ResponseWriter, r *http.Request, supported []string) {
+	err := handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet})
+	if err != nil {
+		c.instruments.Logger().Errorf("%v", err)
+	}
+}
 
 // RegisterHandlers registers rule handlers
-func (c Controller) RegisterHandlers(mux *http.ServeMux, inst instrument.Options) error {
-	log := inst.Logger()
-	mux.HandleFunc(getAllURL, handleGetAll)
-	mux.HandleFunc(createOrDeleteURL, handleCreateDelete)
-	mux.HandleFunc(modifyNamespaceURL, handleModify)
+func (c *controller) RegisterHandlers(mux *http.ServeMux) error {
+	log := c.instruments.Logger()
+	mux.HandleFunc(getAllURL, c.handleGetAll)
+	mux.HandleFunc(createOrDeleteURL, c.handleCreateDelete)
+	mux.HandleFunc(modifyNamespaceURL, c.handleModify)
 	log.Infof("Registered rules endpoints")
 	return nil
 }
 
-func handleGetAll(w http.ResponseWriter, r *http.Request) {
+func (c *controller) handleGetAll(w http.ResponseWriter, r *http.Request) {
 	handler.InitJSONResponse(w)
 	switch r.Method {
 	case http.MethodGet:
 		getNamespaces(w, r)
 	default:
-		handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet})
+		c.handleNotSupported(w, r, []string{http.MethodGet})
 	}
 }
 
-func handleCreateDelete(w http.ResponseWriter, r *http.Request) {
+func (c *controller) handleCreateDelete(w http.ResponseWriter, r *http.Request) {
 	handler.InitJSONResponse(w)
 	switch r.Method {
 	case http.MethodPost:
@@ -64,11 +79,11 @@ func handleCreateDelete(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		deleteNamespace(w, r)
 	default:
-		handler.MethodNotSupportedResponse(w, r, []string{http.MethodPost, http.MethodDelete})
+		c.handleNotSupported(w, r, []string{http.MethodPost, http.MethodDelete})
 	}
 }
 
-func handleModify(w http.ResponseWriter, r *http.Request) {
+func (c *controller) handleModify(w http.ResponseWriter, r *http.Request) {
 	handler.InitJSONResponse(w)
 	switch r.Method {
 	case http.MethodGet:
@@ -76,6 +91,6 @@ func handleModify(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		setRulesInNamespace(w, r)
 	default:
-		handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet, http.MethodPut})
+		c.handleNotSupported(w, r, []string{http.MethodGet, http.MethodPut})
 	}
 }

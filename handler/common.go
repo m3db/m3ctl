@@ -22,6 +22,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -38,15 +39,19 @@ type NotSupportdResponse struct {
 }
 
 // MethodNotSupportedResponse writes a method not supported response to the writer
-func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supported []string) {
+func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supported []string) error {
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	response := NotSupportdResponse{
 		Error:            "Method not supported",
 		URI:              r.RequestURI,
 		MethodName:       r.Method,
 		SupportedMethods: supported}
-	body, _ := json.Marshal(response)
+	body, err := json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("Could not generate MethodNotSupportedResponse for %s - %s", r.Method, r.RequestURI)
+	}
 	w.Write(body)
+	return nil
 }
 
 // InitJSONResponse sets common headers for m3ctl on a ResponseWriter

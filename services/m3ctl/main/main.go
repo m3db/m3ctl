@@ -28,12 +28,13 @@ import (
 	"syscall"
 	"time"
 
-	etcdclient "github.com/m3db/m3cluster/client/etcd"
-	"github.com/m3db/m3ctl/server"
-	"github.com/m3db/m3ctl/services/m3ctl/serve"
+	"github.com/m3db/m3cluster/client/etcd"
 	"github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
+
+	"github.com/m3db/m3ctl/server"
+	"github.com/m3db/m3ctl/services/m3ctl/serve"
 )
 
 type serverConfig struct {
@@ -63,7 +64,7 @@ func (c *serverConfig) NewHTTPServerOptions(
 }
 
 type kvClientConfiguration struct {
-	Etcd *etcdclient.Configuration `yaml:"etcd"`
+	Etcd *etcd.Configuration `yaml:"etcd"`
 }
 
 type configuration struct {

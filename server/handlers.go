@@ -23,22 +23,14 @@ package server
 import (
 	"net/http"
 
-	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3ctl/handler/health"
 	"github.com/m3db/m3ctl/handler/rules"
+
 	"github.com/m3db/m3x/instrument"
 )
 
-var (
-	controllers = []handler.Controller{
-		rules.Controller{},
-		health.Controller{},
-	}
-)
-
 func registerHandlers(mux *http.ServeMux, instruments instrument.Options) error {
-	for _, controller := range controllers {
-		controller.RegisterHandlers(mux, instruments)
-	}
+	rules.NewController(instruments).RegisterHandlers(mux)
+	health.NewController(instruments).RegisterHandlers(mux)
 	return nil
 }

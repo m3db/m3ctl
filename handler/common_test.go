@@ -45,9 +45,7 @@ func TestMethodNotSupportedResponse(t *testing.T) {
 
 	rawResult := make([]byte, rr.Body.Len())
 	_, err := rr.Body.Read(rawResult)
-	if err != nil {
-		t.Errorf("Encountered error parsing reponse")
-	}
+	require.NoError(t, err, "Encountered error parsing reponse")
 
 	var actualResult NotSupportdResponse
 	json.Unmarshal(rawResult, &actualResult)

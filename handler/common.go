@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
+
 package handler
 
 import (
@@ -48,7 +49,7 @@ func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supporte
 	w.Write(body)
 }
 
-// InitJsonResponse sets common headers for m3ctl on a ResponseWriter
+// InitJSONResponse sets common headers for m3ctl on a ResponseWriter
 func InitJSONResponse(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", mimeTypeApplicationJSON)
 }

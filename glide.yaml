@@ -7,4 +7,5 @@ import:
   version: 18bc01a7057d55b78e528236e0e9db297bcd4fa3
 - package: github.com/m3db/m3x
   version: bd6be18ffb184691512eb442561b16a59c15d797
-
+- package: github.com/stretchr/testify
+  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a

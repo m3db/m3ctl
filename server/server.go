@@ -20,18 +20,22 @@
 
 package server
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
 
 // NewServer creates a new http server
 func NewServer(address string, opts Options) (*http.Server, error) {
-	mux := http.NewServeMux()
-	if err := registerHandlers(mux, opts.InstrumentOptions()); err != nil {
+	router := mux.NewRouter()
+	if err := registerHandlers(router, opts.InstrumentOptions()); err != nil {
 		return nil, err
 	}
 	return &http.Server{
 		WriteTimeout: opts.WriteTimeout(),
 		ReadTimeout:  opts.ReadTimeout(),
 		Addr:         address,
-		Handler:      mux,
+		Handler:      router,
 	}, nil
 }

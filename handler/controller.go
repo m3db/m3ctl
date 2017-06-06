@@ -20,10 +20,10 @@
 
 package handler
 
-import "net/http"
+import "github.com/gorilla/mux"
 
 // Controller defines functions around a controllable entity
 type Controller interface {
 	// Registers the handlers for this controller with the given ServeMux
-	RegisterHandlers(*http.ServeMux) error
+	RegisterHandlers(*mux.Router)
 }

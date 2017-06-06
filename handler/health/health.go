@@ -22,40 +22,43 @@ package health
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3x/instrument"
+
+	"github.com/gorilla/mux"
 )
 
 const (
-	ok          = "OK"
-	fail        = "FAIL"
-	healthURL   = "/health"
-	unknownName = "unkown"
+	ok          healthStatus = "OK"
+	fail        healthStatus = "FAIL"
+	healthURL                = "/health"
+	unknownName              = "unkown"
 )
 
-var ()
+type healthStatus string
 
-type health struct {
+type healthCheckResult struct {
 	Host         string        `json:"host"`
 	Timestamp    time.Time     `json:"timestamp"`
 	ResponseTime time.Duration `json:"response_time"`
-	Status       string        `json:"status"`
+	Status       healthStatus  `json:"status"`
 }
 
 type controller struct {
-	instruments instrument.Options
+	iOpts instrument.Options
 }
 
 // NewController creates a new rules controller
-func NewController(instrument instrument.Options) handler.Controller {
-	return &controller{instruments: instrument}
+func NewController(iOpts instrument.Options) handler.Controller {
+	return &controller{iOpts: iOpts}
 }
 
-func healthCheck() string {
+func healthCheck() healthStatus {
 	return ok
 }
 
@@ -68,10 +71,9 @@ func hostName() string {
 }
 
 func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
-	handler.InitJSONResponse(w)
 	start := time.Now()
 	host := hostName()
-	h := health{Host: host, Timestamp: start}
+	h := healthCheckResult{Host: host, Timestamp: start}
 	status := healthCheck()
 	h.ResponseTime = time.Since(start)
 
@@ -79,15 +81,21 @@ func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
 	if status != ok {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	body, _ := json.Marshal(h)
 
+	body, err := json.Marshal(h)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "Could not generate health check result")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
 }
 
 // RegisterHandlers registers health handlers.
-func (c *controller) RegisterHandlers(mux *http.ServeMux) error {
-	log := c.instruments.Logger()
-	mux.HandleFunc(healthURL, m3ctlHealthCheck)
+func (c *controller) RegisterHandlers(router *mux.Router) {
+	log := c.iOpts.Logger()
+	router.HandleFunc(healthURL, m3ctlHealthCheck)
 	log.Infof("Registered health endpoints")
-	return nil
 }

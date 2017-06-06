@@ -18,43 +18,49 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package handler
+package health
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
-const (
-	mimeTypeApplicationJSON = "application/json"
-)
+func TestHostName(t *testing.T) {
+	expectedName, err := os.Hostname()
+	require.NoError(t, err, "Failed to get system hostname")
+	actualName := hostName()
 
-// NotSupportedResponse is data for a method not supported response.
-type NotSupportedResponse struct {
-	Error            string
-	MethodName       string
-	URI              string
-	SupportedMethods []string
+	require.Equal(t, expectedName, actualName)
 }
 
-// MethodNotSupportedResponse writes a method not supported response to the writer.
-func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supported []string) error {
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	response := NotSupportedResponse{
-		Error:            "Method not supported",
-		URI:              r.RequestURI,
-		MethodName:       r.Method,
-		SupportedMethods: supported}
-	body, err := json.Marshal(response)
-	if err != nil {
-		return fmt.Errorf("Could not generate MethodNotSupportedResponse for %s - %s", r.Method, r.RequestURI)
-	}
-	w.Write(body)
-	return nil
-}
+func TestHealthCheck(t *testing.T) {
+	rr := httptest.NewRecorder()
+	// Create a request to pass to our handler. We don't have any query parameters for now, so we'll
+	// pass 'nil' as the third parameter.
+	req := http.Request{Method: "GET", RequestURI: "/health"}
 
-// InitJSONResponse sets common headers for m3ctl on a ResponseWriter.
-func InitJSONResponse(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", mimeTypeApplicationJSON)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m3ctlHealthCheck(w, r)
+	})
+
+	// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
+	// directly and pass in our Request and ResponseRecorder.
+	handler.ServeHTTP(rr, &req)
+
+	rawResult := make([]byte, rr.Body.Len())
+	_, err := rr.Body.Read(rawResult)
+	require.NoError(t, err, "Encountered error parsing reponse")
+
+	var actualResult healthCheckResult
+	json.Unmarshal(rawResult, &actualResult)
+
+	name, _ := os.Hostname()
+
+	require.Equal(t, name, actualResult.Host)
+	require.Equal(t, ok, actualResult.Status)
 }

@@ -29,11 +29,10 @@ import (
 	"time"
 
 	"github.com/m3db/m3cluster/client/etcd"
+	"github.com/m3db/m3ctl/server"
 	"github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
-
-	"github.com/m3db/m3ctl/server"
 )
 
 type serverConfig struct {
@@ -131,7 +130,7 @@ func main() {
 			}
 		}()
 		<-doneCh
-		logger.Debug("server closed")
+		logger.Debug("server stopped")
 	}()
 
 	// Handle interrupts.

@@ -25,71 +25,34 @@ import (
 
 	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3x/instrument"
+
+	"github.com/gorilla/mux"
 )
 
 const (
-	getAllURL          = "/rules/namespaces"
-	createOrDeleteURL  = "/rules/namespace"
-	modifyNamespaceURL = "/rules/namespace/"
+	readNamespacesURL  = "/rules/namespaces"
+	createNamespaceURL = "/rules/namespaces"
+	deleteNamespaceURL = "/rules/namespace/{name}"
+	rulesURL           = "/rules/namespace/{name}"
 )
 
 // Controller sets up the handlers for rules
 type controller struct {
-	instruments instrument.Options
+	iOpts instrument.Options
 }
 
 // NewController creates a new rules controller
-func NewController(instrument instrument.Options) handler.Controller {
-	return &controller{instruments: instrument}
-}
-
-func (c *controller) handleNotSupported(w http.ResponseWriter, r *http.Request, supported []string) {
-	err := handler.MethodNotSupportedResponse(w, r, []string{http.MethodGet})
-	if err != nil {
-		c.instruments.Logger().Errorf("%v", err)
-	}
+func NewController(iOpts instrument.Options) handler.Controller {
+	return &controller{iOpts: iOpts}
 }
 
 // RegisterHandlers registers rule handlers
-func (c *controller) RegisterHandlers(mux *http.ServeMux) error {
-	log := c.instruments.Logger()
-	mux.HandleFunc(getAllURL, c.handleGetAll)
-	mux.HandleFunc(createOrDeleteURL, c.handleCreateDelete)
-	mux.HandleFunc(modifyNamespaceURL, c.handleModify)
+func (c *controller) RegisterHandlers(router *mux.Router) {
+	log := c.iOpts.Logger()
+	router.HandleFunc(readNamespacesURL, c.getNamespacesHandler).Methods(http.MethodGet)
+	router.HandleFunc(createNamespaceURL, c.createNamespaceHandler).Methods(http.MethodPost)
+	router.HandleFunc(deleteNamespaceURL, c.deleteNamespaceHandler).Methods(http.MethodDelete)
+	router.HandleFunc(rulesURL, c.getRulesInNamespaceHandler).Methods(http.MethodGet)
+	router.HandleFunc(rulesURL, c.setRulesInNamespaceHandler).Methods(http.MethodPut, http.MethodPatch)
 	log.Infof("Registered rules endpoints")
-	return nil
-}
-
-func (c *controller) handleGetAll(w http.ResponseWriter, r *http.Request) {
-	handler.InitJSONResponse(w)
-	switch r.Method {
-	case http.MethodGet:
-		getNamespaces(w, r)
-	default:
-		c.handleNotSupported(w, r, []string{http.MethodGet})
-	}
-}
-
-func (c *controller) handleCreateDelete(w http.ResponseWriter, r *http.Request) {
-	handler.InitJSONResponse(w)
-	switch r.Method {
-	case http.MethodPost:
-		createNamespace(w, r)
-	case http.MethodDelete:
-		deleteNamespace(w, r)
-	default:
-		c.handleNotSupported(w, r, []string{http.MethodPost, http.MethodDelete})
-	}
-}
-
-func (c *controller) handleModify(w http.ResponseWriter, r *http.Request) {
-	handler.InitJSONResponse(w)
-	switch r.Method {
-	case http.MethodGet:
-		getRulesInNamespace(w, r)
-	case http.MethodPut:
-		setRulesInNamespace(w, r)
-	default:
-		c.handleNotSupported(w, r, []string{http.MethodGet, http.MethodPut})
-	}
 }

@@ -30,18 +30,18 @@ const (
 	mimeTypeApplicationJSON = "application/json"
 )
 
-// NotSupportdResponse is data for a method not supported response
-type NotSupportdResponse struct {
+// NotSupportedResponse is data for a method not supported response.
+type NotSupportedResponse struct {
 	Error            string
 	MethodName       string
 	URI              string
 	SupportedMethods []string
 }
 
-// MethodNotSupportedResponse writes a method not supported response to the writer
+// MethodNotSupportedResponse writes a method not supported response to the writer.
 func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supported []string) error {
 	w.WriteHeader(http.StatusMethodNotAllowed)
-	response := NotSupportdResponse{
+	response := NotSupportedResponse{
 		Error:            "Method not supported",
 		URI:              r.RequestURI,
 		MethodName:       r.Method,
@@ -54,7 +54,7 @@ func MethodNotSupportedResponse(w http.ResponseWriter, r *http.Request, supporte
 	return nil
 }
 
-// InitJSONResponse sets common headers for m3ctl on a ResponseWriter
+// InitJSONResponse sets common headers for m3ctl on a ResponseWriter.
 func InitJSONResponse(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", mimeTypeApplicationJSON)
 }

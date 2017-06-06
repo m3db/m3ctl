@@ -1,5 +1,5 @@
-hash: 9f0bf05cdb00b6486cd7ef8293d0b936441dbe77cd6a4c2c5b19f2ef29bba14d
-updated: 2017-06-04T21:40:14.350189089-04:00
+hash: 6f273ab6a18291716fcfc6bce802de21ea9fe94ff30b469f64d8a61ceee5bbaa
+updated: 2017-06-06T10:46:20.657085344-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -16,7 +16,6 @@ imports:
   - clientv3
   - etcdserver/api/v3rpc/rpctypes
   - etcdserver/etcdserverpb
-  - integration
   - mvcc/mvccpb
   - pkg/tlsutil
 - name: github.com/facebookgo/clock
@@ -66,7 +65,7 @@ imports:
 - name: github.com/m3db/m3metrics
   version: 18bc01a7057d55b78e528236e0e9db297bcd4fa3
 - name: github.com/m3db/m3x
-  version: bd6be18ffb184691512eb442561b16a59c15d797
+  version: 9e66dd6d48a872bae1bdddb9bf85a33e99129267
   subpackages:
   - clock
   - close
@@ -110,11 +109,6 @@ imports:
   version: bb4de0191aa41b5507caa14b0650cdbddcd9280b
 - name: github.com/StackExchange/wmi
   version: e542ed97d15e640bdc14b5c12162d59e8fc67324
-- name: github.com/stretchr/testify
-  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
-  subpackages:
-  - assert
-  - require
 - name: github.com/uber-go/atomic
   version: e682c1008ac17bf26d2e4b5ad6cdd08520ed0b22
 - name: github.com/uber-go/tally
@@ -158,3 +152,8 @@ testImports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/stretchr/testify
+  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+  subpackages:
+  - assert
+  - require

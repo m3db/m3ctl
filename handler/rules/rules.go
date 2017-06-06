@@ -23,9 +23,8 @@ package rules
 import (
 	"net/http"
 
-	"github.com/m3db/m3x/instrument"
-
 	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3x/instrument"
 )
 
 const (

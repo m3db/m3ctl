@@ -20,64 +20,18 @@
 
 package server
 
-import (
-	"net"
-	"net/http"
-)
-
-// Server is a server capable of listening to incoming traffic and closing itself
-// when it's shut down
-type Server interface {
-	// ListenAndServe starts listening to new incoming connections and
-	// handles data from those connections
-	ListenAndServe() error
-
-	// Close closes the server
-	Close()
-}
-
-// server is an http server receiving incoming metrics traffic
-type server struct {
-	opts     Options
-	address  string
-	listener net.Listener
-}
+import "net/http"
 
 // NewServer creates a new http server
-func NewServer(address string, opts Options) Server {
-	return &server{
-		opts:    opts,
-		address: address,
-	}
-}
-
-func (s *server) ListenAndServe() error {
+func NewServer(address string, opts Options) (*http.Server, error) {
 	mux := http.NewServeMux()
-	if err := registerHandlers(mux, s.opts.InstrumentOptions()); err != nil {
-		return err
+	if err := registerHandlers(mux, opts.InstrumentOptions()); err != nil {
+		return nil, err
 	}
-
-	server := http.Server{
+	return &http.Server{
+		WriteTimeout: opts.WriteTimeout(),
+		ReadTimeout:  opts.ReadTimeout(),
+		Addr:         address,
 		Handler:      mux,
-		ReadTimeout:  s.opts.ReadTimeout(),
-		WriteTimeout: s.opts.WriteTimeout(),
-	}
-
-	listener, err := net.Listen("tcp", s.address)
-	if err != nil {
-		return err
-	}
-	s.listener = listener
-
-	go func() {
-		server.Serve(listener)
-	}()
-
-	return nil
-}
-
-func (s *server) Close() {
-	if s.listener != nil {
-		s.listener.Close()
-	}
+	}, nil
 }

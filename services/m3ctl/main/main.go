@@ -34,17 +34,16 @@ import (
 	"github.com/m3db/m3x/log"
 
 	"github.com/m3db/m3ctl/server"
-	"github.com/m3db/m3ctl/services/m3ctl/serve"
 )
 
 type serverConfig struct {
-	// HTTP server listening address.
+	// ListenAddress is the HTTP server listening address.
 	ListenAddress string `yaml:"listenAddress" validate:"nonzero"`
 
-	// HTTP server read timeout.
+	// ReadTimeout is the HTTP server read timeout.
 	ReadTimeout time.Duration `yaml:"readTimeout"`
 
-	// HTTP server write timeout.
+	// WriteTimeout HTTP server write timeout.
 	WriteTimeout time.Duration `yaml:"writeTimeout"`
 }
 
@@ -75,7 +74,7 @@ type configuration struct {
 	Logging xlog.Configuration `yaml:"logging"`
 
 	// Metrics configuration.
-	// Metrics instrument.MetricsConfiguration `yaml:"metrics"`
+	Metrics instrument.MetricsConfiguration `yaml:"metrics"`
 
 	// HTTP server configuration.
 	HTTP serverConfig `yaml:"http"`
@@ -102,44 +101,43 @@ func main() {
 		os.Exit(1)
 	}
 
-	// _, closer, err := cfg.Metrics.NewRootScope()
-	// if err != nil {
-	// 	logger.Fatalf("error creating metrics root scope: %v", err)
-	// }
-	// defer closer.Close()
+	scope, closer, err := cfg.Metrics.NewRootScope()
+	if err != nil {
+		logger.Fatalf("error creating metrics root scope: %v", err)
+	}
+	defer closer.Close()
 
 	instrumentOpts := instrument.NewOptions().
-		SetLogger(logger)
-	//		SetMetricsScope(scope).
-	// SetMetricsSamplingRate(cfg.Metrics.SampleRate()).
-	//		SetReportInterval(cfg.Metrics.ReportInterval())
+		SetLogger(logger).
+		SetMetricsScope(scope).
+		SetMetricsSamplingRate(cfg.Metrics.SampleRate()).
+		SetReportInterval(cfg.Metrics.ReportInterval())
 
 	listenAddr := cfg.HTTP.ListenAddress
 	serverOpts := cfg.HTTP.NewHTTPServerOptions(instrumentOpts)
 
 	doneCh := make(chan struct{})
-	closedCh := make(chan struct{})
+
+	s, err := server.NewServer(listenAddr, serverOpts)
+	if err != nil {
+		logger.Fatalf("could not create m3ctl server: %v", err)
+	}
+
 	go func() {
-		if err := serve.Serve(
-			listenAddr,
-			serverOpts,
-			doneCh,
-		); err != nil {
-			logger.Fatalf("could not start serving traffic: %v", err)
-		}
+		go func() {
+			logger.Infof("Starting http server on: %s", listenAddr)
+			if err = s.ListenAndServe(); err != nil {
+				logger.Fatalf("could not start serving traffic: %v", err)
+			}
+		}()
+		<-doneCh
 		logger.Debug("server closed")
-		close(closedCh)
 	}()
 
 	// Handle interrupts.
 	logger.Warnf("interrupt: %v", interrupt())
 
 	close(doneCh)
-
-	select {
-	case <-closedCh:
-		logger.Info("server closed clean")
-	}
 }
 
 func interrupt() error {

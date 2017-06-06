@@ -47,10 +47,10 @@ func TestMethodNotSupportedResponse(t *testing.T) {
 	_, err := rr.Body.Read(rawResult)
 	require.NoError(t, err, "Encountered error parsing reponse")
 
-	var actualResult NotSupportdResponse
+	var actualResult NotSupportedResponse
 	json.Unmarshal(rawResult, &actualResult)
 
-	expectedResult := NotSupportdResponse{
+	expectedResult := NotSupportedResponse{
 		Error:            "Method not supported",
 		URI:              "/badMethod",
 		MethodName:       "GET",

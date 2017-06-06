@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/m3db/m3ctl/handler"
-
 	"github.com/m3db/m3x/instrument"
 )
 
@@ -47,7 +46,6 @@ type health struct {
 	Status       string        `json:"status"`
 }
 
-// Controller sets up the handlers for health endpoint
 type controller struct {
 	instruments instrument.Options
 }
@@ -57,12 +55,11 @@ func NewController(instrument instrument.Options) handler.Controller {
 	return &controller{instruments: instrument}
 }
 
-// Returns health check status msg plus additional message
 func healthCheck() string {
 	return ok
 }
 
-func gatherHostInfo() string {
+func hostName() string {
 	host, err := os.Hostname()
 	if err != nil {
 		host = unknownName
@@ -70,11 +67,10 @@ func gatherHostInfo() string {
 	return host
 }
 
-// M3CtlHealthCheck is a health check for the m3ctl server
 func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
 	handler.InitJSONResponse(w)
 	start := time.Now()
-	host := gatherHostInfo()
+	host := hostName()
 	h := health{Host: host, Timestamp: start}
 	status := healthCheck()
 	h.ResponseTime = time.Since(start)
@@ -88,7 +84,7 @@ func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
-// RegisterHandlers registers health handlers
+// RegisterHandlers registers health handlers.
 func (c *controller) RegisterHandlers(mux *http.ServeMux) error {
 	log := c.instruments.Logger()
 	mux.HandleFunc(healthURL, m3ctlHealthCheck)

@@ -25,7 +25,6 @@ import (
 
 	"github.com/m3db/m3ctl/handler/health"
 	"github.com/m3db/m3ctl/handler/rules"
-
 	"github.com/m3db/m3x/instrument"
 )
 

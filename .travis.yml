@@ -8,4 +8,7 @@ env:
 sudo: required
 dist: trusty
 script:
- - make all
+ - make lint
+ - make test-ci-unit
+ - make test-ci-integration
+ - make m3ctl

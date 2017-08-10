@@ -30,10 +30,10 @@ import (
 )
 
 const (
-	readNamespacesURL  = "/rules/namespaces"
-	createNamespaceURL = "/rules/namespaces"
-	deleteNamespaceURL = "/rules/namespace/{name}"
-	rulesURL           = "/rules/namespace/{name}"
+	readNamespacesURL  = "/rules/v1/namespaces"
+	createNamespaceURL = "/rules/v1/namespace/{name}"
+	deleteNamespaceURL = "/rules/v1/namespace/{name}"
+	rulesURL           = "/rules/v1/namespace/{name}"
 )
 
 // Controller sets up the handlers for rules

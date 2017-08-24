@@ -47,15 +47,7 @@
         "produces": [
           "application/json"
         ],
-        "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "blah",
@@ -80,14 +72,7 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
+         {
             "in": "path",
             "name": "namespaceId",
             "description": "The name of the namespace",
@@ -130,13 +115,6 @@
         ],
         "parameters": [
           {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
             "in": "path",
             "name": "namespaceId",
             "description": "The name of the namespace",
@@ -178,13 +156,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "path",
             "name": "namespaceId",
@@ -229,13 +200,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "path",
             "name": "namespaceId",
@@ -285,13 +249,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "body",
             "name": "state",
@@ -357,13 +314,6 @@
         ],
         "parameters": [
           {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
             "in": "body",
             "name": "state",
             "description": "the new state of the ruleset",
@@ -413,13 +363,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "body",
             "name": "state",
@@ -473,13 +416,6 @@
         ],
         "parameters": [
           {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
             "in": "path",
             "name": "namespaceId",
             "description": "The name of the namespace",
@@ -531,13 +467,6 @@
         ],
         "parameters": [
           {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
             "in": "path",
             "name": "namespaceId",
             "description": "The name of the namespace",
@@ -586,13 +515,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "body",
             "name": "state",
@@ -658,13 +580,6 @@
         ],
         "parameters": [
           {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
             "in": "body",
             "name": "state",
             "description": "the new state of the ruleset",
@@ -714,14 +629,7 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
-          {
+         {
             "in": "body",
             "name": "state",
             "description": "the new state of the ruleset",
@@ -773,13 +681,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "X-USER-ID",
-            "description": "the user making this request",
-            "required": true,
-            "type": "string"
-          },
           {
             "in": "path",
             "name": "namespaceId",
@@ -842,9 +743,9 @@
         "version": {
           "type": "integer"
         },
-        "cutoverTime": {
-          "type": "string",
-          "format": "date-time"
+        "cutoverMillis": {
+          "type": "integer",
+          "format": "unixMillis"
         },
         "mappingRules": {
           "type": "array",
@@ -870,7 +771,7 @@
         "name": {
           "type": "string"
         },
-        "filters": {
+        "filter": {
           "type": "string"
         },
         "policies": {
@@ -879,16 +780,16 @@
             "type": "string"
           }
         },
-        "cutoverNanos": {
+        "cutoverMillies": {
           "type": "integer",
-          "description": "unixNanos"
+          "description": "unixMillies"
         },
         "lastUpdateBy": {
           "type": "string"
         },
-        "lastUpdatedNanos": {
+        "lastUpdatedMillis": {
           "type": "integer",
-          "description": "unixNanos"
+          "description": "unixMillies"
         }
       }
     },
@@ -902,7 +803,7 @@
         "name": {
           "type": "string"
         },
-        "filters": {
+        "filter": {
           "type": "string"
         },
         "targets": {
@@ -911,16 +812,16 @@
             "$ref": "#/definitions/RollupTarget"
           }
         },
-        "cutoverNanos": {
+        "cutoverMillis": {
           "type": "integer",
-          "description": "unixNanos"
+          "description": "unixMillis"
         },
         "lastUpdateBy": {
           "type": "string"
         },
-        "lastUpdatedNanos": {
+        "lastUpdatedMillis": {
           "type": "integer",
-          "description": "unixNanos"
+          "description": "unixMillis"
         }
       }
     },

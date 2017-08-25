@@ -21,6 +21,7 @@
 package r2
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -59,6 +60,104 @@ func NewService(iOpts instrument.Options, rootPrefix string, store Store) server
 	return &service{iOpts: iOpts, store: store, rootPrefix: rootPrefix}
 }
 
+func writeAPIResponse(w http.ResponseWriter, code int, msg string) {
+	j, _ := json.Marshal(newAPIResponse(code, msg))
+	w.WriteHeader(code)
+	w.Write(j)
+}
+
+func handleError(w http.ResponseWriter, opError error) {
+	switch opError.(type) {
+	case ConflictError:
+		writeAPIResponse(w, http.StatusConflict, opError.Error())
+	case InternalError:
+		writeAPIResponse(w, http.StatusInternalServerError, opError.Error())
+	case VersionError:
+		writeAPIResponse(w, http.StatusConflict, opError.Error())
+	}
+}
+
+func (s *service) ReadNamespaces(w http.ResponseWriter, r *http.Request) {
+	nss, v, err := s.store.FetchNamespaces()
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")
+		return
+	}
+
+	j, err := json.Marshal(namespaces{
+		Version:    v,
+		Namespaces: nss,
+	})
+
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(j)
+}
+
+func (s *service) ReadNamespace(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceId"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceId")
+		return
+	}
+
+	rs, err := s.store.FetchRuleSet(namespaceID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	j, err := json.Marshal(newRuleSetView(*rs))
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(j)
+}
+
+func (s *service) CreateNamespace(w http.ResponseWriter, r *http.Request) {
+	var cnb createNamespaceBody
+	if err := json.NewDecoder(r.Body).Decode(&cnb); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new namespace data.")
+		return
+	}
+
+	nsd := NewNamespaceData(cnb.ID, cnb.NamespacesVersion)
+	newName, err := s.store.CreateNamespace(nsd)
+	if err == nil {
+		writeAPIResponse(w, http.StatusCreated, fmt.Sprintf("Created namespace %s", newName))
+	} else {
+		handleError(w, err)
+	}
+}
+
+func (s *service) DeleteNamespace(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceId"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceId")
+	}
+
+	var cdn deleteNamespaceBody
+	if err := json.NewDecoder(r.Body).Decode(&cdn); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse update data.")
+		return
+	}
+	nsd := NewNamespaceData(namespaceID, cdn.NamespacesVersion)
+	err := s.store.DeleteNamespace(nsd)
+	if err == nil {
+		writeAPIResponse(w, http.StatusOK, fmt.Sprintf("Deleted namespace %s", namespaceID))
+	} else {
+		handleError(w, err)
+	}
+}
 func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readNamespace")
@@ -132,13 +231,14 @@ func (s *service) readRollupRuleHistory(w http.ResponseWriter, _ *http.Request) 
 // RegisterHandlers registers rule handler.
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
-	// Get all namespaces
-	router.HandleFunc(s.fullPath(namespacePrefix), s.readNamespaces).Methods(http.MethodGet)
+	// Namespaces action
+	fullNamespacesPrefix := s.fullPath(namespacePrefix)
+	router.HandleFunc(fullNamespacesPrefix, s.readNamespaces).Methods(http.MethodGet)
+	router.HandleFunc(fullNamespacesPrefix, s.createNamespace).Methods(http.MethodPost)
 
-	fullNamespacePath := s.fullPath(namespacePath)
 	// Ruleset actions
+	fullNamespacePath := s.fullPath(namespacePath)
 	router.HandleFunc(fullNamespacePath, s.readNamespace).Methods(http.MethodGet)
-	router.HandleFunc(fullNamespacePath, s.createNamespace).Methods(http.MethodPost)
 	router.HandleFunc(fullNamespacePath, s.deleteNamespace).Methods(http.MethodDelete)
 
 	// Mapping Rule actions

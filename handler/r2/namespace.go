@@ -18,19 +18,4 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package rules
-
-import (
-	"fmt"
-	"net/http"
-)
-
-func (c *controller) getRulesInNamespaceHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for getRulesInNamespace")
-}
-
-func (c *controller) setRulesInNamespaceHandler(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for setRulesInNamespace")
-}
+package r2

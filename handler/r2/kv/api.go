@@ -1,4 +1,3 @@
-// Copyright (c) 2017 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,90 +17,112 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package r2
+package kv
 
 import (
 	"fmt"
 	"net/http"
 
+	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3ctl/handler/r2"
 	"github.com/m3db/m3x/instrument"
 )
 
-type multiBackendR2Api struct {
-	iOpts instrument.Options
-	// backends -- Backend List
+// API holds all the state for a multi backend api  instance.
+type API struct {
+	iOpts  instrument.Options
+	config r2.APIConfig
 }
 
-func newMultiBackendR2Api(iOpts instrument.Options) multiBackendR2Api {
-	return multiBackendR2Api{iOpts: iOpts}
+// NewController creates a new rules controller using multiple backends
+func NewController(iOpts instrument.Options, rootPrefix string, cfg r2.APIConfig) handler.Controller {
+	newAPI := &API{
+		iOpts:  iOpts,
+		config: cfg,
+	}
+	return r2.NewController(iOpts, newAPI, rootPrefix)
 }
 
-func (c multiBackendR2Api) readNamespaces(w http.ResponseWriter, _ *http.Request) {
+// ReadNamespaces fetches all the namespaces.
+func (a *API) ReadNamespaces(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readNamespaces")
 }
 
-func (c multiBackendR2Api) readNamespace(w http.ResponseWriter, _ *http.Request) {
+// ReadNamespace fetches the current state of a namespace.
+func (a *API) ReadNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readNamespace")
 }
 
-func (c multiBackendR2Api) createNamespace(w http.ResponseWriter, _ *http.Request) {
+// CreateNamespace creates a namespace and new ruleset and persists it.
+func (a *API) CreateNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createNamespace")
 }
 
-func (c multiBackendR2Api) deleteNamespace(w http.ResponseWriter, _ *http.Request) {
+// DeleteNamespace deletes a namespace and its underlying ruleset.
+func (a *API) DeleteNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteNamespace")
 }
 
-func (c multiBackendR2Api) readMappingRule(w http.ResponseWriter, _ *http.Request) {
+// ReadMappingRule fetches the current state of a mapping rule.
+func (a *API) ReadMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readMappingRule")
 }
 
-func (c multiBackendR2Api) createMappingRule(w http.ResponseWriter, _ *http.Request) {
+// CreateMappingRule creates or revives a mapping rule.
+func (a *API) CreateMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createMappingRule")
 }
 
-func (c multiBackendR2Api) updateMappingRule(w http.ResponseWriter, _ *http.Request) {
+// UpdateMappingRule updates a mapping rule to a new state.
+func (a *API) UpdateMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for updateMappingRule")
 }
 
-func (c multiBackendR2Api) deleteMappingRule(w http.ResponseWriter, _ *http.Request) {
+// DeleteMappingRule deletes a mapping rule.
+func (a *API) DeleteMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteMappingRule")
 }
 
-func (c multiBackendR2Api) readMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
+// ReadMappingRuleHistory fetches all of the snapshots for a given mapping rule.
+func (a *API) ReadMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readMappingRuleHistory")
 }
 
-func (c multiBackendR2Api) readRollupRule(w http.ResponseWriter, _ *http.Request) {
+// ReadRollupRule fetches the current state of a rollup rule.
+func (a *API) ReadRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readRollupRule")
 }
 
-func (c multiBackendR2Api) createRollupRule(w http.ResponseWriter, _ *http.Request) {
+// CreateRollupRule creates or revives a rollup rule.
+func (a *API) CreateRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createRollupRule")
 }
 
-func (c multiBackendR2Api) updateRollupRule(w http.ResponseWriter, _ *http.Request) {
+// UpdateRollupRule updates a rollup rule to a new state.
+func (a *API) UpdateRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for updateRollupRule")
 }
 
-func (c multiBackendR2Api) deleteRollupRule(w http.ResponseWriter, _ *http.Request) {
+// DeleteRollupRule deletes a rollup rule.
+func (a *API) DeleteRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteRollupRule")
 }
 
-func (c multiBackendR2Api) readRollupRuleHistory(w http.ResponseWriter, _ *http.Request) {
+// ReadRollupRuleHistory fetches all of the snapshots for a given rollup rule.
+func (a *API) ReadRollupRuleHistory(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readRollupRuleHistory")
 }

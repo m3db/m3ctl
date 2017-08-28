@@ -946,10 +946,7 @@
                     "type": "integer",
                     "format": "int32"
                 },
-                "type": {
-                    "type": "string"
-                },
-                "message": {
+               "message": {
                     "type": "string"
                 }
             }

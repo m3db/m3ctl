@@ -29,9 +29,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/m3db/m3ctl/handler/r2"
+
 	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3ctl/handler/health"
-	"github.com/m3db/m3ctl/handler/r2"
+	"github.com/m3db/m3ctl/handler/r2/kv"
 	"github.com/m3db/m3ctl/handler/swagger"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 
@@ -147,7 +149,7 @@ func main() {
 	handlers := []handler.Controller{
 		health.NewController(instrumentOpts),
 		swagger.NewController(instrumentOpts, "r2/v1"),
-		r2.NewMultiBackendController(instrumentOpts, "r2/v1"),
+		kv.NewController(instrumentOpts, "r2/v1", r2.APIConfig{}),
 	}
 
 	r2ApiServer := server.NewServer(listenAddr, serverOpts, handlers)

@@ -25,6 +25,7 @@ import (
 	"net/http"
 
 	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"
@@ -38,81 +39,110 @@ const (
 )
 
 var (
-	mappingRuleRoot         = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
-	mappingRuleWithIDPath   = fmt.Sprintf("%s/{ruleId}", mappingRuleRoot)
-	mappingRuleWithNamePath = fmt.Sprintf("%s/{ruleName}", mappingRuleRoot)
-	mappingRuleHistoryPath  = fmt.Sprintf("%s/history", mappingRuleWithIDPath)
+	mappingRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
+	mappingRuleWithIDPath  = fmt.Sprintf("%s/{ruleId}", mappingRuleRoot)
+	mappingRuleHistoryPath = fmt.Sprintf("%s/history", mappingRuleWithIDPath)
 
-	rollupRuleRoot         = fmt.Sprintf("%s/%s", namespacePrefix, rollupRulePrefix)
-	rollupRuleWithIDPath   = fmt.Sprintf("%s/{ruleId}", rollupRuleRoot)
-	rollupRuleWithNamePath = fmt.Sprintf("%s/{ruleName}", rollupRuleRoot)
-	rollupRuleHistoryPath  = fmt.Sprintf("%s/history", rollupRuleWithIDPath)
+	rollupRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, rollupRulePrefix)
+	rollupRuleWithIDPath  = fmt.Sprintf("%s/{ruleId}", rollupRuleRoot)
+	rollupRuleHistoryPath = fmt.Sprintf("%s/history", rollupRuleWithIDPath)
 )
 
 // Controller sets up the handlers for rules
 type r2Controller struct {
 	iOpts      instrument.Options
-	api        r2Api
+	api        API
 	rootPrefix string
 }
 
-// NewMultiBackendController creates a new rules controller
-func NewMultiBackendController(iOpts instrument.Options, rootPrefix string) handler.Controller {
-	return r2Controller{iOpts: iOpts, api: newMultiBackendR2Api(iOpts), rootPrefix: rootPrefix}
+// APIConfig is all the configuration state needed by every api
+type APIConfig struct {
+	UpdateHelper rules.RuleSetUpdateHelper
 }
 
-type r2Api interface {
-	readNamespaces(http.ResponseWriter, *http.Request)
-	readNamespace(http.ResponseWriter, *http.Request)
-	createNamespace(http.ResponseWriter, *http.Request)
-	deleteNamespace(http.ResponseWriter, *http.Request)
+// NewController creates a new r2Controller instance.
+func NewController(iOpts instrument.Options, api API, rootPrefix string) handler.Controller {
+	return r2Controller{iOpts: iOpts, api: api, rootPrefix: rootPrefix}
+}
 
-	readMappingRule(http.ResponseWriter, *http.Request)
-	createMappingRule(http.ResponseWriter, *http.Request)
-	updateMappingRule(http.ResponseWriter, *http.Request)
-	deleteMappingRule(http.ResponseWriter, *http.Request)
-	readMappingRuleHistory(http.ResponseWriter, *http.Request)
+// API exposes the http functions available to any implementation of an r2api.
+type API interface {
+	// ReadNamespaces fetches all the namespaces.
+	ReadNamespaces(http.ResponseWriter, *http.Request)
 
-	readRollupRule(http.ResponseWriter, *http.Request)
-	createRollupRule(http.ResponseWriter, *http.Request)
-	updateRollupRule(http.ResponseWriter, *http.Request)
-	deleteRollupRule(http.ResponseWriter, *http.Request)
-	readRollupRuleHistory(http.ResponseWriter, *http.Request)
+	// ReadNamespace fetches the current state of a namespace.
+	ReadNamespace(http.ResponseWriter, *http.Request)
+
+	// CreateNamespace creates a namespace and new ruleset and persists it.
+	CreateNamespace(http.ResponseWriter, *http.Request)
+
+	// DeleteNamespace deletes a namespace and its underlying ruleset.
+	DeleteNamespace(http.ResponseWriter, *http.Request)
+
+	// ReadMappingRule fetches the current state of a mapping rule.
+	ReadMappingRule(http.ResponseWriter, *http.Request)
+
+	// CreateMappingRule creates or revives a mapping rule.
+	CreateMappingRule(http.ResponseWriter, *http.Request)
+
+	// UpdateMappingRule updates a mapping rule to a new state.
+	UpdateMappingRule(http.ResponseWriter, *http.Request)
+
+	// DeleteMappingRule deletes a mapping rule.
+	DeleteMappingRule(http.ResponseWriter, *http.Request)
+
+	// ReadMappingRuleHistory fetches all of the snapshots for a given mapping rule.
+	ReadMappingRuleHistory(http.ResponseWriter, *http.Request)
+
+	// ReadRollupRule fetches the current state of a rollup rule.
+	ReadRollupRule(http.ResponseWriter, *http.Request)
+
+	// CreateRollupRule creates or revives a rollup rule.
+	CreateRollupRule(http.ResponseWriter, *http.Request)
+
+	// UpdateRollupRule updates a rollup rule to a new state.
+	UpdateRollupRule(http.ResponseWriter, *http.Request)
+
+	// DeleteRollupRule deletes a rollup rule.
+	DeleteRollupRule(http.ResponseWriter, *http.Request)
+
+	// ReadRollupRuleHistory fetches all of the snapshots for a given rollup rule.
+	ReadRollupRuleHistory(http.ResponseWriter, *http.Request)
 }
 
 // RegisterHandlers registers rule handlers
 func (c r2Controller) RegisterHandlers(router *mux.Router) {
 	log := c.iOpts.Logger()
 	// Get all namespaces
-	router.HandleFunc(c.fullPath(namespacePrefix), c.api.readNamespaces).Methods(http.MethodGet)
+	router.HandleFunc(c.fullPath(namespacePrefix), c.api.ReadNamespaces).Methods(http.MethodGet)
 
 	fullNamespacePath := c.fullPath(namespacePath)
 	// Ruleset actions
-	router.HandleFunc(fullNamespacePath, c.api.readNamespace).Methods(http.MethodGet)
-	router.HandleFunc(fullNamespacePath, c.api.createNamespace).Methods(http.MethodPost)
-	router.HandleFunc(fullNamespacePath, c.api.deleteNamespace).Methods(http.MethodDelete)
+	router.HandleFunc(fullNamespacePath, c.api.ReadNamespace).Methods(http.MethodGet)
+	router.HandleFunc(fullNamespacePath, c.api.CreateNamespace).Methods(http.MethodPost)
+	router.HandleFunc(fullNamespacePath, c.api.DeleteNamespace).Methods(http.MethodDelete)
 
 	// Mapping Rule actions
-	router.HandleFunc(c.fullPath(mappingRuleWithNamePath), c.api.createMappingRule).Methods(http.MethodPost)
+	router.HandleFunc(c.fullPath(mappingRuleRoot), c.api.CreateMappingRule).Methods(http.MethodPost)
 
 	fullMappingRuleWithIDPath := c.fullPath(mappingRuleWithIDPath)
-	router.HandleFunc(fullMappingRuleWithIDPath, c.api.readMappingRule).Methods(http.MethodGet)
-	router.HandleFunc(fullMappingRuleWithIDPath, c.api.updateMappingRule).Methods(http.MethodPut, http.MethodPatch)
-	router.HandleFunc(fullMappingRuleWithIDPath, c.api.deleteMappingRule).Methods(http.MethodDelete)
+	router.HandleFunc(fullMappingRuleWithIDPath, c.api.ReadMappingRule).Methods(http.MethodGet)
+	router.HandleFunc(fullMappingRuleWithIDPath, c.api.UpdateMappingRule).Methods(http.MethodPut, http.MethodPatch)
+	router.HandleFunc(fullMappingRuleWithIDPath, c.api.DeleteMappingRule).Methods(http.MethodDelete)
 
 	// Mapping Rule history
-	router.HandleFunc(c.fullPath(mappingRuleHistoryPath), c.api.readMappingRuleHistory).Methods(http.MethodGet)
+	router.HandleFunc(c.fullPath(mappingRuleHistoryPath), c.api.ReadMappingRuleHistory).Methods(http.MethodGet)
 
 	// Rollup Rule actions
-	router.HandleFunc(c.fullPath(rollupRuleWithNamePath), c.api.createRollupRule).Methods(http.MethodPost)
+	router.HandleFunc(c.fullPath(rollupRuleRoot), c.api.CreateRollupRule).Methods(http.MethodPost)
 
 	fullRollupRuleWithIDPath := c.fullPath(rollupRuleWithIDPath)
-	router.HandleFunc(fullRollupRuleWithIDPath, c.api.readRollupRule).Methods(http.MethodGet)
-	router.HandleFunc(fullRollupRuleWithIDPath, c.api.updateRollupRule).Methods(http.MethodPut, http.MethodPatch)
-	router.HandleFunc(fullRollupRuleWithIDPath, c.api.deleteRollupRule).Methods(http.MethodDelete)
+	router.HandleFunc(fullRollupRuleWithIDPath, c.api.ReadRollupRule).Methods(http.MethodGet)
+	router.HandleFunc(fullRollupRuleWithIDPath, c.api.UpdateRollupRule).Methods(http.MethodPut, http.MethodPatch)
+	router.HandleFunc(fullRollupRuleWithIDPath, c.api.DeleteRollupRule).Methods(http.MethodDelete)
 
 	// Rollup Rule history
-	router.HandleFunc(c.fullPath(rollupRuleHistoryPath), c.api.readRollupRuleHistory).Methods(http.MethodGet)
+	router.HandleFunc(c.fullPath(rollupRuleHistoryPath), c.api.ReadRollupRuleHistory).Methods(http.MethodGet)
 
 	log.Infof("Registered rules endpoints")
 }

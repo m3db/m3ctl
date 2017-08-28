@@ -21,6 +21,7 @@
 package swagger
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/m3db/m3ctl/handler"
@@ -30,27 +31,33 @@ import (
 )
 
 const (
-	swaggerURL = "/swagger/r2/v1"
-	swaggerDir = "public/swagger/"
+	swaggerPrefix = "/swagger"
+	swaggerDir    = "public/swagger/"
 )
 
 type controller struct {
-	iOpts instrument.Options
+	iOpts      instrument.Options
+	apiVersion string
 }
 
 // NewController creates a new rules controller
-func NewController(iOpts instrument.Options) handler.Controller {
-	return &controller{iOpts: iOpts}
+func NewController(iOpts instrument.Options, apiVersion string) handler.Controller {
+	return &controller{iOpts: iOpts, apiVersion: apiVersion}
 }
 
 // RegisterHandlers registers rule handlers
 func (c *controller) RegisterHandlers(router *mux.Router) {
 	log := c.iOpts.Logger()
-	router.PathPrefix(swaggerURL).Handler(
+	swaggerPath := c.fullPath()
+	router.PathPrefix(swaggerPath).Handler(
 		http.StripPrefix(
-			swaggerURL,
+			swaggerPath,
 			http.FileServer(http.Dir(swaggerDir)),
 		),
 	)
 	log.Infof("Registered swagger endpoints")
+}
+
+func (c *controller) fullPath() string {
+	return fmt.Sprintf("%s/%s", swaggerPrefix, c.apiVersion)
 }

@@ -24,18 +24,23 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/m3db/m3ctl/handler"
 )
 
-// NewServer creates a new http server
-func NewServer(address string, opts Options) (*http.Server, error) {
-	router := mux.NewRouter()
-	if err := registerHandlers(router, opts.InstrumentOptions()); err != nil {
-		return nil, err
+func registerHandlers(router *mux.Router, controllers []handler.Controller) {
+	for _, c := range controllers {
+		c.RegisterHandlers(router)
 	}
+}
+
+// NewServer creates a new http server for R2
+func NewServer(address string, serverOpts Options, controllers []handler.Controller) *http.Server {
+	router := mux.NewRouter()
+	registerHandlers(router, controllers)
 	return &http.Server{
-		WriteTimeout: opts.WriteTimeout(),
-		ReadTimeout:  opts.ReadTimeout(),
+		WriteTimeout: serverOpts.WriteTimeout(),
+		ReadTimeout:  serverOpts.ReadTimeout(),
 		Addr:         address,
 		Handler:      router,
-	}, nil
+	}
 }

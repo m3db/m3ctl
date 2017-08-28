@@ -29,8 +29,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3ctl/handler/health"
+	"github.com/m3db/m3ctl/handler/r2"
+	"github.com/m3db/m3ctl/handler/swagger"
+	"github.com/m3db/m3ctl/services/m3ctl/server"
+
 	"github.com/m3db/m3cluster/client/etcd"
-	"github.com/m3db/m3ctl/server"
 	"github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
@@ -139,15 +144,18 @@ func main() {
 
 	doneCh := make(chan struct{})
 
-	s, err := server.NewServer(listenAddr, serverOpts)
-	if err != nil {
-		logger.Fatalf("could not create m3ctl server: %v", err)
+	handlers := []handler.Controller{
+		health.NewController(instrumentOpts),
+		swagger.NewController(instrumentOpts, "r2/v1"),
+		r2.NewMultiBackendController(instrumentOpts, "r2/v1"),
 	}
+
+	r2ApiServer := server.NewServer(listenAddr, serverOpts, handlers)
 
 	go func() {
 		go func() {
 			logger.Infof("Starting http server on: %s", listenAddr)
-			if err = s.ListenAndServe(); err != nil {
+			if err = r2ApiServer.ListenAndServe(); err != nil {
 				logger.Fatalf("could not start serving traffic: %v", err)
 			}
 		}()

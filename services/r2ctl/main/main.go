@@ -33,7 +33,7 @@ import (
 	"github.com/m3db/m3ctl/handler/health"
 	"github.com/m3db/m3ctl/handler/r2"
 	"github.com/m3db/m3ctl/handler/swagger"
-	"github.com/m3db/m3ctl/services/m3ctl/server"
+	"github.com/m3db/m3ctl/services/r2ctl/server"
 
 	"github.com/m3db/m3cluster/client/etcd"
 	"github.com/m3db/m3x/config"
@@ -42,7 +42,7 @@ import (
 )
 
 const (
-	portEnvVar = "M3CTL_PORT"
+	portEnvVar = "R2CTL_PORT"
 )
 
 type serverConfig struct {

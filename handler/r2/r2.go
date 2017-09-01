@@ -25,7 +25,7 @@ import (
 	"net/http"
 
 	"github.com/m3db/m3ctl/handler"
-	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"
@@ -55,59 +55,14 @@ type r2Controller struct {
 	rootPrefix string
 }
 
-// APIConfig is all the configuration state needed by every api
-type APIConfig struct {
-	UpdateHelper rules.RuleSetUpdateHelper
-}
+// NewController creates a new rules controller using multiple backends
+func NewController(iOpts instrument.Options, rootPrefix string, operator r2.Operator) handler.Controller {
+	newAPI := &api{
+		iOpts:    iOpts,
+		operator: operator,
+	}
 
-// NewController creates a new r2Controller instance.
-func NewController(iOpts instrument.Options, api API, rootPrefix string) handler.Controller {
-	return r2Controller{iOpts: iOpts, api: api, rootPrefix: rootPrefix}
-}
-
-// API exposes the http functions available to any implementation of an r2api.
-type API interface {
-	// ReadNamespaces fetches all the namespaces.
-	ReadNamespaces(http.ResponseWriter, *http.Request)
-
-	// ReadNamespace fetches the current state of a namespace.
-	ReadNamespace(http.ResponseWriter, *http.Request)
-
-	// CreateNamespace creates a namespace and new ruleset and persists it.
-	CreateNamespace(http.ResponseWriter, *http.Request)
-
-	// DeleteNamespace deletes a namespace and its underlying ruleset.
-	DeleteNamespace(http.ResponseWriter, *http.Request)
-
-	// ReadMappingRule fetches the current state of a mapping rule.
-	ReadMappingRule(http.ResponseWriter, *http.Request)
-
-	// CreateMappingRule creates or revives a mapping rule.
-	CreateMappingRule(http.ResponseWriter, *http.Request)
-
-	// UpdateMappingRule updates a mapping rule to a new state.
-	UpdateMappingRule(http.ResponseWriter, *http.Request)
-
-	// DeleteMappingRule deletes a mapping rule.
-	DeleteMappingRule(http.ResponseWriter, *http.Request)
-
-	// ReadMappingRuleHistory fetches all of the snapshots for a given mapping rule.
-	ReadMappingRuleHistory(http.ResponseWriter, *http.Request)
-
-	// ReadRollupRule fetches the current state of a rollup rule.
-	ReadRollupRule(http.ResponseWriter, *http.Request)
-
-	// CreateRollupRule creates or revives a rollup rule.
-	CreateRollupRule(http.ResponseWriter, *http.Request)
-
-	// UpdateRollupRule updates a rollup rule to a new state.
-	UpdateRollupRule(http.ResponseWriter, *http.Request)
-
-	// DeleteRollupRule deletes a rollup rule.
-	DeleteRollupRule(http.ResponseWriter, *http.Request)
-
-	// ReadRollupRuleHistory fetches all of the snapshots for a given rollup rule.
-	ReadRollupRuleHistory(http.ResponseWriter, *http.Request)
+	return r2Controller{iOpts: iOpts, api: newAPI, rootPrefix: rootPrefix}
 }
 
 // RegisterHandlers registers rule handlers

@@ -29,12 +29,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/m3db/m3ctl/handler/r2"
-
 	"github.com/m3db/m3ctl/handler"
 	"github.com/m3db/m3ctl/handler/health"
-	"github.com/m3db/m3ctl/handler/r2/kv"
+	"github.com/m3db/m3ctl/handler/r2"
 	"github.com/m3db/m3ctl/handler/swagger"
+	"github.com/m3db/m3ctl/r2/kv"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 
 	"github.com/m3db/m3cluster/client/etcd"
@@ -149,7 +148,7 @@ func main() {
 	handlers := []handler.Controller{
 		health.NewController(instrumentOpts),
 		swagger.NewController(instrumentOpts, "r2/v1"),
-		kv.NewController(instrumentOpts, "r2/v1", r2.APIConfig{}),
+		r2.NewController(instrumentOpts, "r2/v1", kv.NewOperator(kv.OperatorConfig{})),
 	}
 
 	r2ApiServer := server.NewServer(listenAddr, serverOpts, handlers)

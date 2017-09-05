@@ -22,8 +22,8 @@ package server
 
 import "github.com/gorilla/mux"
 
-// Service defines routes and handlers for a given entity
+// Service defines routes and handlers for a given entity.
 type Service interface {
-	// RegisterHandlers wires the http handlers for this Service with the given ServeMux
+	// RegisterHandlers wires the http handlers for this Service with the given router.
 	RegisterHandlers(*mux.Router)
 }

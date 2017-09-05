@@ -25,7 +25,6 @@ import (
 	"net/http"
 
 	"github.com/m3db/m3ctl/services/r2ctl/server"
-
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"

@@ -45,7 +45,7 @@ func NewService(iOpts instrument.Options, apiVersion string) server.Service {
 	return &service{iOpts: iOpts, apiVersion: apiVersion}
 }
 
-// RegisterHandlers registers rule handlers
+// RegisterHandlers registers rule handlers.
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
 	swaggerPath := s.fullPath()

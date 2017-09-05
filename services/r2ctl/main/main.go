@@ -29,12 +29,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/m3db/m3ctl/handler"
-	"github.com/m3db/m3ctl/handler/health"
-	"github.com/m3db/m3ctl/handler/r2"
-	"github.com/m3db/m3ctl/handler/swagger"
+	"github.com/m3db/m3ctl/health"
+	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/r2/kv"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
+	"github.com/m3db/m3ctl/swagger"
 
 	"github.com/m3db/m3cluster/client/etcd"
 	"github.com/m3db/m3x/config"
@@ -145,13 +144,13 @@ func main() {
 
 	doneCh := make(chan struct{})
 
-	handlers := []handler.Controller{
-		health.NewController(instrumentOpts),
-		swagger.NewController(instrumentOpts, "r2/v1"),
-		r2.NewController(instrumentOpts, "r2/v1", kv.NewOperator(kv.OperatorConfig{})),
+	routers := []server.Router{
+		health.NewRouter(instrumentOpts),
+		swagger.NewRouter(instrumentOpts, "r2/v1"),
+		r2.NewRouter(instrumentOpts, "r2/v1", kv.NewService(kv.ServiceConfig{})),
 	}
 
-	r2ApiServer := server.NewServer(listenAddr, serverOpts, handlers)
+	r2ApiServer := server.NewServer(listenAddr, serverOpts, routers)
 
 	go func() {
 		go func() {

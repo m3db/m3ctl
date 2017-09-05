@@ -18,7 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package r2
+package server
 
-// Operator is a construct that can perform operations against a backing rule store.
-type Operator interface{}
+import "github.com/gorilla/mux"
+
+// Router defines routes and handlers for a given entity
+type Router interface {
+	// Registers the handlers for this Router with the given ServeMux
+	RegisterHandlers(*mux.Router)
+}

@@ -16,25 +16,48 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE
+// THE SOFTWARE.
 
-package kv
+package swagger
 
 import (
-	"github.com/m3db/m3ctl/r2"
-	"github.com/m3db/m3metrics/rules"
+	"fmt"
+	"net/http"
+
+	"github.com/m3db/m3ctl/services/r2ctl/server"
+	"github.com/m3db/m3x/instrument"
+
+	"github.com/gorilla/mux"
 )
 
-type operator struct {
-	cfg OperatorConfig
+const (
+	swaggerPrefix = "/swagger"
+	swaggerDir    = "public/swagger/"
+)
+
+type router struct {
+	iOpts      instrument.Options
+	apiVersion string
 }
 
-// OperatorConfig is all the configuration state needed by a kv operator.
-type OperatorConfig struct {
-	UpdateHelper rules.RuleSetUpdateHelper
+// NewRouter creates a new rules controller
+func NewRouter(iOpts instrument.Options, apiVersion string) server.Router {
+	return &router{iOpts: iOpts, apiVersion: apiVersion}
 }
 
-// NewOperator returns a new operator that knows how to talk to a kv backed r2 store.
-func NewOperator(cfg OperatorConfig) r2.Operator {
-	return &operator{cfg: cfg}
+// RegisterHandlers registers rule handlers
+func (c *router) RegisterHandlers(router *mux.Router) {
+	log := c.iOpts.Logger()
+	swaggerPath := c.fullPath()
+	router.PathPrefix(swaggerPath).Handler(
+		http.StripPrefix(
+			swaggerPath,
+			http.FileServer(http.Dir(swaggerDir)),
+		),
+	)
+	log.Infof("Registered swagger endpoints")
+}
+
+func (c *router) fullPath() string {
+	return fmt.Sprintf("%s/%s", swaggerPrefix, c.apiVersion)
 }

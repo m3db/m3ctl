@@ -16,48 +16,25 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// THE SOFTWARE
 
-package swagger
+package kv
 
 import (
-	"fmt"
-	"net/http"
-
-	"github.com/m3db/m3ctl/handler"
-	"github.com/m3db/m3x/instrument"
-
-	"github.com/gorilla/mux"
+	"github.com/m3db/m3ctl/r2"
+	"github.com/m3db/m3metrics/rules"
 )
 
-const (
-	swaggerPrefix = "/swagger"
-	swaggerDir    = "public/swagger/"
-)
-
-type controller struct {
-	iOpts      instrument.Options
-	apiVersion string
+type service struct {
+	cfg ServiceConfig
 }
 
-// NewController creates a new rules controller
-func NewController(iOpts instrument.Options, apiVersion string) handler.Controller {
-	return &controller{iOpts: iOpts, apiVersion: apiVersion}
+// ServiceConfig is all the configuration state needed by a kv service.
+type ServiceConfig struct {
+	UpdateHelper rules.RuleSetUpdateHelper
 }
 
-// RegisterHandlers registers rule handlers
-func (c *controller) RegisterHandlers(router *mux.Router) {
-	log := c.iOpts.Logger()
-	swaggerPath := c.fullPath()
-	router.PathPrefix(swaggerPath).Handler(
-		http.StripPrefix(
-			swaggerPath,
-			http.FileServer(http.Dir(swaggerDir)),
-		),
-	)
-	log.Infof("Registered swagger endpoints")
-}
-
-func (c *controller) fullPath() string {
-	return fmt.Sprintf("%s/%s", swaggerPrefix, c.apiVersion)
+// NewService returns a new service that knows how to talk to a kv backed r2 store.
+func NewService(cfg ServiceConfig) r2.Service {
+	return &service{cfg: cfg}
 }

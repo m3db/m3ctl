@@ -27,7 +27,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/m3db/m3ctl/handler"
+	"github.com/m3db/m3ctl/services/r2ctl/server"
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"
@@ -48,13 +48,13 @@ type healthCheckResult struct {
 	Status       healthStatus  `json:"status"`
 }
 
-type controller struct {
+type router struct {
 	iOpts instrument.Options
 }
 
-// NewController creates a new rules controller
-func NewController(iOpts instrument.Options) handler.Controller {
-	return &controller{iOpts: iOpts}
+// NewRouter creates a new rules controller
+func NewRouter(iOpts instrument.Options) server.Router {
+	return &router{iOpts: iOpts}
 }
 
 func healthCheck() healthStatus {
@@ -93,7 +93,7 @@ func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterHandlers registers health handlers.
-func (c *controller) RegisterHandlers(router *mux.Router) {
+func (c *router) RegisterHandlers(router *mux.Router) {
 	log := c.iOpts.Logger()
 	router.HandleFunc(healthURL, m3ctlHealthCheck)
 	log.Infof("Registered health endpoints")

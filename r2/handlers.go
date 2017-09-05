@@ -24,18 +24,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3x/instrument"
 )
 
 // API holds all the state for a multi backend api  instance.
-type api struct {
-	iOpts    instrument.Options
-	operator r2.Operator
+type handlers struct {
+	iOpts   instrument.Options
+	service Service
 }
 
-// API exposes the http functions available to any implementation of an r2api.
-type API interface {
+// Handlers exposes the http functions available to any implementation of an r2api.
+type Handlers interface {
 	// ReadNamespaces fetches all the namespaces.
 	ReadNamespaces(http.ResponseWriter, *http.Request)
 
@@ -79,72 +78,72 @@ type API interface {
 	ReadRollupRuleHistory(http.ResponseWriter, *http.Request)
 }
 
-func (a *api) ReadNamespaces(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadNamespaces(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readNamespace")
 }
 
-func (a *api) ReadNamespace(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readNamespace")
 }
 
-func (a *api) CreateNamespace(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) CreateNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createNamespace")
 }
 
-func (a *api) DeleteNamespace(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) DeleteNamespace(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteNamespace")
 }
 
-func (a *api) ReadMappingRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readMappingRule")
 }
 
-func (a *api) CreateMappingRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) CreateMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createMappingRule")
 }
 
-func (a *api) UpdateMappingRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) UpdateMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for updateMappingRule")
 }
 
-func (a *api) DeleteMappingRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) DeleteMappingRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteMappingRule")
 }
 
-func (a *api) ReadMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readMappingRuleHistory")
 }
 
-func (a *api) ReadRollupRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readRollupRule")
 }
 
-func (a *api) CreateRollupRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) CreateRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for createRollupRule")
 }
 
-func (a *api) UpdateRollupRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) UpdateRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for updateRollupRule")
 }
 
-func (a *api) DeleteRollupRule(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) DeleteRollupRule(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for deleteRollupRule")
 }
 
-func (a *api) ReadRollupRuleHistory(w http.ResponseWriter, _ *http.Request) {
+func (h *handlers) ReadRollupRuleHistory(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 	fmt.Fprintf(w, "Placeholder for readRollupRuleHistory")
 }

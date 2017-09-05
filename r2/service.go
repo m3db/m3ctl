@@ -18,12 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package handler
+package r2
 
-import "github.com/gorilla/mux"
-
-// Controller defines functions around a controllable entity
-type Controller interface {
-	// Registers the handlers for this controller with the given ServeMux
-	RegisterHandlers(*mux.Router)
-}
+// Service is a construct that performs operations against a backing rule store.
+type Service interface{}

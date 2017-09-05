@@ -16,48 +16,14 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// THE SOFTWARE
 
-package swagger
+package server
 
-import (
-	"fmt"
-	"net/http"
+import "github.com/gorilla/mux"
 
-	"github.com/m3db/m3ctl/services/r2ctl/server"
-	"github.com/m3db/m3x/instrument"
-
-	"github.com/gorilla/mux"
-)
-
-const (
-	swaggerPrefix = "/swagger"
-	swaggerDir    = "public/swagger/"
-)
-
-type router struct {
-	iOpts      instrument.Options
-	apiVersion string
-}
-
-// NewRouter creates a new rules controller
-func NewRouter(iOpts instrument.Options, apiVersion string) server.Router {
-	return &router{iOpts: iOpts, apiVersion: apiVersion}
-}
-
-// RegisterHandlers registers rule handlers
-func (c *router) RegisterHandlers(router *mux.Router) {
-	log := c.iOpts.Logger()
-	swaggerPath := c.fullPath()
-	router.PathPrefix(swaggerPath).Handler(
-		http.StripPrefix(
-			swaggerPath,
-			http.FileServer(http.Dir(swaggerDir)),
-		),
-	)
-	log.Infof("Registered swagger endpoints")
-}
-
-func (c *router) fullPath() string {
-	return fmt.Sprintf("%s/%s", swaggerPrefix, c.apiVersion)
+// Service defines routes and handlers for a given entity
+type Service interface {
+	// RegisterHandlers wires the http handlers for this Service with the given ServeMux
+	RegisterHandlers(*mux.Router)
 }

@@ -26,20 +26,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func registerHandlers(router *mux.Router, routers []Router) {
-	for _, r := range routers {
-		r.RegisterHandlers(router)
+func registerHandlers(router *mux.Router, services []Service) {
+	for _, s := range services {
+		s.RegisterHandlers(router)
 	}
 }
 
 // NewServer creates a new http server for R2
-func NewServer(address string, serverOpts Options, routers []Router) *http.Server {
-	r := mux.NewRouter()
-	registerHandlers(r, routers)
+func NewServer(address string, serverOpts Options, services []Service) *http.Server {
+	router := mux.NewRouter()
+	registerHandlers(router, services)
 	return &http.Server{
 		WriteTimeout: serverOpts.WriteTimeout(),
 		ReadTimeout:  serverOpts.ReadTimeout(),
 		Addr:         address,
-		Handler:      r,
+		Handler:      router,
 	}
 }

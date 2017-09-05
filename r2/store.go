@@ -18,23 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package kv
+package r2
 
-import (
-	"github.com/m3db/m3ctl/r2"
-	"github.com/m3db/m3metrics/rules"
-)
-
-type service struct {
-	cfg ServiceConfig
-}
-
-// ServiceConfig is all the configuration state needed by a kv service.
-type ServiceConfig struct {
-	UpdateHelper rules.RuleSetUpdateHelper
-}
-
-// NewService returns a new service that knows how to talk to a kv backed r2 store.
-func NewService(cfg ServiceConfig) r2.Service {
-	return &service{cfg: cfg}
-}
+// Store is a construct that performs operations against a backing rule store.
+type Store interface{}

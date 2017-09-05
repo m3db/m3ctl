@@ -48,13 +48,13 @@ type healthCheckResult struct {
 	Status       healthStatus  `json:"status"`
 }
 
-type router struct {
+type service struct {
 	iOpts instrument.Options
 }
 
-// NewRouter creates a new rules controller
-func NewRouter(iOpts instrument.Options) server.Router {
-	return &router{iOpts: iOpts}
+// NewService creates a new rules controller.
+func NewService(iOpts instrument.Options) server.Service {
+	return &service{iOpts: iOpts}
 }
 
 func healthCheck() healthStatus {
@@ -93,8 +93,8 @@ func m3ctlHealthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // RegisterHandlers registers health handlers.
-func (c *router) RegisterHandlers(router *mux.Router) {
-	log := c.iOpts.Logger()
+func (s *service) RegisterHandlers(router *mux.Router) {
+	log := s.iOpts.Logger()
 	router.HandleFunc(healthURL, m3ctlHealthCheck)
 	log.Infof("Registered health endpoints")
 }

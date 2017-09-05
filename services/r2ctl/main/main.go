@@ -144,13 +144,13 @@ func main() {
 
 	doneCh := make(chan struct{})
 
-	routers := []server.Router{
-		health.NewRouter(instrumentOpts),
-		swagger.NewRouter(instrumentOpts, "r2/v1"),
-		r2.NewRouter(instrumentOpts, "r2/v1", kv.NewService(kv.ServiceConfig{})),
+	services := []server.Service{
+		health.NewService(instrumentOpts),
+		swagger.NewService(instrumentOpts, "r2/v1"),
+		r2.NewService(instrumentOpts, "r2/v1", kv.NewStore(kv.StoreConfig{})),
 	}
 
-	r2ApiServer := server.NewServer(listenAddr, serverOpts, routers)
+	r2ApiServer := server.NewServer(listenAddr, serverOpts, services)
 
 	go func() {
 		go func() {

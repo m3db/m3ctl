@@ -38,3 +38,19 @@ type StoreConfig struct {
 func NewStore(cfg StoreConfig) r2.Store {
 	return &store{cfg: cfg}
 }
+
+func (s *store) FetchNamespaces() ([]string, int, error) {
+	return nil, 0, nil
+}
+
+func (s *store) CreateNamespace(ns r2.NamespaceData) (string, error) {
+	return "", nil
+}
+
+func (s *store) DeleteNamespace(ns r2.NamespaceData) error {
+	return nil
+}
+
+func (s *store) FetchRuleSet(namespaceID string) (*r2.RuleSet, error) {
+	return nil, nil
+}

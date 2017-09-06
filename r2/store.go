@@ -80,20 +80,3 @@ type Store interface {
 
 	FetchRuleSet(namespaceID string) (*RuleSet, error)
 }
-
-type ConflictError struct{ msg string }
-
-func NewConflictError(msg string) ConflictError { return ConflictError{msg: msg} }
-func (c ConflictError) Error() string           { return c.msg }
-
-type InternalError struct{ msg string }
-
-func NewInternalError(msg string) InternalError { return InternalError{msg: msg} }
-
-func (c InternalError) Error() string { return c.msg }
-
-type VersionError struct{ msg string }
-
-func NewVersionError(msg string) VersionError { return VersionError{msg: msg} }
-
-func (c VersionError) Error() string { return c.msg }

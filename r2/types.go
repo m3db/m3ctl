@@ -27,15 +27,13 @@ import (
 	"github.com/m3db/m3metrics/policy"
 )
 
+// API response
 type apiResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-func newAPIResponse(code int, msg string) apiResponse {
-	return apiResponse{Code: code, Message: msg}
-}
-
+// Namespace Level
 type namespaces struct {
 	Version    int      `json:"version"`
 	Namespaces []string `json:"namespaces"`
@@ -50,6 +48,7 @@ type deleteNamespaceBody struct {
 	NamespacesVersion int `json:"namespacesVersion"`
 }
 
+// RuleSet View
 type filter map[string]string
 
 func (f filter) string() string {
@@ -97,12 +96,7 @@ func newRuleSetView(rs RuleSet) ruleSetView {
 	}
 }
 
-type mappingRuleData struct {
-	Name     string          `json:"name"`
-	Filter   string          `json:"filter"`
-	Policies []policy.Policy `json:"policies"`
-}
-
+// Mapping Rule
 type mappingRuleView struct {
 	mappingRuleData
 
@@ -124,17 +118,24 @@ func newMappingRuleView(mr MappingRule) mappingRuleView {
 	}
 }
 
-type mappingRuleUpdate struct {
+type mappingRuleData struct {
+	Name     string          `json:"name"`
+	Filter   string          `json:"filter"`
+	Policies []policy.Policy `json:"policies"`
+}
+
+type mappingRuleUpdate struct { // nolint
 	mappingRuleData
 
 	ID             string `json:"id"`
 	RuleSetVersion int    `json:"rulesetVersion"`
 }
 
-type mappingRuleHistory struct {
+type mappingRuleHistory struct { // nolint
 	States []mappingRuleView `json:"states"`
 }
 
+// Rollup Rule
 type rollupRuleView struct {
 	rollupRuleData
 
@@ -145,11 +146,7 @@ type rollupRuleView struct {
 func newRollupRuleView(rr RollupRule) rollupRuleView {
 	targets := make([]rollupTargetView, len(rr.Targets))
 	for i, t := range rr.Targets {
-		targets[i] = rollupTargetView{
-			Name:     string(t.Name),
-			Tags:     t.Tags,
-			Policies: t.Policies,
-		}
+		targets[i] = rollupTargetView(t)
 	}
 
 	rrd := rollupRuleData{
@@ -177,13 +174,40 @@ type rollupTargetView struct {
 	Policies []policy.Policy `json:"policies"`
 }
 
-type rollupRuleUpdate struct {
+type rollupRuleUpdate struct { // nolint
 	rollupRuleData
 
 	ID             string `json:"id"`
 	RuleSetVersion int    `json:"rulesetVersion"`
 }
 
-type rollupRuleHistory struct {
+type rollupRuleHistory struct { // nolint
 	States []rollupRuleView `json:"states"`
 }
+
+// Errors
+
+// ConflictError represents either a version mismatch writing data or a data conflict issue.
+type ConflictError struct{ msg string }
+
+// NewConflictError creates a new Conflict Error
+func NewConflictError(msg string) ConflictError { return ConflictError{msg: msg} }
+
+func (c ConflictError) Error() string { return c.msg }
+
+// InternalError represents an unexpected server error.
+type InternalError struct{ msg string }
+
+// NewInternalError creates a new Internal Error
+func NewInternalError(msg string) InternalError { return InternalError{msg: msg} }
+
+func (c InternalError) Error() string { return c.msg }
+
+// VersionError represents a mismatch in the Namespaces or Ruleset version specified in the request
+// and the latest one.
+type VersionError struct{ msg string }
+
+// NewVersionError creates a new Version Error
+func NewVersionError(msg string) VersionError { return VersionError{msg: msg} }
+
+func (c VersionError) Error() string { return c.msg }

@@ -26,9 +26,6 @@ import (
 	"github.com/m3db/m3ctl/r2"
 )
 
-type stubRuleSet struct {
-}
-
 type stubData struct {
 	Namespaces        []string
 	RuleSets          map[string]r2.RuleSet
@@ -53,13 +50,14 @@ type store struct {
 	data *stubData
 }
 
-func NewStore() r2.Operator {
+// NewStore creates a new stub
+func NewStore() r2.Store {
 	return &store{data: &dummyData}
 }
 
 // FetchNamespaces ...
 func (s *store) FetchNamespaces() ([]string, int, error) {
-	return o.data.Namespaces, 1, nil
+	return s.data.Namespaces, 1, nil
 }
 
 // CreateNamespace ...
@@ -70,7 +68,7 @@ func (s *store) CreateNamespace(ns r2.NamespaceData) (string, error) {
 	case conflicatNs:
 		return "", r2.NewVersionError(fmt.Sprintf("Namespaces version mismatch"))
 	default:
-		for _, n := range o.data.Namespaces {
+		for _, n := range s.data.Namespaces {
 			if namespaceID == n {
 				return "", r2.NewConflictError(fmt.Sprintf("Namespace %s already exists", namespaceID))
 			}
@@ -87,7 +85,7 @@ func (s *store) DeleteNamespace(ns r2.NamespaceData) error {
 	case conflicatNs:
 		return r2.NewVersionError("Namespace version mismatch")
 	default:
-		for _, n := range o.data.Namespaces {
+		for _, n := range s.data.Namespaces {
 			if namespaceID == n {
 				return nil
 			}
@@ -104,9 +102,9 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.RuleSet, error) {
 	case conflicatNs:
 		return nil, r2.NewVersionError("Namespace version mismatch")
 	default:
-		for _, n := range o.data.Namespaces {
+		for _, n := range s.data.Namespaces {
 			if namespaceID == n {
-				rs, _ := o.data.RuleSets[namespaceID]
+				rs := s.data.RuleSets[namespaceID]
 				return &rs, nil
 			}
 		}

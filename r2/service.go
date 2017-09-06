@@ -61,7 +61,7 @@ func NewService(iOpts instrument.Options, rootPrefix string, store Store) server
 }
 
 func writeAPIResponse(w http.ResponseWriter, code int, msg string) {
-	j, _ := json.Marshal(newAPIResponse(code, msg))
+	j, _ := json.Marshal(apiResponse{Code: code, Message: msg})
 	w.WriteHeader(code)
 	w.Write(j)
 }
@@ -77,7 +77,7 @@ func handleError(w http.ResponseWriter, opError error) {
 	}
 }
 
-func (s *service) ReadNamespaces(w http.ResponseWriter, r *http.Request) {
+func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
 	nss, v, err := s.store.FetchNamespaces()
 	if err != nil {
 		writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")
@@ -98,7 +98,7 @@ func (s *service) ReadNamespaces(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func (s *service) ReadNamespace(w http.ResponseWriter, r *http.Request) {
+func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespaceID, exists := vars["namespaceId"]
 	if !exists {
@@ -122,7 +122,7 @@ func (s *service) ReadNamespace(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func (s *service) CreateNamespace(w http.ResponseWriter, r *http.Request) {
+func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) {
 	var cnb createNamespaceBody
 	if err := json.NewDecoder(r.Body).Decode(&cnb); err != nil {
 		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new namespace data.")
@@ -138,7 +138,7 @@ func (s *service) CreateNamespace(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *service) DeleteNamespace(w http.ResponseWriter, r *http.Request) {
+func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespaceID, exists := vars["namespaceId"]
 	if !exists {
@@ -157,25 +157,6 @@ func (s *service) DeleteNamespace(w http.ResponseWriter, r *http.Request) {
 	} else {
 		handleError(w, err)
 	}
-}
-func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readNamespace")
-}
-
-func (s *service) readNamespace(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readNamespace")
-}
-
-func (s *service) createNamespace(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for createNamespace")
-}
-
-func (s *service) deleteNamespace(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for deleteNamespace")
 }
 
 func (s *service) readMappingRule(w http.ResponseWriter, _ *http.Request) {

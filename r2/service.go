@@ -123,7 +123,7 @@ func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) {
-	var cnb createNamespaceBody
+	var cnb createNamespaceData
 	if err := json.NewDecoder(r.Body).Decode(&cnb); err != nil {
 		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new namespace data.")
 		return
@@ -145,7 +145,7 @@ func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) {
 		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceId")
 	}
 
-	var cdn deleteNamespaceBody
+	var cdn deleteNamespaceData
 	if err := json.NewDecoder(r.Body).Decode(&cdn); err != nil {
 		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse update data.")
 		return

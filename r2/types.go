@@ -22,9 +22,15 @@ package r2
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/m3db/m3metrics/policy"
+)
+
+const (
+	tagFilterListSeparator = " "
+	tagFilterSeparator     = ":"
 )
 
 // API response
@@ -39,24 +45,43 @@ type namespaces struct {
 	Namespaces []string `json:"namespaces"`
 }
 
-type createNamespaceBody struct {
+type createNamespaceData struct {
 	ID                string `json:"id"`
 	NamespacesVersion int    `json:"namespacesVersion"`
 }
 
-type deleteNamespaceBody struct {
+type deleteNamespaceData struct {
 	NamespacesVersion int `json:"namespacesVersion"`
 }
 
 // RuleSet View
 type filter map[string]string
 
-func (f filter) string() string {
+func (f filter) MarshalJSON() ([]byte, error) {
 	tmp := make([]string, 0, len(f))
 	for k, v := range f {
 		tmp = append(tmp, fmt.Sprintf("%s:%s", k, v))
 	}
-	return strings.Join(tmp, " ")
+	marshalled := strconv.Quote(strings.Join(tmp, " "))
+	return []byte(marshalled), nil
+}
+
+func (f filter) UnmarshalJSON(data []byte) error {
+	str := string(data)
+	unquoted, err := strconv.Unquote(str)
+	if err != nil {
+		return err
+	}
+
+	tagPairs := strings.Split(unquoted, tagFilterListSeparator)
+	for _, p := range tagPairs {
+		parts := strings.Split(p, tagFilterSeparator)
+		if len(parts) != 2 {
+			return NewBadInputError(fmt.Sprintf("invalid tag filter pair %s", p))
+		}
+		f[parts[0]] = parts[1]
+	}
+	return nil
 }
 
 type ruleSetView struct {
@@ -107,7 +132,7 @@ type mappingRuleView struct {
 func newMappingRuleView(mr MappingRule) mappingRuleView {
 	mrd := mappingRuleData{
 		Name:     mr.Name,
-		Filter:   filter(mr.RawFilters).string(),
+		Filter:   mr.RawFilters,
 		Policies: mr.Policies,
 	}
 
@@ -120,7 +145,7 @@ func newMappingRuleView(mr MappingRule) mappingRuleView {
 
 type mappingRuleData struct {
 	Name     string          `json:"name"`
-	Filter   string          `json:"filter"`
+	Filter   filter          `json:"filter"`
 	Policies []policy.Policy `json:"policies"`
 }
 
@@ -151,7 +176,7 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 
 	rrd := rollupRuleData{
 		Name:    rr.Name,
-		Filter:  filter(rr.RawFilters).string(),
+		Filter:  rr.RawFilters,
 		Targets: targets,
 	}
 
@@ -164,7 +189,7 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 
 type rollupRuleData struct {
 	Name    string             `json:"name"`
-	Filter  string             `json:"filter"`
+	Filter  filter             `json:"filter"`
 	Targets []rollupTargetView `json:"targets"`
 }
 
@@ -185,15 +210,13 @@ type rollupRuleHistory struct { // nolint
 	States []rollupRuleView `json:"states"`
 }
 
-// Errors
-
 // ConflictError represents either a version mismatch writing data or a data conflict issue.
 type ConflictError struct{ msg string }
 
 // NewConflictError creates a new Conflict Error
 func NewConflictError(msg string) ConflictError { return ConflictError{msg: msg} }
 
-func (c ConflictError) Error() string { return c.msg }
+func (e ConflictError) Error() string { return e.msg }
 
 // InternalError represents an unexpected server error.
 type InternalError struct{ msg string }
@@ -201,7 +224,7 @@ type InternalError struct{ msg string }
 // NewInternalError creates a new Internal Error
 func NewInternalError(msg string) InternalError { return InternalError{msg: msg} }
 
-func (c InternalError) Error() string { return c.msg }
+func (e InternalError) Error() string { return e.msg }
 
 // VersionError represents a mismatch in the Namespaces or Ruleset version specified in the request
 // and the latest one.
@@ -210,4 +233,12 @@ type VersionError struct{ msg string }
 // NewVersionError creates a new Version Error
 func NewVersionError(msg string) VersionError { return VersionError{msg: msg} }
 
-func (c VersionError) Error() string { return c.msg }
+func (e VersionError) Error() string { return e.msg }
+
+// BadInputError represents an error due to malformed or invalid metrics.
+type BadInputError struct{ msg string }
+
+// NewBadInputError creates a new Bad Input Error.
+func NewBadInputError(msg string) BadInputError { return BadInputError{msg: msg} }
+
+func (e BadInputError) Error() string { return e.msg }

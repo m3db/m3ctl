@@ -33,8 +33,8 @@ import (
 
 const (
 	namespacePrefix   = "namespace/{namespaceID}"
-	mappingRulePrefix = "mapping"
-	rollupRulePrefix  = "rollup"
+	mappingRulePrefix = "mappings"
+	rollupRulePrefix  = "rollups"
 	namespacePath     = "namespaces"
 )
 
@@ -117,7 +117,7 @@ func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
 
 func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	namespaceID, exists := vars["namespaceId"]
+	namespaceID, exists := vars["namespaceID"]
 	if !exists {
 		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceId")
 		return
@@ -265,9 +265,27 @@ func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *service) deleteMappingRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for deleteMappingRule")
+func (s *service) deleteMappingRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	mappingRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse mappingRuleID")
+		return
+	}
+
+	err := s.store.DeleteMappingRule(namespaceID, mappingRuleID, 0)
+	if err == nil {
+		writeAPIResponse(w, http.StatusOK,
+			fmt.Sprintf("Deleted mapping rule: %s in namespace %s", mappingRuleID, namespaceID))
+	} else {
+		handleError(w, err)
+	}
 }
 
 func (s *service) readMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
@@ -364,26 +382,73 @@ func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *service) deleteRollupRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for deleteRollupRule")
+func (s *service) deleteRollupRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	rollupRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse rollupRuleID")
+		return
+	}
+
+	err := s.store.DeleteRollupRule(namespaceID, rollupRuleID, 0)
+
+	if err == nil {
+		writeAPIResponse(w, http.StatusOK, fmt.Sprintf("Deleted rollup rule: %s in namespace %s", rollupRuleID, namespaceID))
+	} else {
+		handleError(w, err)
+	}
 }
 
-func (s *service) readRollupRuleHistory(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readRollupRuleHistory")
+func (s *service) readRollupRuleHistory(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	rollupRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse rollupRuleID")
+		return
+	}
+
+	hist, err := s.store.FetchRollupRuleHistory(namespaceID, rollupRuleID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	views := make([]rollupRuleView, len(hist))
+	for i, rollupRule := range hist {
+		x := rollupRule
+		views[i] = newRollupRuleView(*x)
+	}
+
+	j, err := json.Marshal(views)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusOK).write(w)
 }
 
 // RegisterHandlers registers rule handler.
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
 	// Namespaces action
-	fullNamespacesPrefix := s.fullPath(namespacePrefix)
+	fullNamespacesPrefix := s.fullPath("namespaces")
 	router.HandleFunc(fullNamespacesPrefix, s.readNamespaces).Methods(http.MethodGet)
 	router.HandleFunc(fullNamespacesPrefix, s.createNamespace).Methods(http.MethodPost)
 
 	// Ruleset actions
-	fullNamespacePath := s.fullPath(namespacePath)
+	fullNamespacePath := s.fullPath(namespacePrefix)
 	router.HandleFunc(fullNamespacePath, s.readNamespace).Methods(http.MethodGet)
 	router.HandleFunc(fullNamespacePath, s.deleteNamespace).Methods(http.MethodDelete)
 

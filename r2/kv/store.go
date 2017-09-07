@@ -86,3 +86,6 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd r2.Rollup
 func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error {
 	return nil
 }
+func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*RollupRule, error) {
+	return nil, nil
+}

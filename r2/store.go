@@ -46,7 +46,7 @@ type RollupRule struct {
 	Tombstoned   bool
 	CutoverNanos int64
 	RawFilters   map[string]string
-	Targets      []rollupTargetView
+	Targets      []RollupTarget
 }
 
 // RuleSet represents a latest state slice of a m3metrics ruleset.
@@ -83,5 +83,7 @@ type Store interface {
 
 	UpdateRollupRule(namespaceID, rollupRuleID string, rrd RollupRuleData) error
 
-	DeleteRollupRule(namespaceID, mappingRuleID string, ruleSetVersion int) error
+	DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error
+
+	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*RollupRule, error)
 }

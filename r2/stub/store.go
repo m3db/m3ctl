@@ -25,11 +25,12 @@ import (
 	"time"
 
 	"github.com/m3db/m3ctl/r2"
+	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3x/instrument"
 )
 
-type mappingRuleHistories map[string][]r2.MappingRule
-type rollupRuleHistories map[string][]r2.RollupRule
+type mappingRuleHistories map[string][]*r2.MappingRule
+type rollupRuleHistories map[string][]*r2.RollupRule
 
 type stubData struct {
 	Namespaces        []string
@@ -40,21 +41,178 @@ type stubData struct {
 	RollupHistory     map[string]rollupRuleHistories
 }
 
+func makePolicy(s string) policy.Policy {
+	p, _ := policy.ParsePolicy(s)
+	return p
+}
+
 var (
-	dummyData = stubData{
+	cutoverTimestamp = time.Now().UnixNano()
+	dummyData        = stubData{
 		ErrorNamespace:    "errNs",
 		ConflictNamespace: "conflictNs",
 		Namespaces:        []string{"ns1", "ns2"},
 		RuleSets: map[string]r2.RuleSet{
-			"ns1": r2.RuleSet{},
-			"ns2": r2.RuleSet{},
+			"ns1": r2.RuleSet{
+				Namespace:    "ns1",
+				Version:      1,
+				CutoverNanos: cutoverTimestamp,
+				MappingRules: []r2.MappingRule{
+					r2.MappingRule{
+						ID:           "mr_id1",
+						Name:         "mr1",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Policies: []policy.Policy{
+							makePolicy("1m:10d"),
+							makePolicy("10m:30d"),
+						},
+					},
+					r2.MappingRule{
+						ID:           "mr_id2",
+						Name:         "mr2",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag2": "val2",
+						},
+						Policies: []policy.Policy{
+							makePolicy("1m:10d"),
+						},
+					},
+				},
+				RollupRules: []r2.RollupRule{
+					r2.RollupRule{
+						ID:           "rr_id1",
+						Name:         "rr1",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Targets: []r2.RollupTarget{
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|Min"),
+								},
+							},
+						},
+					},
+					r2.RollupRule{
+						ID:           "rr_id2",
+						Name:         "rr2",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+						},
+						Targets: []r2.RollupTarget{
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:30d|Min"),
+								},
+							},
+						},
+					},
+				},
+			},
+			"ns2": r2.RuleSet{
+				Namespace:    "ns2",
+				Version:      1,
+				CutoverNanos: cutoverTimestamp,
+				MappingRules: []r2.MappingRule{},
+				RollupRules: []r2.RollupRule{
+					r2.RollupRule{
+						ID:           "rr_id3",
+						Name:         "rr1",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Targets: []r2.RollupTarget{
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|Min,Max"),
+								},
+							},
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|P999"),
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		MappingHistory: map[string]mappingRuleHistories{
 			"ns1": nil,
 			"ns2": nil,
 		},
 		RollupHistory: map[string]rollupRuleHistories{
-			"ns1": nil,
+			"ns1": rollupRuleHistories{
+				"rr_id3": []*r2.RollupRule{
+					&r2.RollupRule{
+						ID:           "rr_id3",
+						Name:         "rr1",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Targets: []r2.RollupTarget{
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|Min,Max"),
+								},
+							},
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|P999"),
+								},
+							},
+						},
+					},
+					&r2.RollupRule{
+						ID:           "rr_id3",
+						Name:         "rr1",
+						Tombstoned:   false,
+						CutoverNanos: cutoverTimestamp,
+						RawFilters: map[string]string{
+							"tag1": "val1",
+						},
+						Targets: []r2.RollupTarget{
+							r2.RollupTarget{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|Min,Max"),
+								},
+							},
+						},
+					},
+				},
+			},
 			"ns2": nil,
 		},
 	}
@@ -255,13 +413,18 @@ func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2
 				return nil, r2.NewConflictError(fmt.Sprintf("rollup rule: %s already exists in namespace: %s", rrd.Name, namespaceID))
 			}
 		}
+		targets := make([]r2.RollupTarget, len(rrd.Targets))
+		for i, t := range rrd.Targets {
+			targets[i] = r2.RollupTarget(t)
+		}
+
 		return &r2.RollupRule{
 			ID:           "new",
 			Name:         rrd.Name,
 			Tombstoned:   false,
 			CutoverNanos: time.Now().UnixNano(),
 			RawFilters:   rrd.Filter,
-			Targets:      rrd.Targets,
+			Targets:      targets,
 		}, nil
 	}
 }
@@ -309,7 +472,7 @@ func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersio
 }
 
 // FetchRollupRuleHistory ...
-func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]r2.RollupRule, error) {
+func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*r2.RollupRule, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("Could not fetch rollupRule: %s in namespace: %s", namespaceID, rollupRuleID))
@@ -318,6 +481,7 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]r2.R
 		if !exists {
 			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
 		}
+		s.iOpts.Logger().Infof("%v", ns)
 		hist, exists := ns[rollupRuleID]
 		if !exists {
 			return nil, r2.NewNotFoundError(fmt.Sprintf("rollupRule: %s doesn't exist in Namespace: %s", rollupRuleID, namespaceID))

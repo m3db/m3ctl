@@ -35,10 +35,13 @@ func registerHandlers(router *mux.Router, services []Service) {
 // NewServer creates a new http server for R2.
 func NewServer(address string, serverOpts Options, services []Service) *http.Server {
 	router := mux.NewRouter()
-
-	// Public route handler
 	registerHandlers(router, services)
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
+
+	// Public route handler - This has to be registered after all of the other ones.
+	// If it is registered before, all of the other registration will return 404s trying to access
+	// their paths under public/r2/v1
+	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("public"))))
+
 	return &http.Server{
 		WriteTimeout: serverOpts.WriteTimeout(),
 		ReadTimeout:  serverOpts.ReadTimeout(),

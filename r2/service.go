@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	namespacePrefix   = "namespace/{namespaceID}"
+	namespacePrefix   = "namespaces/{namespaceID}"
 	mappingRulePrefix = "mappings"
 	rollupRulePrefix  = "rollups"
 	namespacePath     = "namespaces"
@@ -443,7 +443,7 @@ func (s *service) readRollupRuleHistory(w http.ResponseWriter, r *http.Request) 
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
 	// Namespaces action
-	fullNamespacesPrefix := s.fullPath("namespaces")
+	fullNamespacesPrefix := s.fullPath(namespacePath)
 	router.HandleFunc(fullNamespacesPrefix, s.readNamespaces).Methods(http.MethodGet)
 	router.HandleFunc(fullNamespacesPrefix, s.createNamespace).Methods(http.MethodPost)
 

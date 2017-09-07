@@ -481,7 +481,6 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*r2.
 		if !exists {
 			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
 		}
-		s.iOpts.Logger().Infof("%v", ns)
 		hist, exists := ns[rollupRuleID]
 		if !exists {
 			return nil, r2.NewNotFoundError(fmt.Sprintf("rollupRule: %s doesn't exist in Namespace: %s", rollupRuleID, namespaceID))

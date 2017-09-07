@@ -33,7 +33,6 @@ import (
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/r2/stub"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
-	"github.com/m3db/m3ctl/swagger"
 	"github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
@@ -83,7 +82,7 @@ type configuration struct {
 }
 
 func main() {
-	configFile := flag.String("f", "", "configuration file")
+	configFile := flag.String("f", "config/base.yaml", "configuration file")
 	flag.Parse()
 
 	if len(*configFile) == 0 {
@@ -120,7 +119,7 @@ func main() {
 
 	// scope, closer, err := cfg.Metrics.NewRootScope()
 	// if err != nil {
-	// 	logger.Fatalf("error creating metrics root scope: %v", err)
+	// logger.Fatalf("error creating metrics root scope: %v", err)
 	// }
 	// defer closer.Close()
 
@@ -137,7 +136,6 @@ func main() {
 
 	services := []server.Service{
 		health.NewService(instrumentOpts),
-		swagger.NewService(instrumentOpts, "r2/v1"),
 		r2.NewService(instrumentOpts, "r2/v1", stub.NewStore(instrumentOpts)),
 	}
 

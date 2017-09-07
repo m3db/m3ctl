@@ -32,7 +32,7 @@ import (
 	"github.com/m3db/m3cluster/client/etcd"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
-	"github.com/m3db/m3ctl/r2/kv"
+	"github.com/m3db/m3ctl/r2/stub"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 	"github.com/m3db/m3ctl/swagger"
 	"github.com/m3db/m3x/config"
@@ -146,7 +146,7 @@ func main() {
 	services := []server.Service{
 		health.NewService(instrumentOpts),
 		swagger.NewService(instrumentOpts, "r2/v1"),
-		r2.NewService(instrumentOpts, "r2/v1", kv.NewStore(kv.StoreConfig{})),
+		r2.NewService(instrumentOpts, "r2/v1", stub.NewStore(instrumentOpts)),
 	}
 
 	r2ApiServer := server.NewServer(listenAddr, serverOpts, services)

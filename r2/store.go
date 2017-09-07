@@ -22,17 +22,6 @@ package r2
 
 import "github.com/m3db/m3metrics/policy"
 
-// NamespaceData contains a namespace name and the NamespacesVersion it is associated with
-type NamespaceData struct {
-	ID      string
-	Version int
-}
-
-// NewNamespaceData creates a new NamespaceData.
-func NewNamespaceData(id string, version int) NamespaceData {
-	return NamespaceData{ID: id, Version: version}
-}
-
 // MappingRule represents a configuration of a mapping rule at a single point in time.
 type MappingRule struct {
 	ID           string
@@ -57,7 +46,7 @@ type RollupRule struct {
 	Tombstoned   bool
 	CutoverNanos int64
 	RawFilters   map[string]string
-	Targets      []RollupTarget
+	Targets      []rollupTargetView
 }
 
 // RuleSet represents a latest state slice of a m3metrics ruleset.
@@ -79,4 +68,20 @@ type Store interface {
 	DeleteNamespace(ns NamespaceData) error
 
 	FetchRuleSet(namespaceID string) (*RuleSet, error)
+
+	FetchMappingRule(namespaceID, mappingRuleID string) (*MappingRule, error)
+
+	CreateMappingRule(namespaceID string, mrd MappingRuleData) (*MappingRule, error)
+
+	UpdateMappingRule(namespaceID, mappingRuleID string, mrd MappingRuleData) error
+
+	DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVersion int) error
+
+	FetchRollupRule(namespaceID, rollupRuleID string) (*RollupRule, error)
+
+	CreateRollupRule(namespaceID string, rrd RollupRuleData) (*RollupRule, error)
+
+	UpdateRollupRule(namespaceID, rollupRuleID string, rrd RollupRuleData) error
+
+	DeleteRollupRule(namespaceID, mappingRuleID string, ruleSetVersion int) error
 }

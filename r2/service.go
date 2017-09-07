@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	namespacePrefix   = "namespace/{namespaceId}"
+	namespacePrefix   = "namespace/{namespaceID}"
 	mappingRulePrefix = "mapping"
 	rollupRulePrefix  = "rollup"
 	namespacePath     = "namespaces"
@@ -40,11 +40,11 @@ const (
 
 var (
 	mappingRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
-	mappingRuleWithIDPath  = fmt.Sprintf("%s/{ruleId}", mappingRuleRoot)
+	mappingRuleWithIDPath  = fmt.Sprintf("%s/{ruleID}", mappingRuleRoot)
 	mappingRuleHistoryPath = fmt.Sprintf("%s/history", mappingRuleWithIDPath)
 
 	rollupRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, rollupRulePrefix)
-	rollupRuleWithIDPath  = fmt.Sprintf("%s/{ruleId}", rollupRuleRoot)
+	rollupRuleWithIDPath  = fmt.Sprintf("%s/{ruleID}", rollupRuleRoot)
 	rollupRuleHistoryPath = fmt.Sprintf("%s/history", rollupRuleWithIDPath)
 )
 
@@ -60,20 +60,38 @@ func NewService(iOpts instrument.Options, rootPrefix string, store Store) server
 	return &service{iOpts: iOpts, store: store, rootPrefix: rootPrefix}
 }
 
+type payload struct {
+	data   []byte
+	status int
+}
+
+func newPayload(d []byte, status int) payload {
+	return payload{data: d, status: status}
+}
+
+func (p payload) write(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(p.status)
+	w.Write(p.data)
+}
+
 func writeAPIResponse(w http.ResponseWriter, code int, msg string) {
 	j, _ := json.Marshal(apiResponse{Code: code, Message: msg})
-	w.WriteHeader(code)
-	w.Write(j)
+	newPayload(j, code).write(w)
 }
 
 func handleError(w http.ResponseWriter, opError error) {
 	switch opError.(type) {
 	case ConflictError:
 		writeAPIResponse(w, http.StatusConflict, opError.Error())
-	case InternalError:
-		writeAPIResponse(w, http.StatusInternalServerError, opError.Error())
+	case BadInputError:
+		writeAPIResponse(w, http.StatusBadRequest, opError.Error())
 	case VersionError:
 		writeAPIResponse(w, http.StatusConflict, opError.Error())
+	case NotFoundError:
+		writeAPIResponse(w, http.StatusNotFound, opError.Error())
+	default:
+		writeAPIResponse(w, http.StatusInternalServerError, opError.Error())
 	}
 }
 
@@ -94,8 +112,7 @@ func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(j)
+	newPayload(j, http.StatusOK).write(w)
 }
 
 func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
@@ -118,8 +135,7 @@ func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(j)
+	newPayload(j, http.StatusOK).write(w)
 }
 
 func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) {
@@ -140,9 +156,10 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) {
 
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	namespaceID, exists := vars["namespaceId"]
+	namespaceID, exists := vars["namespaceID"]
 	if !exists {
 		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceId")
+		return
 	}
 
 	var cdn deleteNamespaceData
@@ -159,19 +176,93 @@ func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *service) readMappingRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readMappingRule")
+func (s *service) readMappingRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	mappingRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse mappingRuleID")
+		return
+	}
+
+	mappingRule, err := s.store.FetchMappingRule(namespaceID, mappingRuleID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	view := newMappingRuleView(*mappingRule)
+
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusOK).write(w)
 }
 
-func (s *service) createMappingRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for createMappingRule")
+func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	var mrd MappingRuleData
+	if err := json.NewDecoder(r.Body).Decode(&mrd); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new mapping rule data.")
+		return
+	}
+
+	mappingRule, err := s.store.CreateMappingRule(namespaceID, mrd)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	s.iOpts.Logger().Infof("%v", mappingRule.RawFilters)
+	view := newMappingRuleView(*mappingRule)
+
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusOK).write(w)
 }
 
-func (s *service) updateMappingRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for updateMappingRule")
+func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	mappingRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse mappingRuleID")
+		return
+	}
+	var mrd MappingRuleData
+	if err := json.NewDecoder(r.Body).Decode(&mrd); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new mapping rule data.")
+		return
+	}
+
+	err := s.store.UpdateMappingRule(namespaceID, mappingRuleID, mrd)
+	if err == nil {
+		writeAPIResponse(w, http.StatusOK,
+			fmt.Sprintf("Updated mapping rule: %s in namespace %s", mappingRuleID, namespaceID))
+	} else {
+		handleError(w, err)
+	}
 }
 
 func (s *service) deleteMappingRule(w http.ResponseWriter, _ *http.Request) {
@@ -184,19 +275,93 @@ func (s *service) readMappingRuleHistory(w http.ResponseWriter, _ *http.Request)
 	fmt.Fprintf(w, "Placeholder for readMappingRuleHistory")
 }
 
-func (s *service) readRollupRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readRollupRule")
+func (s *service) readRollupRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	rollupRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse rollupRuleID")
+		return
+	}
+
+	rollupRule, err := s.store.FetchRollupRule(namespaceID, rollupRuleID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	view := newRollupRuleView(*rollupRule)
+
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusOK).write(w)
 }
 
-func (s *service) createRollupRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for createRollupRule")
+func (s *service) createRollupRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	var rrd RollupRuleData
+	if err := json.NewDecoder(r.Body).Decode(&rrd); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new rollup rule data.")
+		return
+	}
+
+	rollupRule, err := s.store.CreateRollupRule(namespaceID, rrd)
+
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	view := newRollupRuleView(*rollupRule)
+
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+	newPayload(j, http.StatusOK).write(w)
 }
 
-func (s *service) updateRollupRule(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for updateRollupRule")
+func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	rollupRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse rollupRuleID")
+		return
+	}
+
+	var rrd RollupRuleData
+	if err := json.NewDecoder(r.Body).Decode(&rrd); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new rollup rule data.")
+		return
+	}
+	err := s.store.UpdateRollupRule(namespaceID, rollupRuleID, rrd)
+
+	if err == nil {
+		writeAPIResponse(w, http.StatusOK, fmt.Sprintf("Updated rollup rule: %s in namespace %s", rollupRuleID, namespaceID))
+	} else {
+		handleError(w, err)
+	}
 }
 
 func (s *service) deleteRollupRule(w http.ResponseWriter, _ *http.Request) {

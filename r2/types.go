@@ -45,6 +45,17 @@ type namespaces struct {
 	Namespaces []string `json:"namespaces"`
 }
 
+// NamespaceData contains a namespace name and the NamespacesVersion it is associated with
+type NamespaceData struct {
+	ID      string
+	Version int
+}
+
+// NewNamespaceData creates a new NamespaceData.
+func NewNamespaceData(id string, version int) NamespaceData {
+	return NamespaceData{ID: id, Version: version}
+}
+
 type createNamespaceData struct {
 	ID                string `json:"id"`
 	NamespacesVersion int    `json:"namespacesVersion"`
@@ -66,20 +77,21 @@ func (f filter) MarshalJSON() ([]byte, error) {
 	return []byte(marshalled), nil
 }
 
-func (f filter) UnmarshalJSON(data []byte) error {
+func (f *filter) UnmarshalJSON(data []byte) error {
 	str := string(data)
 	unquoted, err := strconv.Unquote(str)
 	if err != nil {
 		return err
 	}
 
+	*f = make(map[string]string)
 	tagPairs := strings.Split(unquoted, tagFilterListSeparator)
 	for _, p := range tagPairs {
 		parts := strings.Split(p, tagFilterSeparator)
 		if len(parts) != 2 {
 			return NewBadInputError(fmt.Sprintf("invalid tag filter pair %s", p))
 		}
-		f[parts[0]] = parts[1]
+		(*f)[parts[0]] = parts[1]
 	}
 	return nil
 }
@@ -123,46 +135,40 @@ func newRuleSetView(rs RuleSet) ruleSetView {
 
 // Mapping Rule
 type mappingRuleView struct {
-	mappingRuleData
+	MappingRuleData
 
 	ID             string `json:"id"`
 	CutoverMillies int64  `json:"cutoverMillies"`
 }
 
 func newMappingRuleView(mr MappingRule) mappingRuleView {
-	mrd := mappingRuleData{
+	mrd := MappingRuleData{
 		Name:     mr.Name,
 		Filter:   mr.RawFilters,
 		Policies: mr.Policies,
 	}
 
 	return mappingRuleView{
-		mappingRuleData: mrd,
+		MappingRuleData: mrd,
 		ID:              mr.ID,
 		CutoverMillies:  mr.CutoverNanos / 1000,
 	}
 }
 
-type mappingRuleData struct {
-	Name     string          `json:"name"`
-	Filter   filter          `json:"filter"`
-	Policies []policy.Policy `json:"policies"`
-}
-
-type mappingRuleUpdate struct { // nolint
-	mappingRuleData
-
-	ID             string `json:"id"`
-	RuleSetVersion int    `json:"rulesetVersion"`
+// MappingRuleData ...
+type MappingRuleData struct {
+	Name          string          `json:"name"`
+	Filter        filter          `json:"filter"`
+	Policies      []policy.Policy `json:"policies"`
+	SourceVersion int             `json:"ruleSetVersion"`
 }
 
 type mappingRuleHistory struct { // nolint
 	States []mappingRuleView `json:"states"`
 }
 
-// Rollup Rule
 type rollupRuleView struct {
-	rollupRuleData
+	RollupRuleData
 
 	ID             string `json:"id"`
 	CutoverMillies int64  `json:"cutoverMillies"`
@@ -174,36 +180,31 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 		targets[i] = rollupTargetView(t)
 	}
 
-	rrd := rollupRuleData{
+	rrd := RollupRuleData{
 		Name:    rr.Name,
 		Filter:  rr.RawFilters,
 		Targets: targets,
 	}
 
 	return rollupRuleView{
-		rollupRuleData: rrd,
+		RollupRuleData: rrd,
 		ID:             rr.ID,
 		CutoverMillies: rr.CutoverNanos / 1000,
 	}
 }
 
-type rollupRuleData struct {
-	Name    string             `json:"name"`
-	Filter  filter             `json:"filter"`
-	Targets []rollupTargetView `json:"targets"`
+// RollupRuleData ...
+type RollupRuleData struct {
+	Name          string             `json:"name"`
+	Filter        filter             `json:"filter"`
+	Targets       []rollupTargetView `json:"targets"`
+	SourceVersion int                `json:"ruleSetVersion"`
 }
 
 type rollupTargetView struct {
 	Name     string          `json:"name"`
 	Tags     []string        `json:"tags"`
 	Policies []policy.Policy `json:"policies"`
-}
-
-type rollupRuleUpdate struct { // nolint
-	rollupRuleData
-
-	ID             string `json:"id"`
-	RuleSetVersion int    `json:"rulesetVersion"`
 }
 
 type rollupRuleHistory struct { // nolint
@@ -242,3 +243,11 @@ type BadInputError struct{ msg string }
 func NewBadInputError(msg string) BadInputError { return BadInputError{msg: msg} }
 
 func (e BadInputError) Error() string { return e.msg }
+
+// NotFoundError represents an error due to malformed or invalid metrics.
+type NotFoundError struct{ msg string }
+
+// NewNotFoundError creates a new not found Error.
+func NewNotFoundError(msg string) NotFoundError { return NotFoundError{msg: msg} }
+
+func (e NotFoundError) Error() string { return e.msg }

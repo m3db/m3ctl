@@ -35,6 +35,10 @@ func registerHandlers(router *mux.Router, services []Service) {
 // NewServer creates a new http server for R2.
 func NewServer(address string, serverOpts Options, services []Service) *http.Server {
 	router := mux.NewRouter()
+
+	// Public route handler
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
+
 	registerHandlers(router, services)
 	return &http.Server{
 		WriteTimeout: serverOpts.WriteTimeout(),

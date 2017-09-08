@@ -37,9 +37,8 @@ func NewServer(address string, serverOpts Options, services []Service) *http.Ser
 	router := mux.NewRouter()
 
 	// Public route handler
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
-
 	registerHandlers(router, services)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
 	return &http.Server{
 		WriteTimeout: serverOpts.WriteTimeout(),
 		ReadTimeout:  serverOpts.ReadTimeout(),

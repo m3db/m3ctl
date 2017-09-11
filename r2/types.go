@@ -175,15 +175,10 @@ type rollupRuleView struct {
 }
 
 func newRollupRuleView(rr RollupRule) rollupRuleView {
-	targets := make([]rollupTargetView, len(rr.Targets))
-	for i, t := range rr.Targets {
-		targets[i] = rollupTargetView(t)
-	}
-
 	rrd := RollupRuleData{
 		Name:    rr.Name,
 		Filter:  rr.RawFilters,
-		Targets: targets,
+		Targets: rr.Targets,
 	}
 
 	return rollupRuleView{
@@ -195,16 +190,10 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 
 // RollupRuleData ...
 type RollupRuleData struct {
-	Name          string             `json:"name"`
-	Filter        filter             `json:"filter"`
-	Targets       []rollupTargetView `json:"targets"`
-	SourceVersion int                `json:"ruleSetVersion"`
-}
-
-type rollupTargetView struct {
-	Name     string          `json:"name"`
-	Tags     []string        `json:"tags"`
-	Policies []policy.Policy `json:"policies"`
+	Name          string         `json:"name"`
+	Filter        filter         `json:"filter"`
+	Targets       []RollupTarget `json:"targets"`
+	SourceVersion int            `json:"ruleSetVersion"`
 }
 
 type rollupRuleHistory struct { // nolint

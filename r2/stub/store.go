@@ -413,10 +413,6 @@ func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2
 				return nil, r2.NewConflictError(fmt.Sprintf("rollup rule: %s already exists in namespace: %s", rrd.Name, namespaceID))
 			}
 		}
-		targets := make([]r2.RollupTarget, len(rrd.Targets))
-		for i, t := range rrd.Targets {
-			targets[i] = r2.RollupTarget(t)
-		}
 
 		return &r2.RollupRule{
 			ID:           "new",
@@ -424,7 +420,7 @@ func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2
 			Tombstoned:   false,
 			CutoverNanos: time.Now().UnixNano(),
 			RawFilters:   rrd.Filter,
-			Targets:      targets,
+			Targets:      rrd.Targets,
 		}, nil
 	}
 }

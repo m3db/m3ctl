@@ -51,6 +51,7 @@ type RollupRule struct {
 
 // RuleSet represents a latest state slice of a m3metrics ruleset.
 type RuleSet struct {
+	UUID         string
 	Namespace    string
 	Version      int
 	CutoverNanos int64
@@ -73,15 +74,17 @@ type Store interface {
 
 	CreateMappingRule(namespaceID string, mrd MappingRuleData) (*MappingRule, error)
 
-	UpdateMappingRule(namespaceID, mappingRuleID string, mrd MappingRuleData) error
+	UpdateMappingRule(namespaceID, mappingRuleID string, mrd MappingRuleData) (*MappingRule, error)
 
 	DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVersion int) error
+
+	FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*MappingRule, error)
 
 	FetchRollupRule(namespaceID, rollupRuleID string) (*RollupRule, error)
 
 	CreateRollupRule(namespaceID string, rrd RollupRuleData) (*RollupRule, error)
 
-	UpdateRollupRule(namespaceID, rollupRuleID string, rrd RollupRuleData) error
+	UpdateRollupRule(namespaceID, rollupRuleID string, rrd RollupRuleData) (*RollupRule, error)
 
 	DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error
 

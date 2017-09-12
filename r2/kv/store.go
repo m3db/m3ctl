@@ -63,12 +63,16 @@ func (s *store) CreateMappingRule(namespaceID string, mrd r2.MappingRuleData) (*
 	return nil, nil
 }
 
-func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrd r2.MappingRuleData) error {
-	return nil
+func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrd r2.MappingRuleData) (*r2.MappingRule, error) {
+	return nil, nil
 }
 
 func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVersion int) error {
 	return nil
+}
+
+func (s *store) FetchMappingRuleHistory(namespaceID, rollupRuleID string) ([]*r2.MappingRule, error) {
+	return nil, nil
 }
 
 func (s *store) FetchRollupRule(namespaceID string, rollupRuleID string) (*r2.RollupRule, error) {
@@ -79,13 +83,14 @@ func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2
 	return nil, nil
 }
 
-func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd r2.RollupRuleData) error {
-	return nil
+func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd r2.RollupRuleData) (*r2.RollupRule, error) {
+	return nil, nil
 }
 
 func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error {
 	return nil
 }
+
 func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*r2.RollupRule, error) {
 	return nil, nil
 }

@@ -225,7 +225,6 @@ func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	s.iOpts.Logger().Infof("%v", mappingRule.RawFilters)
 	view := newMappingRuleView(*mappingRule)
 
 	j, err := json.Marshal(view)
@@ -234,7 +233,7 @@ func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newPayload(j, http.StatusOK).write(w)
+	newPayload(j, http.StatusCreated).write(w)
 }
 
 func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) {
@@ -256,13 +255,20 @@ func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := s.store.UpdateMappingRule(namespaceID, mappingRuleID, mrd)
-	if err == nil {
-		writeAPIResponse(w, http.StatusOK,
-			fmt.Sprintf("Updated mapping rule: %s in namespace %s", mappingRuleID, namespaceID))
-	} else {
+	mappingRule, err := s.store.UpdateMappingRule(namespaceID, mappingRuleID, mrd)
+	if err != nil {
 		handleError(w, err)
+		return
 	}
+	view := newMappingRuleView(*mappingRule)
+
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusCreated).write(w)
 }
 
 func (s *service) deleteMappingRule(w http.ResponseWriter, r *http.Request) {
@@ -288,9 +294,38 @@ func (s *service) deleteMappingRule(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *service) readMappingRuleHistory(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, "Placeholder for readMappingRuleHistory")
+func (s *service) readMappingRuleHistory(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	namespaceID, exists := vars["namespaceID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse namespaceID")
+		return
+	}
+
+	mappingRuleID, exists := vars["ruleID"]
+	if !exists {
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse ruleID")
+		return
+	}
+
+	hist, err := s.store.FetchMappingRuleHistory(namespaceID, mappingRuleID)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	views := make([]mappingRuleView, len(hist))
+	for i, mappingRule := range hist {
+		x := mappingRule
+		views[i] = newMappingRuleView(*x)
+	}
+
+	j, err := json.Marshal(views)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+
+	newPayload(j, http.StatusOK).write(w)
 }
 
 func (s *service) readRollupRule(w http.ResponseWriter, r *http.Request) {
@@ -351,7 +386,7 @@ func (s *service) createRollupRule(w http.ResponseWriter, r *http.Request) {
 		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
 		return
 	}
-	newPayload(j, http.StatusOK).write(w)
+	newPayload(j, http.StatusCreated).write(w)
 }
 
 func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) {
@@ -373,13 +408,19 @@ func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) {
 		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new rollup rule data.")
 		return
 	}
-	err := s.store.UpdateRollupRule(namespaceID, rollupRuleID, rrd)
 
-	if err == nil {
-		writeAPIResponse(w, http.StatusOK, fmt.Sprintf("Updated rollup rule: %s in namespace %s", rollupRuleID, namespaceID))
-	} else {
+	rollupRule, err := s.store.UpdateRollupRule(namespaceID, rollupRuleID, rrd)
+	if err != nil {
 		handleError(w, err)
 	}
+
+	view := newRollupRuleView(*rollupRule)
+	j, err := json.Marshal(view)
+	if err != nil {
+		writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
+		return
+	}
+	newPayload(j, http.StatusOK).write(w)
 }
 
 func (s *service) deleteRollupRule(w http.ResponseWriter, r *http.Request) {
@@ -415,7 +456,7 @@ func (s *service) readRollupRuleHistory(w http.ResponseWriter, r *http.Request) 
 
 	rollupRuleID, exists := vars["ruleID"]
 	if !exists {
-		writeAPIResponse(w, http.StatusBadRequest, "Could not parse rollupRuleID")
+		writeAPIResponse(w, http.StatusBadRequest, "Could not parse ruleID")
 		return
 	}
 

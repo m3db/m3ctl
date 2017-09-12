@@ -320,7 +320,7 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Ruleset updated",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
@@ -609,7 +609,7 @@
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Ruleset updated",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
@@ -675,7 +675,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Ruleset updated",
                         "schema": {
                             "$ref": "#/definitions/RollupRule"

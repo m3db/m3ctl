@@ -46,7 +46,7 @@
                 "parameters": [],
                 "responses": {
                     "200": {
-                        "description": "blah",
+                        "description": "Got all namespaces successfully",
                         "schema": {
                             "$ref": "#/definitions/Namespaces"
                         }
@@ -68,10 +68,12 @@
                 "parameters": [
                     {
                         "in": "body",
-                        "name": "namespaceID",
-                        "description": "The name of the namespace",
-                        "type": "string",
-                        "required": true
+                        "name": "namespaceData",
+                        "description": "The data associated with the namespace being created.",
+                        "required": true,
+                        "schema": {
+                           "$ref": "#/definitions/NamespaceData"
+                        }
                     }
                 ],
                 "responses": {
@@ -158,10 +160,19 @@
                         "description": "The name of the namespace",
                         "type": "string",
                         "required": true
+                    },
+                    {
+                        "in": "body",
+                        "name": "version",
+                        "description": "The version of the namespaces object this namespace belongs to",
+                        "required": true,
+                        "schema": {
+                           "$ref": "#/definitions/NamespaceVersion"
+                        }
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "Succesfully deleted the namespace",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
@@ -769,6 +780,25 @@
         }
     },
     "definitions": {
+        "NamespaceData": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "NamespaceVersion": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
         "Namespaces": {
             "type": "object",
             "properties": {

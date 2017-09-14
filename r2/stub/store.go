@@ -264,7 +264,7 @@ func (s *store) DeleteNamespace(ns r2.NamespaceData) error {
 				return nil
 			}
 		}
-		return r2.NewConflictError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
+		return r2.NewConflictError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 	}
 }
 
@@ -280,7 +280,7 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.RuleSet, error) {
 				return &rs, nil
 			}
 		}
-		return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
+		return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 	}
 }
 
@@ -392,7 +392,7 @@ func (s *store) FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*r
 	default:
 		ns, exists := s.data.MappingHistory[namespaceID]
 		if !exists {
-			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
+			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
 		hist, exists := ns[mappingRuleID]
 		if !exists {
@@ -507,7 +507,7 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*r2.
 	default:
 		ns, exists := s.data.RollupHistory[namespaceID]
 		if !exists {
-			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exists", namespaceID))
+			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
 		hist, exists := ns[rollupRuleID]
 		if !exists {

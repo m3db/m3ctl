@@ -58,7 +58,7 @@ func NewNamespaceData(id string, version int) NamespaceData {
 
 type createNamespaceData struct {
 	ID                string `json:"id"`
-	NamespacesVersion int    `json:"namespacesVersion"`
+	NamespacesVersion int    `json:"version"`
 }
 
 type deleteNamespaceData struct {
@@ -127,7 +127,7 @@ func newRuleSetView(rs RuleSet) ruleSetView {
 	return ruleSetView{
 		Namespace:     rs.Namespace,
 		Version:       rs.Version,
-		CutoverMillis: rs.CutoverNanos / 1000,
+		CutoverMillis: nanoToMilli(rs.CutoverNanos),
 		MappingRules:  mrs,
 		RollupRules:   rrs,
 	}
@@ -151,7 +151,7 @@ func newMappingRuleView(mr MappingRule) mappingRuleView {
 	return mappingRuleView{
 		MappingRuleData: mrd,
 		ID:              mr.ID,
-		CutoverMillies:  mr.CutoverNanos / 1000,
+		CutoverMillies:  nanoToMilli(mr.CutoverNanos),
 	}
 }
 
@@ -184,7 +184,7 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 	return rollupRuleView{
 		RollupRuleData: rrd,
 		ID:             rr.ID,
-		CutoverMillies: rr.CutoverNanos / 1000,
+		CutoverMillies: nanoToMilli(rr.CutoverNanos),
 	}
 }
 
@@ -198,6 +198,10 @@ type RollupRuleData struct {
 
 type rollupRuleHistory struct { // nolint
 	States []rollupRuleView `json:"states"`
+}
+
+func nanoToMilli(nanos int64) int64 {
+	return nanos / 1000000
 }
 
 // ConflictError represents either a version mismatch writing data or a data conflict issue.

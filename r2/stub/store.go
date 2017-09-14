@@ -27,6 +27,7 @@ import (
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3x/instrument"
+	"github.com/pborman/uuid"
 )
 
 type mappingRuleHistories map[string][]*r2.MappingRule
@@ -36,7 +37,7 @@ type stubData struct {
 	Namespaces        []string
 	ErrorNamespace    string
 	ConflictNamespace string
-	RuleSets          map[string]r2.RuleSet
+	RuleSets          map[string]*r2.RuleSet
 	MappingHistory    map[string]mappingRuleHistories
 	RollupHistory     map[string]rollupRuleHistories
 }
@@ -52,8 +53,8 @@ var (
 		ErrorNamespace:    "errNs",
 		ConflictNamespace: "conflictNs",
 		Namespaces:        []string{"ns1", "ns2"},
-		RuleSets: map[string]r2.RuleSet{
-			"ns1": r2.RuleSet{
+		RuleSets: map[string]*r2.RuleSet{
+			"ns1": &r2.RuleSet{
 				Namespace:    "ns1",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
@@ -125,7 +126,7 @@ var (
 					},
 				},
 			},
-			"ns2": r2.RuleSet{
+			"ns2": &r2.RuleSet{
 				Namespace:    "ns2",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
@@ -247,6 +248,15 @@ func (s *store) CreateNamespace(ns r2.NamespaceData) (string, error) {
 				return "", r2.NewConflictError(fmt.Sprintf("namespace %s already exists", namespaceID))
 			}
 		}
+		s.data.Namespaces = append(s.data.Namespaces, namespaceID)
+		s.data.RuleSets[namespaceID] = &r2.RuleSet{
+			UUID:         uuid.New(),
+			Namespace:    namespaceID,
+			Version:      1,
+			CutoverNanos: time.Now().UnixNano(),
+			MappingRules: make([]r2.MappingRule, 0),
+			RollupRules:  make([]r2.RollupRule, 0),
+		}
 		return namespaceID, nil
 	}
 }
@@ -259,8 +269,9 @@ func (s *store) DeleteNamespace(ns r2.NamespaceData) error {
 	case s.data.ConflictNamespace:
 		return r2.NewVersionError("namespace version mismatch")
 	default:
-		for _, n := range s.data.Namespaces {
+		for i, n := range s.data.Namespaces {
 			if namespaceID == n {
+				s.data.Namespaces = append(s.data.Namespaces[:i], s.data.Namespaces[i+1:]...)
 				return nil
 			}
 		}
@@ -277,7 +288,7 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.RuleSet, error) {
 		for _, n := range s.data.Namespaces {
 			if namespaceID == n {
 				rs := s.data.RuleSets[namespaceID]
-				return &rs, nil
+				return rs, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
@@ -323,14 +334,16 @@ func (s *store) CreateMappingRule(namespaceID string, mrd r2.MappingRuleData) (*
 			}
 		}
 
-		return &r2.MappingRule{
+		newRule := r2.MappingRule{
 			ID:           "new",
 			Name:         mrd.Name,
 			Tombstoned:   false,
 			CutoverNanos: time.Now().UnixNano(),
 			RawFilters:   mrd.Filter,
 			Policies:     mrd.Policies,
-		}, nil
+		}
+		rs.MappingRules = append(rs.MappingRules, newRule)
+		return &newRule, nil
 	}
 }
 
@@ -347,16 +360,18 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrd r2.Mapp
 			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
 
-		for _, m := range rs.MappingRules {
+		for i, m := range rs.MappingRules {
 			if mappingRuleID == m.ID {
-				return &r2.MappingRule{
+				newRule := r2.MappingRule{
 					ID:           "new",
 					Name:         mrd.Name,
 					Tombstoned:   false,
 					CutoverNanos: time.Now().UnixNano(),
 					RawFilters:   mrd.Filter,
 					Policies:     mrd.Policies,
-				}, nil
+				}
+				rs.MappingRules[i] = newRule
+				return &newRule, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("mapping rule: %s doesn't exist in namespace: %s", mappingRuleID, namespaceID))
@@ -375,8 +390,9 @@ func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVers
 		if !exists {
 			return r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
-		for _, m := range rs.MappingRules {
+		for i, m := range rs.MappingRules {
 			if mappingRuleID == m.ID {
+				rs.MappingRules = append(rs.MappingRules[:i], rs.MappingRules[i+1:]...)
 				return nil
 			}
 		}
@@ -438,15 +454,16 @@ func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2
 				return nil, r2.NewConflictError(fmt.Sprintf("rollup rule: %s already exists in namespace: %s", rrd.Name, namespaceID))
 			}
 		}
-
-		return &r2.RollupRule{
-			ID:           "new",
+		newRule := r2.RollupRule{
+			ID:           uuid.New(),
 			Name:         rrd.Name,
 			Tombstoned:   false,
 			CutoverNanos: time.Now().UnixNano(),
 			RawFilters:   rrd.Filter,
 			Targets:      rrd.Targets,
-		}, nil
+		}
+		rs.RollupRules = append(rs.RollupRules, newRule)
+		return &newRule, nil
 	}
 }
 
@@ -462,16 +479,18 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd r2.Rollup
 		if !exists {
 			return nil, r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
-		for _, r := range rs.RollupRules {
+		for i, r := range rs.RollupRules {
 			if rollupRuleID == r.ID {
-				return &r2.RollupRule{
-					ID:           "new",
+				newRule := r2.RollupRule{
+					ID:           r.ID,
 					Name:         rrd.Name,
 					Tombstoned:   false,
 					CutoverNanos: time.Now().UnixNano(),
 					RawFilters:   rrd.Filter,
 					Targets:      rrd.Targets,
-				}, nil
+				}
+				rs.RollupRules[i] = newRule
+				return &newRule, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("rollup rule: %s doesn't exist in namespace: %s", rollupRuleID, namespaceID))
@@ -490,8 +509,9 @@ func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersio
 		if !exists {
 			return r2.NewNotFoundError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 		}
-		for _, r := range rs.RollupRules {
+		for i, r := range rs.RollupRules {
 			if rollupRuleID == r.ID {
+				rs.RollupRules = append(rs.RollupRules[:i], rs.RollupRules[i+1:]...)
 				return nil
 			}
 		}

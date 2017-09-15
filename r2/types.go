@@ -157,9 +157,9 @@ func newMappingRuleView(mr MappingRule) mappingRuleView {
 
 // MappingRuleData ...
 type MappingRuleData struct {
-	Name          string          `json:"name" validate:"nonzero"`
-	Filter        filter          `json:"filter" validate:"nonzero"`
-	Policies      []policy.Policy `json:"policies" validate:"nonzero"`
+	Name          string          `json:"name" validate:"required"`
+	Filter        filter          `json:"filter" validate:"required"`
+	Policies      []policy.Policy `json:"policies" validate:"required"`
 	SourceVersion int             `json:"ruleSetVersion,omitempty"`
 }
 
@@ -190,9 +190,9 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 
 // RollupRuleData ...
 type RollupRuleData struct {
-	Name          string         `json:"name" validate:"nonzero"`
-	Filter        filter         `json:"filter" validate:"nonzero"`
-	Targets       []RollupTarget `json:"targets" validate:"nonzero"`
+	Name          string         `json:"name" validate:"required"`
+	Filter        filter         `json:"filter" validate:"required"`
+	Targets       []RollupTarget `json:"targets" validate:"required,dive,required"`
 	SourceVersion int            `json:"ruleSetVersion,omitempty"`
 }
 

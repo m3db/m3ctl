@@ -25,11 +25,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
+	"strings"
 
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 const (
@@ -96,6 +99,35 @@ func handleError(w http.ResponseWriter, opError error) {
 	}
 }
 
+// TODO(dgromov): Make this return a list of validation errors
+func parseRequest(s interface{}, body io.ReadCloser) string {
+	if err := json.NewDecoder(body).Decode(s); err != nil {
+		return fmt.Sprintf("Malformed Json: %s", err.Error())
+	}
+
+	validate := validator.New()
+
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		return name
+	})
+
+	required := make([]string, 0)
+
+	if err := validate.Struct(s); err != nil {
+		for _, e := range err.(validator.ValidationErrors) {
+			if e.ActualTag() == "required" {
+				required = append(required, e.Namespace())
+			}
+		}
+	}
+
+	if len(required) > 0 {
+		return fmt.Sprintf("Required: [%v]", strings.Join(required, ", "))
+	}
+	return ""
+}
+
 func (s *service) readNamespaces(w http.ResponseWriter, _ *http.Request) {
 	nss, v, err := s.store.FetchNamespaces()
 	if err != nil {
@@ -142,7 +174,13 @@ func (s *service) readNamespace(w http.ResponseWriter, r *http.Request) {
 func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) {
 	var cnb createNamespaceData
 	if err := json.NewDecoder(r.Body).Decode(&cnb); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new namespace data.")
+		writeAPIResponse(w, http.StatusBadRequest, "Cannot read namespace data.")
+		return
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(cnb); err != nil {
+		writeAPIResponse(w, http.StatusBadRequest, fmt.Sprintf("%v", err.Error()))
 		return
 	}
 
@@ -221,8 +259,9 @@ func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mrd MappingRuleData
-	if err := json.NewDecoder(r.Body).Decode(&mrd); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new mapping rule data.")
+	errs := parseRequest(&mrd, r.Body)
+	if len(errs) > 0 {
+		writeAPIResponse(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -255,9 +294,11 @@ func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) {
 		writeAPIResponse(w, http.StatusBadRequest, "Could not parse mappingRuleID")
 		return
 	}
+
 	var mrd MappingRuleData
-	if err := json.NewDecoder(r.Body).Decode(&mrd); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new mapping rule data.")
+	errs := parseRequest(&mrd, r.Body)
+	if len(errs) > 0 {
+		writeAPIResponse(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -373,8 +414,9 @@ func (s *service) createRollupRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rrd RollupRuleData
-	if err := json.NewDecoder(r.Body).Decode(&rrd); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new rollup rule data.")
+	errs := parseRequest(&rrd, r.Body)
+	if len(errs) > 0 {
+		writeAPIResponse(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -410,8 +452,9 @@ func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var rrd RollupRuleData
-	if err := json.NewDecoder(r.Body).Decode(&rrd); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse new rollup rule data.")
+	errs := parseRequest(&rrd, r.Body)
+	if len(errs) > 0 {
+		writeAPIResponse(w, http.StatusBadRequest, errs)
 		return
 	}
 

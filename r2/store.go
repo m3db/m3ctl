@@ -34,9 +34,9 @@ type MappingRule struct {
 
 // RollupTarget represents a single rollup target but with types for display purposes.
 type RollupTarget struct {
-	Name     string          `json:"name"`
-	Tags     []string        `json:"tags"`
-	Policies []policy.Policy `json:"policies"`
+	Name     string          `json:"name" validate:"nonzero"`
+	Tags     []string        `json:"tags" validate:"nonzero"`
+	Policies []policy.Policy `json:"policies" validate:"nonzero"`
 }
 
 // RollupRule represents a configuration of a rollup rule at a single point in time.

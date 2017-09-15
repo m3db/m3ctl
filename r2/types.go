@@ -57,12 +57,12 @@ func NewNamespaceData(id string, version int) NamespaceData {
 }
 
 type createNamespaceData struct {
-	ID                string `json:"id"`
-	NamespacesVersion int    `json:"version"`
+	ID                string `json:"id" validate:"nonzero"`
+	NamespacesVersion int    `json:"version,omitempty"`
 }
 
 type deleteNamespaceData struct {
-	NamespacesVersion int `json:"namespacesVersion"`
+	NamespacesVersion int `json:"namespacesVersion, omitempty"`
 }
 
 // RuleSet View
@@ -157,10 +157,10 @@ func newMappingRuleView(mr MappingRule) mappingRuleView {
 
 // MappingRuleData ...
 type MappingRuleData struct {
-	Name          string          `json:"name"`
-	Filter        filter          `json:"filter"`
-	Policies      []policy.Policy `json:"policies"`
-	SourceVersion int             `json:"ruleSetVersion"`
+	Name          string          `json:"name" validate:"nonzero"`
+	Filter        filter          `json:"filter" validate:"nonzero"`
+	Policies      []policy.Policy `json:"policies" validate:"nonzero"`
+	SourceVersion int             `json:"ruleSetVersion,omitempty"`
 }
 
 type mappingRuleHistory struct { // nolint
@@ -190,10 +190,10 @@ func newRollupRuleView(rr RollupRule) rollupRuleView {
 
 // RollupRuleData ...
 type RollupRuleData struct {
-	Name          string         `json:"name"`
-	Filter        filter         `json:"filter"`
-	Targets       []RollupTarget `json:"targets"`
-	SourceVersion int            `json:"ruleSetVersion"`
+	Name          string         `json:"name" validate:"nonzero"`
+	Filter        filter         `json:"filter" validate:"nonzero"`
+	Targets       []RollupTarget `json:"targets" validate:"nonzero"`
+	SourceVersion int            `json:"ruleSetVersion,omitempty"`
 }
 
 type rollupRuleHistory struct { // nolint

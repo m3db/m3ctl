@@ -23,6 +23,7 @@ package r2
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/m3db/m3ctl/services/r2ctl/server"
@@ -33,8 +34,8 @@ import (
 
 const (
 	namespacePrefix   = "namespaces/{namespaceID}"
-	mappingRulePrefix = "mappings"
-	rollupRulePrefix  = "rollups"
+	mappingRulePrefix = "mapping-rules"
+	rollupRulePrefix  = "rollup-rules"
 	namespacePath     = "namespaces"
 )
 
@@ -164,9 +165,14 @@ func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) {
 
 	var cdn deleteNamespaceData
 	if err := json.NewDecoder(r.Body).Decode(&cdn); err != nil {
-		writeAPIResponse(w, http.StatusBadRequest, "Unable to parse update data.")
-		return
+		if err == io.EOF {
+			cdn.NamespacesVersion = 0
+		} else {
+			writeAPIResponse(w, http.StatusBadRequest, fmt.Sprintf("Unable to parse update data, %s", err.Error()))
+			return
+		}
 	}
+
 	nsd := NewNamespaceData(namespaceID, cdn.NamespacesVersion)
 	err := s.store.DeleteNamespace(nsd)
 	if err == nil {

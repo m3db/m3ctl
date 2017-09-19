@@ -43,27 +43,27 @@ func (s *store) FetchNamespaces() ([]string, int, error) {
 	return nil, 0, nil
 }
 
-func (s *store) CreateNamespace(ns r2.NamespaceData) (string, error) {
+func (s *store) CreateNamespace(namespaceID string) (string, error) {
 	return "", nil
 }
 
-func (s *store) DeleteNamespace(ns r2.NamespaceData) error {
+func (s *store) DeleteNamespace(namespaceID string) error {
 	return nil
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (*r2.RuleSet, error) {
+func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
 	return nil, nil
 }
 
-func (s *store) FetchMappingRule(namespaceID string, ruleSetID string) (*r2.MappingRule, error) {
+func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) CreateMappingRule(namespaceID string, mrd r2.MappingRuleData) (*r2.MappingRule, error) {
+func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrd r2.MappingRuleData) (*r2.MappingRule, error) {
+func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
@@ -71,19 +71,19 @@ func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVers
 	return nil
 }
 
-func (s *store) FetchMappingRuleHistory(namespaceID, rollupRuleID string) ([]*r2.MappingRule, error) {
+func (s *store) FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) FetchRollupRule(namespaceID string, rollupRuleID string) (*r2.RollupRule, error) {
+func (s *store) FetchRollupRule(namespaceID string, rollupRuleID string) (*rules.RollupRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) CreateRollupRule(namespaceID string, rrd r2.RollupRuleData) (*r2.RollupRule, error) {
+func (s *store) CreateRollupRule(namespaceID string, rrd rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd r2.RollupRuleData) (*r2.RollupRule, error) {
+func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	return nil, nil
 }
 
@@ -91,6 +91,6 @@ func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersio
 	return nil
 }
 
-func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*r2.RollupRule, error) {
+func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rules.RollupRuleView, error) {
 	return nil, nil
 }

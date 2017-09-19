@@ -20,73 +20,36 @@
 
 package r2
 
-import "github.com/m3db/m3metrics/policy"
-
-// MappingRule represents a configuration of a mapping rule at a single point in time.
-type MappingRule struct {
-	ID           string
-	Name         string
-	Tombstoned   bool
-	CutoverNanos int64
-	RawFilters   map[string]string
-	Policies     []policy.Policy
-}
-
-// RollupTarget represents a single rollup target but with types for display purposes.
-type RollupTarget struct {
-	Name     string          `json:"name" validate:"required"`
-	Tags     []string        `json:"tags" validate:"required"`
-	Policies []policy.Policy `json:"policies" validate:"required"`
-}
-
-// RollupRule represents a configuration of a rollup rule at a single point in time.
-type RollupRule struct {
-	ID           string
-	Name         string
-	Tombstoned   bool
-	CutoverNanos int64
-	RawFilters   map[string]string
-	Targets      []RollupTarget
-}
-
-// RuleSet represents a latest state slice of a m3metrics ruleset.
-type RuleSet struct {
-	UUID         string
-	Namespace    string
-	Version      int
-	CutoverNanos int64
-	MappingRules []MappingRule
-	RollupRules  []RollupRule
-}
+import "github.com/m3db/m3metrics/rules"
 
 // Store is a construct that can perform operations against a backing rule store.
 type Store interface {
 	// Fetch namespaces and their version
 	FetchNamespaces() ([]string, int, error)
 
-	CreateNamespace(ns NamespaceData) (string, error)
+	CreateNamespace(namespaceID string) (string, error)
 
-	DeleteNamespace(ns NamespaceData) error
+	DeleteNamespace(namespaceID string) error
 
-	FetchRuleSet(namespaceID string) (*RuleSet, error)
+	FetchRuleSet(namespaceID string) (*CurrentRuleSet, error)
 
-	FetchMappingRule(namespaceID, mappingRuleID string) (*MappingRule, error)
+	FetchMappingRule(namespaceID, mappingRuleID string) (*rules.MappingRuleView, error)
 
-	CreateMappingRule(namespaceID string, mrd MappingRuleData) (*MappingRule, error)
+	CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error)
 
-	UpdateMappingRule(namespaceID, mappingRuleID string, mrd MappingRuleData) (*MappingRule, error)
+	UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error)
 
-	DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVersion int) error
+	DeleteMappingRule(namespaceID, mappingRuleID string) error
 
-	FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*MappingRule, error)
+	FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error)
 
-	FetchRollupRule(namespaceID, rollupRuleID string) (*RollupRule, error)
+	FetchRollupRule(namespaceID, rollupRuleID string) (*rules.RollupRuleView, error)
 
-	CreateRollupRule(namespaceID string, rrd RollupRuleData) (*RollupRule, error)
+	CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error)
 
-	UpdateRollupRule(namespaceID, rollupRuleID string, rrd RollupRuleData) (*RollupRule, error)
+	UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error)
 
-	DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error
+	DeleteRollupRule(namespaceID, rollupRuleID string) error
 
-	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*RollupRule, error)
+	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rules.RollupRuleView, error)
 }

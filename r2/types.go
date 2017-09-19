@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/m3db/m3metrics/policy"
+	"github.com/m3db/m3metrics/rules"
 )
 
 const (
@@ -33,42 +34,100 @@ const (
 	tagFilterSeparator     = ":"
 )
 
+// CurrentRuleSet represents the current state of a rule set. A rule with all the latest snapshots
+// of its ruleset.
+type CurrentRuleSet struct {
+	Namespace    string
+	Version      int
+	CutoverNanos int64
+	MappingRules []rules.MappingRuleView
+	RollupRules  []rules.RollupRuleView
+}
+
+func newCurrentRuleSetView(r rules.RuleSet) CurrentRuleSet {
+	currentMappingRules := newMappingRules(r.MappingRules())
+	currentRollupRules := newRollupRules(r.RollupRules())
+
+	return CurrentRuleSet{
+		Namespace:    string(r.Namespace()),
+		Version:      r.Version(),
+		CutoverNanos: r.CutoverNanos(),
+		MappingRules: currentMappingRules,
+		RollupRules:  currentRollupRules,
+	}
+}
+
+type ruleSetJSON struct {
+	Namespace     string            `json:"namespace"`
+	Version       int               `json:"version"`
+	CutoverMillis int64             `json:"cutoverMillis"`
+	MappingRules  []mappingRuleJSON `json:"mappingRules"`
+	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
+}
+
+func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
+	mrJSON := make([]mappingRuleJSON, len(c.MappingRules))
+	for i, m := range c.MappingRules {
+		mrJSON[i] = newMappingRuleJSON(&m)
+	}
+	rrJSON := make([]rollupRuleJSON, len(c.RollupRules))
+	for i, r := range c.RollupRules {
+		rrJSON[i] = newRollupRuleJSON(&r)
+	}
+	return ruleSetJSON{
+		Namespace:     c.Namespace,
+		Version:       c.Version,
+		CutoverMillis: nanoToMilli(c.CutoverNanos),
+		MappingRules:  mrJSON,
+		RollupRules:   rrJSON,
+	}
+}
+
+func newMappingRules(mrs rules.MappingRules) []rules.MappingRuleView {
+	result := make([]rules.MappingRuleView, len(mrs))
+	idx := 0
+	for _, m := range mrs {
+		if len(m) == 0 {
+			continue
+		}
+		result[idx] = m[len(m)-1]
+		idx++
+	}
+	return result
+}
+
+func newRollupRules(rrs rules.RollupRules) []rules.RollupRuleView {
+	result := make([]rules.RollupRuleView, len(rrs))
+	idx := 0
+	for _, r := range rrs {
+		if len(r) == 0 {
+			continue
+		}
+		result[idx] = r[len(r)-1]
+		idx++
+	}
+	return result
+}
+
 // API response
 type apiResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
+type namespaceJSON struct {
+	ID string `json:"id" validate:"required"`
+}
+
 // Namespace Level
-type namespaces struct {
-	Version    int      `json:"version"`
-	Namespaces []string `json:"namespaces"`
+type namespacesJSON struct {
+	Version    int             `json:"version"`
+	Namespaces []namespaceJSON `json:"namespaces"`
 }
 
-// NamespaceData contains a namespace name and the NamespacesVersion it is associated with
-type NamespaceData struct {
-	ID      string
-	Version int
-}
+type filters map[string]string
 
-// NewNamespaceData creates a new NamespaceData.
-func NewNamespaceData(id string, version int) NamespaceData {
-	return NamespaceData{ID: id, Version: version}
-}
-
-type createNamespaceData struct {
-	ID                string `json:"id" validate:"nonzero"`
-	NamespacesVersion int    `json:"version,omitempty"`
-}
-
-type deleteNamespaceData struct {
-	NamespacesVersion int `json:"namespacesVersion, omitempty"`
-}
-
-// RuleSet View
-type filter map[string]string
-
-func (f filter) MarshalJSON() ([]byte, error) {
+func (f filters) MarshalJSON() ([]byte, error) {
 	tmp := make([]string, 0, len(f))
 	for k, v := range f {
 		tmp = append(tmp, fmt.Sprintf("%s:%s", k, v))
@@ -77,7 +136,7 @@ func (f filter) MarshalJSON() ([]byte, error) {
 	return []byte(marshalled), nil
 }
 
-func (f *filter) UnmarshalJSON(data []byte) error {
+func (f *filters) UnmarshalJSON(data []byte) error {
 	str := string(data)
 	unquoted, err := strconv.Unquote(str)
 	if err != nil {
@@ -96,108 +155,98 @@ func (f *filter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type ruleSetView struct {
-	Namespace     string            `json:"namespace"`
-	Version       int               `json:"version"`
-	CutoverMillis int64             `json:"cutoverMillis"`
-	MappingRules  []mappingRuleView `json:"mappingRules"`
-	RollupRules   []rollupRuleView  `json:"rollupRules"`
+type mappingRuleJSON struct {
+	ID             string          `json:"id,omitempty"`
+	Name           string          `json:"name" validate:"required"`
+	CutoverMillies int64           `json:"cutoverMillies,omitempty"`
+	Filters        filters         `json:"filters" validate:"required"`
+	Policies       []policy.Policy `json:"policies" validate:"required"`
 }
 
-func newMappingRuleViews(mrs []MappingRule) []mappingRuleView {
-	result := make([]mappingRuleView, len(mrs))
-	for i, m := range mrs {
-		result[i] = newMappingRuleView(m)
-	}
-	return result
-}
-
-func newRollupRuleViews(rrs []RollupRule) []rollupRuleView {
-	result := make([]rollupRuleView, len(rrs))
-	for i, r := range rrs {
-		result[i] = newRollupRuleView(r)
-	}
-	return result
-}
-
-func newRuleSetView(rs RuleSet) ruleSetView {
-	mrs := newMappingRuleViews(rs.MappingRules)
-	rrs := newRollupRuleViews(rs.RollupRules)
-
-	return ruleSetView{
-		Namespace:     rs.Namespace,
-		Version:       rs.Version,
-		CutoverMillis: nanoToMilli(rs.CutoverNanos),
-		MappingRules:  mrs,
-		RollupRules:   rrs,
+func (m mappingRuleJSON) mappingRuleView() rules.MappingRuleView {
+	return rules.MappingRuleView{
+		ID:       m.ID,
+		Name:     m.Name,
+		Filters:  m.Filters,
+		Policies: m.Policies,
 	}
 }
 
-// Mapping Rule
-type mappingRuleView struct {
-	MappingRuleData
-
-	ID             string `json:"id"`
-	CutoverMillies int64  `json:"cutoverMillies"`
-}
-
-func newMappingRuleView(mr MappingRule) mappingRuleView {
-	mrd := MappingRuleData{
-		Name:     mr.Name,
-		Filter:   mr.RawFilters,
-		Policies: mr.Policies,
+func newMappingRuleJSON(mrv *rules.MappingRuleView) mappingRuleJSON {
+	return mappingRuleJSON{
+		ID:             mrv.ID,
+		Name:           mrv.Name,
+		Filters:        mrv.Filters,
+		Policies:       mrv.Policies,
+		CutoverMillies: nanoToMilli(mrv.CutoverNanos),
 	}
-
-	return mappingRuleView{
-		MappingRuleData: mrd,
-		ID:              mr.ID,
-		CutoverMillies:  nanoToMilli(mr.CutoverNanos),
-	}
-}
-
-// MappingRuleData ...
-type MappingRuleData struct {
-	Name          string          `json:"name" validate:"required"`
-	Filter        filter          `json:"filter" validate:"required"`
-	Policies      []policy.Policy `json:"policies" validate:"required"`
-	SourceVersion int             `json:"ruleSetVersion,omitempty"`
 }
 
 type mappingRuleHistory struct { // nolint
-	States []mappingRuleView `json:"states"`
+	States []mappingRuleJSON `json:"states"`
 }
 
-type rollupRuleView struct {
-	RollupRuleData
-
-	ID             string `json:"id"`
-	CutoverMillies int64  `json:"cutoverMillies"`
+// RollupTargetData ...
+type rollupTargetJSON struct {
+	Name     string          `json:"name" validate:"required"`
+	Tags     []string        `json:"tags" validate:"required"`
+	Policies []policy.Policy `json:"policies" validate:"required"`
 }
 
-func newRollupRuleView(rr RollupRule) rollupRuleView {
-	rrd := RollupRuleData{
-		Name:    rr.Name,
-		Filter:  rr.RawFilters,
-		Targets: rr.Targets,
-	}
-
-	return rollupRuleView{
-		RollupRuleData: rrd,
-		ID:             rr.ID,
-		CutoverMillies: nanoToMilli(rr.CutoverNanos),
+func (t rollupTargetJSON) rollupTargetView() rules.RollupTargetView {
+	return rules.RollupTargetView{
+		Name:     t.Name,
+		Tags:     t.Tags,
+		Policies: t.Policies,
 	}
 }
 
-// RollupRuleData ...
-type RollupRuleData struct {
-	Name          string         `json:"name" validate:"required"`
-	Filter        filter         `json:"filter" validate:"required"`
-	Targets       []RollupTarget `json:"targets" validate:"required,dive,required"`
-	SourceVersion int            `json:"ruleSetVersion,omitempty"`
+func newRollupTargetJSON(t rules.RollupTargetView) rollupTargetJSON {
+	return rollupTargetJSON{
+		Name:     t.Name,
+		Tags:     t.Tags,
+		Policies: t.Policies,
+	}
+}
+
+type rollupRuleJSON struct {
+	ID             string             `json:"id,omitempty"`
+	Name           string             `json:"name" validate:"required"`
+	Filters        filters            `json:"filters" validate:"required"`
+	Targets        []rollupTargetJSON `json:"targets" validate:"required,dive,required"`
+	CutoverMillies int64              `json:"cutoverMillies,omitempty"`
+}
+
+func newRollupRuleJSON(rrv *rules.RollupRuleView) rollupRuleJSON {
+	targets := make([]rollupTargetJSON, len(rrv.Targets))
+	for i, t := range rrv.Targets {
+		targets[i] = newRollupTargetJSON(t)
+	}
+	return rollupRuleJSON{
+		ID:             rrv.ID,
+		Name:           rrv.Name,
+		Filters:        rrv.Filters,
+		Targets:        targets,
+		CutoverMillies: nanoToMilli(rrv.CutoverNanos),
+	}
+}
+
+func (r rollupRuleJSON) rollupRuleView() rules.RollupRuleView {
+	targets := make([]rules.RollupTargetView, len(r.Targets))
+	for i, t := range r.Targets {
+		targets[i] = t.rollupTargetView()
+	}
+
+	return rules.RollupRuleView{
+		ID:      r.ID,
+		Name:    r.Name,
+		Filters: r.Filters,
+		Targets: targets,
+	}
 }
 
 type rollupRuleHistory struct { // nolint
-	States []rollupRuleView `json:"states"`
+	States []rollupRuleJSON `json:"states"`
 }
 
 func nanoToMilli(nanos int64) int64 {

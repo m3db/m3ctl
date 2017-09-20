@@ -51,7 +51,7 @@ func (s *store) DeleteNamespace(namespaceID string) error {
 	return nil
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
+func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
 	return nil, nil
 }
 
@@ -67,7 +67,7 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.M
 	return nil, nil
 }
 
-func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, ruleSetVersion int) error {
+func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string) error {
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd rules.Rol
 	return nil, nil
 }
 
-func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, ruleSetVersion int) error {
+func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string) error {
 	return nil
 }
 

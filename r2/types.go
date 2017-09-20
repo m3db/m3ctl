@@ -44,6 +44,7 @@ type CurrentRuleSet struct {
 	RollupRules  []rules.RollupRuleView
 }
 
+// nolint
 func newCurrentRuleSetView(r rules.RuleSet) CurrentRuleSet {
 	currentMappingRules := newMappingRules(r.MappingRules())
 	currentRollupRules := newRollupRules(r.RollupRules())
@@ -83,6 +84,7 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 	}
 }
 
+// nolint
 func newMappingRules(mrs rules.MappingRules) []rules.MappingRuleView {
 	result := make([]rules.MappingRuleView, len(mrs))
 	idx := 0
@@ -96,6 +98,7 @@ func newMappingRules(mrs rules.MappingRules) []rules.MappingRuleView {
 	return result
 }
 
+// nolint
 func newRollupRules(rrs rules.RollupRules) []rules.RollupRuleView {
 	result := make([]rules.RollupRuleView, len(rrs))
 	idx := 0

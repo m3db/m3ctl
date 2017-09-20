@@ -836,7 +836,7 @@
                 "name": {
                     "type": "string"
                 },
-                "filters": {
+                "filter": {
                     "type": "string"
                 },
                 "policies": {
@@ -853,7 +853,7 @@
                 "name": {
                     "type": "string"
                 },
-                "filters": {
+                "filter": {
                     "type": "string"
                 },
                 "policies": {
@@ -876,7 +876,7 @@
                 "name": {
                     "type": "string"
                 },
-                "filters": {
+                "filter": {
                     "type": "string"
                 },
                 "targets": {
@@ -896,7 +896,7 @@
                 "name": {
                     "type": "string"
                 },
-                "filters": {
+                "filter": {
                     "type": "string"
                 },
                 "cutoverMillis": {

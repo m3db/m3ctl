@@ -159,7 +159,7 @@ type mappingRuleJSON struct {
 	ID             string          `json:"id,omitempty"`
 	Name           string          `json:"name" validate:"required"`
 	CutoverMillies int64           `json:"cutoverMillies,omitempty"`
-	Filters        filters         `json:"filters" validate:"required"`
+	Filters        filters         `json:"filter" validate:"required"`
 	Policies       []policy.Policy `json:"policies" validate:"required"`
 }
 
@@ -212,7 +212,7 @@ func newRollupTargetJSON(t rules.RollupTargetView) rollupTargetJSON {
 type rollupRuleJSON struct {
 	ID             string             `json:"id,omitempty"`
 	Name           string             `json:"name" validate:"required"`
-	Filters        filters            `json:"filters" validate:"required"`
+	Filters        filters            `json:"filter" validate:"required"`
 	Targets        []rollupTargetJSON `json:"targets" validate:"required,dive,required"`
 	CutoverMillies int64              `json:"cutoverMillies,omitempty"`
 }

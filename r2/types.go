@@ -59,7 +59,7 @@ func newCurrentRuleSetView(r rules.RuleSet) CurrentRuleSet {
 }
 
 type ruleSetJSON struct {
-	Namespace     string            `json:"namespace"`
+	Namespace     string            `json:"id"`
 	Version       int               `json:"version"`
 	CutoverMillis int64             `json:"cutoverMillis"`
 	MappingRules  []mappingRuleJSON `json:"mappingRules"`

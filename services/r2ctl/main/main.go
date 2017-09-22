@@ -121,12 +121,13 @@ func main() {
 	serverOpts := cfg.HTTP.newHTTPServerOptions(instrumentOpts)
 
 	doneCh := make(chan struct{})
-
+	authService := server.NewSimpleAuth("user")
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
+		authService,
 		r2.NewService(instrumentOpts, "/r2/v1/", stub.NewStore(instrumentOpts)),
-		health.NewService(instrumentOpts),
+		health.NewService(instrumentOpts)
 	)
 
 	go func() {

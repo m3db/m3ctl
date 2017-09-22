@@ -40,22 +40,32 @@ type CurrentRuleSet struct {
 	Namespace    string
 	Version      int
 	CutoverNanos int64
-	MappingRules []rules.MappingRuleView
-	RollupRules  []rules.RollupRuleView
+	MappingRules []*rules.MappingRuleView
+	RollupRules  []*rules.RollupRuleView
 }
 
 // nolint
-func newCurrentRuleSetView(r rules.RuleSet) CurrentRuleSet {
-	currentMappingRules := newMappingRules(r.MappingRules())
-	currentRollupRules := newRollupRules(r.RollupRules())
+func newCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
+	mrs, err := r.MappingRules()
+	if err != nil {
+		return nil, err
+	}
 
-	return CurrentRuleSet{
+	rrs, err := r.RollupRules()
+	if err != nil {
+		return nil, err
+	}
+
+	currentMappingRules := newMappingRules(mrs)
+	currentRollupRules := newRollupRules(rrs)
+
+	return &CurrentRuleSet{
 		Namespace:    string(r.Namespace()),
 		Version:      r.Version(),
 		CutoverNanos: r.CutoverNanos(),
 		MappingRules: currentMappingRules,
 		RollupRules:  currentRollupRules,
-	}
+	}, nil
 }
 
 type ruleSetJSON struct {
@@ -69,11 +79,11 @@ type ruleSetJSON struct {
 func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 	mrJSON := make([]mappingRuleJSON, len(c.MappingRules))
 	for i, m := range c.MappingRules {
-		mrJSON[i] = newMappingRuleJSON(&m)
+		mrJSON[i] = newMappingRuleJSON(m)
 	}
 	rrJSON := make([]rollupRuleJSON, len(c.RollupRules))
 	for i, r := range c.RollupRules {
-		rrJSON[i] = newRollupRuleJSON(&r)
+		rrJSON[i] = newRollupRuleJSON(r)
 	}
 	return ruleSetJSON{
 		Namespace:     c.Namespace,
@@ -85,8 +95,8 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 }
 
 // nolint
-func newMappingRules(mrs rules.MappingRules) []rules.MappingRuleView {
-	result := make([]rules.MappingRuleView, len(mrs))
+func newMappingRules(mrs rules.MappingRules) []*rules.MappingRuleView {
+	result := make([]*rules.MappingRuleView, len(mrs))
 	idx := 0
 	for _, m := range mrs {
 		if len(m) == 0 {
@@ -99,8 +109,8 @@ func newMappingRules(mrs rules.MappingRules) []rules.MappingRuleView {
 }
 
 // nolint
-func newRollupRules(rrs rules.RollupRules) []rules.RollupRuleView {
-	result := make([]rules.RollupRuleView, len(rrs))
+func newRollupRules(rrs rules.RollupRules) []*rules.RollupRuleView {
+	result := make([]*rules.RollupRuleView, len(rrs))
 	idx := 0
 	for _, r := range rrs {
 		if len(r) == 0 {

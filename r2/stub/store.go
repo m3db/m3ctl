@@ -59,8 +59,8 @@ var (
 				Namespace:    "ns1",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
-				MappingRules: []rules.MappingRuleView{
-					rules.MappingRuleView{
+				MappingRules: []*rules.MappingRuleView{
+					&rules.MappingRuleView{
 						ID:           "mr_id1",
 						Name:         "mr1",
 						CutoverNanos: cutoverTimestamp,
@@ -73,7 +73,7 @@ var (
 							makePolicy("10m:30d"),
 						},
 					},
-					rules.MappingRuleView{
+					&rules.MappingRuleView{
 						ID:           "mr_id2",
 						Name:         "mr2",
 						CutoverNanos: cutoverTimestamp,
@@ -85,8 +85,8 @@ var (
 						},
 					},
 				},
-				RollupRules: []rules.RollupRuleView{
-					rules.RollupRuleView{
+				RollupRules: []*rules.RollupRuleView{
+					&rules.RollupRuleView{
 						ID:           "rr_id1",
 						Name:         "rr1",
 						CutoverNanos: cutoverTimestamp,
@@ -104,7 +104,7 @@ var (
 							},
 						},
 					},
-					rules.RollupRuleView{
+					&rules.RollupRuleView{
 						ID:           "rr_id2",
 						Name:         "rr2",
 						CutoverNanos: cutoverTimestamp,
@@ -127,9 +127,9 @@ var (
 				Namespace:    "ns2",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
-				MappingRules: []rules.MappingRuleView{},
-				RollupRules: []rules.RollupRuleView{
-					rules.RollupRuleView{
+				MappingRules: []*rules.MappingRuleView{},
+				RollupRules: []*rules.RollupRuleView{
+					&rules.RollupRuleView{
 						ID:           "rr_id3",
 						Name:         "rr1",
 						CutoverNanos: cutoverTimestamp,
@@ -247,8 +247,8 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 			Namespace:    namespaceID,
 			Version:      1,
 			CutoverNanos: time.Now().UnixNano(),
-			MappingRules: make([]rules.MappingRuleView, 0),
-			RollupRules:  make([]rules.RollupRuleView, 0),
+			MappingRules: make([]*rules.MappingRuleView, 0),
+			RollupRules:  make([]*rules.RollupRuleView, 0),
 		}
 		return namespaceID, nil
 	}
@@ -300,7 +300,7 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rul
 		}
 		for _, m := range rs.MappingRules {
 			if mappingRuleID == m.ID {
-				return &m, nil
+				return m, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("mappingRule: %s doesn't exist in Namespace: %s", mappingRuleID, namespaceID))
@@ -326,7 +326,7 @@ func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView)
 			}
 		}
 
-		newRule := rules.MappingRuleView{
+		newRule := &rules.MappingRuleView{
 			ID:           "new",
 			Name:         mrv.Name,
 			CutoverNanos: time.Now().UnixNano(),
@@ -334,7 +334,7 @@ func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView)
 			Policies:     mrv.Policies,
 		}
 		rs.MappingRules = append(rs.MappingRules, newRule)
-		return &newRule, nil
+		return newRule, nil
 	}
 }
 
@@ -353,7 +353,7 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.M
 
 		for i, m := range rs.MappingRules {
 			if mappingRuleID == m.ID {
-				newRule := rules.MappingRuleView{
+				newRule := &rules.MappingRuleView{
 					ID:           "new",
 					Name:         mrv.Name,
 					CutoverNanos: time.Now().UnixNano(),
@@ -361,7 +361,7 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.M
 					Policies:     mrv.Policies,
 				}
 				rs.MappingRules[i] = newRule
-				return &newRule, nil
+				return newRule, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("mapping rule: %s doesn't exist in namespace: %s", mappingRuleID, namespaceID))
@@ -420,7 +420,7 @@ func (s *store) FetchRollupRule(namespaceID, rollupRuleID string) (*rules.Rollup
 		}
 		for _, r := range rs.RollupRules {
 			if rollupRuleID == r.ID {
-				return &r, nil
+				return r, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("rollupRule: %s doesn't exist in Namespace: %s", rollupRuleID, namespaceID))
@@ -444,7 +444,7 @@ func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (
 				return nil, r2.NewConflictError(fmt.Sprintf("rollup rule: %s already exists in namespace: %s", rrv.Name, namespaceID))
 			}
 		}
-		newRule := rules.RollupRuleView{
+		newRule := &rules.RollupRuleView{
 			ID:           uuid.New(),
 			Name:         rrv.Name,
 			CutoverNanos: time.Now().UnixNano(),
@@ -452,7 +452,7 @@ func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (
 			Targets:      rrv.Targets,
 		}
 		rs.RollupRules = append(rs.RollupRules, newRule)
-		return &newRule, nil
+		return newRule, nil
 	}
 }
 
@@ -470,7 +470,7 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.Rol
 		}
 		for i, r := range rs.RollupRules {
 			if rollupRuleID == r.ID {
-				newRule := rules.RollupRuleView{
+				newRule := &rules.RollupRuleView{
 					ID:           r.ID,
 					Name:         rrv.Name,
 					CutoverNanos: time.Now().UnixNano(),
@@ -478,7 +478,7 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.Rol
 					Targets:      rrv.Targets,
 				}
 				rs.RollupRules[i] = newRule
-				return &newRule, nil
+				return newRule, nil
 			}
 		}
 		return nil, r2.NewNotFoundError(fmt.Sprintf("rollup rule: %s doesn't exist in namespace: %s", rollupRuleID, namespaceID))

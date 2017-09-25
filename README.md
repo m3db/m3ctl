@@ -21,13 +21,13 @@ This project is released under the [MIT License](LICENSE.md).
 ```bash
 git clone --recursive https://github.com/m3db/m3ctl.git
 cd m3ctl
-glide install
+glide install -v
 make r2ctl && ./bin/r2ctl -f config/base.yaml
 curl -v localhost:9000/r2/v1/namespaces
 ```
 
-**API Server**  
+**API Server**
 `/r2/v1`
 
-**API Docs (via Swagger)**  
+**API Docs (via Swagger)**
 `/r2/v1/swagger`

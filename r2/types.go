@@ -27,11 +27,15 @@ import (
 
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
+	xtime "github.com/m3db/m3x/time"
 )
 
 const (
-	tagFilterListSeparator = " "
-	tagFilterSeparator     = ":"
+	// TagFilterListSeparator splits key:value pairs in a tag filter list.
+	TagFilterListSeparator = " "
+
+	// TagFilterSeparator splits keys and values inside of a tag filter.
+	TagFilterSeparator = ":"
 )
 
 // CurrentRuleSet represents the current state of a rule set. A rule with all the latest snapshots
@@ -56,15 +60,12 @@ func newCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
 		return nil, err
 	}
 
-	currentMappingRules := newMappingRules(mrs)
-	currentRollupRules := newRollupRules(rrs)
-
 	return &CurrentRuleSet{
 		Namespace:    string(r.Namespace()),
 		Version:      r.Version(),
 		CutoverNanos: r.CutoverNanos(),
-		MappingRules: currentMappingRules,
-		RollupRules:  currentRollupRules,
+		MappingRules: newMappingRules(mrs),
+		RollupRules:  newRollupRules(rrs),
 	}, nil
 }
 
@@ -96,28 +97,24 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 
 // nolint
 func newMappingRules(mrs rules.MappingRules) []*rules.MappingRuleView {
-	result := make([]*rules.MappingRuleView, len(mrs))
-	idx := 0
+	var result []*rules.MappingRuleView
 	for _, m := range mrs {
-		if len(m) == 0 {
-			continue
+		if len(m) > 0 {
+			// views included in m are sorted latest first.
+			result = append(result, m[0])
 		}
-		result[idx] = m[len(m)-1]
-		idx++
 	}
 	return result
 }
 
 // nolint
 func newRollupRules(rrs rules.RollupRules) []*rules.RollupRuleView {
-	result := make([]*rules.RollupRuleView, len(rrs))
-	idx := 0
+	var result []*rules.RollupRuleView
 	for _, r := range rrs {
-		if len(r) == 0 {
-			continue
+		if len(r) > 0 {
+			// views included in m are sorted latest first.
+			result = append(result, r[0])
 		}
-		result[idx] = r[len(r)-1]
-		idx++
 	}
 	return result
 }
@@ -143,9 +140,9 @@ type filters map[string]string
 func (f filters) MarshalJSON() ([]byte, error) {
 	tmp := make([]string, 0, len(f))
 	for k, v := range f {
-		tmp = append(tmp, fmt.Sprintf("%s:%s", k, v))
+		tmp = append(tmp, fmt.Sprintf("%s%s%s", k, TagFilterSeparator, v))
 	}
-	marshalled := strconv.Quote(strings.Join(tmp, " "))
+	marshalled := strconv.Quote(strings.Join(tmp, TagFilterListSeparator))
 	return []byte(marshalled), nil
 }
 
@@ -156,24 +153,25 @@ func (f *filters) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	*f = make(map[string]string)
-	tagPairs := strings.Split(unquoted, tagFilterListSeparator)
+	tmp := make(map[string]string)
+	tagPairs := strings.Split(unquoted, TagFilterListSeparator)
 	for _, p := range tagPairs {
-		parts := strings.Split(p, tagFilterSeparator)
+		parts := strings.Split(p, TagFilterSeparator)
 		if len(parts) != 2 {
-			return NewBadInputError(fmt.Sprintf("invalid tag filter pair %s", p))
+			return NewBadInputError(fmt.Sprintf("invalid filter: Expecting tag:value pairs. Got: %s", unquoted))
 		}
-		(*f)[parts[0]] = parts[1]
+		tmp[parts[0]] = parts[1]
 	}
+	*f = tmp
 	return nil
 }
 
 type mappingRuleJSON struct {
-	ID             string          `json:"id,omitempty"`
-	Name           string          `json:"name" validate:"required"`
-	CutoverMillies int64           `json:"cutoverMillies,omitempty"`
-	Filters        filters         `json:"filter" validate:"required"`
-	Policies       []policy.Policy `json:"policies" validate:"required"`
+	ID            string          `json:"id,omitempty"`
+	Name          string          `json:"name" validate:"required"`
+	CutoverMillis int64           `json:"cutoverMillis,omitempty"`
+	Filters       filters         `json:"filter" validate:"required"`
+	Policies      []policy.Policy `json:"policies" validate:"required"`
 }
 
 func (m mappingRuleJSON) mappingRuleView() rules.MappingRuleView {
@@ -187,11 +185,11 @@ func (m mappingRuleJSON) mappingRuleView() rules.MappingRuleView {
 
 func newMappingRuleJSON(mrv *rules.MappingRuleView) mappingRuleJSON {
 	return mappingRuleJSON{
-		ID:             mrv.ID,
-		Name:           mrv.Name,
-		Filters:        mrv.Filters,
-		Policies:       mrv.Policies,
-		CutoverMillies: nanoToMilli(mrv.CutoverNanos),
+		ID:            mrv.ID,
+		Name:          mrv.Name,
+		Filters:       mrv.Filters,
+		Policies:      mrv.Policies,
+		CutoverMillis: nanoToMilli(mrv.CutoverNanos),
 	}
 }
 
@@ -223,11 +221,11 @@ func newRollupTargetJSON(t rules.RollupTargetView) rollupTargetJSON {
 }
 
 type rollupRuleJSON struct {
-	ID             string             `json:"id,omitempty"`
-	Name           string             `json:"name" validate:"required"`
-	Filters        filters            `json:"filter" validate:"required"`
-	Targets        []rollupTargetJSON `json:"targets" validate:"required,dive,required"`
-	CutoverMillies int64              `json:"cutoverMillies,omitempty"`
+	ID            string             `json:"id,omitempty"`
+	Name          string             `json:"name" validate:"required"`
+	Filters       filters            `json:"filter" validate:"required"`
+	Targets       []rollupTargetJSON `json:"targets" validate:"required,dive,required"`
+	CutoverMillis int64              `json:"cutoverMillis,omitempty"`
 }
 
 func newRollupRuleJSON(rrv *rules.RollupRuleView) rollupRuleJSON {
@@ -236,11 +234,11 @@ func newRollupRuleJSON(rrv *rules.RollupRuleView) rollupRuleJSON {
 		targets[i] = newRollupTargetJSON(t)
 	}
 	return rollupRuleJSON{
-		ID:             rrv.ID,
-		Name:           rrv.Name,
-		Filters:        rrv.Filters,
-		Targets:        targets,
-		CutoverMillies: nanoToMilli(rrv.CutoverNanos),
+		ID:            rrv.ID,
+		Name:          rrv.Name,
+		Filters:       rrv.Filters,
+		Targets:       targets,
+		CutoverMillis: nanoToMilli(rrv.CutoverNanos),
 	}
 }
 
@@ -263,7 +261,7 @@ type rollupRuleHistory struct { // nolint
 }
 
 func nanoToMilli(nanos int64) int64 {
-	return nanos / 1000000
+	return xtime.ToUnixMillis(xtime.FromNanoseconds(nanos))
 }
 
 // ConflictError represents either a version mismatch writing data or a data conflict issue.

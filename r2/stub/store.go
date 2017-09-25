@@ -390,7 +390,6 @@ func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string) error {
 	}
 }
 
-// FetchMappingRuleHistory ...
 func (s *store) FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -408,7 +407,6 @@ func (s *store) FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*r
 	}
 }
 
-// FetchRollupRule ...
 func (s *store) FetchRollupRule(namespaceID, rollupRuleID string) (*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -427,7 +425,6 @@ func (s *store) FetchRollupRule(namespaceID, rollupRuleID string) (*rules.Rollup
 	}
 }
 
-// CreateRollupRule ...
 func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -456,7 +453,6 @@ func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (
 	}
 }
 
-// UpdateRollupRule ...
 func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -485,7 +481,6 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.Rol
 	}
 }
 
-// DeleteRollupRule ...
 func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -507,7 +502,6 @@ func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string) error {
 	}
 }
 
-// FetchRollupRuleHistory ...
 func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:

@@ -26,16 +26,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func registerHandlers(router *mux.Router, services []Service) {
-	for _, s := range services {
-		s.RegisterHandlers(router)
-	}
-}
-
 // NewServer creates a new http server for R2.
-func NewServer(address string, serverOpts Options, services []Service) *http.Server {
-	router := mux.NewRouter()
-	registerHandlers(router, services)
+func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
+	router := mux.NewRouter().StrictSlash(false)
+
+	r2Router := router.PathPrefix(r2Service.Root()).Subrouter()
+	r2Service.RegisterHandlers(r2Router)
+
+	healthRouter := router.PathPrefix(healthService.Root()).Subrouter()
+	healthService.RegisterHandlers(healthRouter)
 
 	// Public route handler - This has to be registered after all of the other ones.
 	// If it is registered before, all of the other registration will return 404s trying to access

@@ -134,12 +134,12 @@ func main() {
 
 	doneCh := make(chan struct{})
 
-	services := []server.Service{
+	r2ApiServer := server.NewServer(
+		listenAddr,
+		serverOpts,
+		r2.NewService(instrumentOpts, "/r2/v1/", stub.NewStore(instrumentOpts)),
 		health.NewService(instrumentOpts),
-		r2.NewService(instrumentOpts, "r2/v1", stub.NewStore(instrumentOpts)),
-	}
-
-	r2ApiServer := server.NewServer(listenAddr, serverOpts, services)
+	)
 
 	go func() {
 		go func() {

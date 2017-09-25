@@ -224,12 +224,10 @@ func NewStore(iOpts instrument.Options) r2.Store {
 	return &store{data: &dummyData, iOpts: iOpts}
 }
 
-// FetchNamespaces ...
 func (s *store) FetchNamespaces() ([]string, int, error) {
 	return s.data.Namespaces, 1, nil
 }
 
-// CreateNamespace ...
 func (s *store) CreateNamespace(namespaceID string) (string, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -254,7 +252,6 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 	}
 }
 
-// DeleteNamespace ...
 func (s *store) DeleteNamespace(namespaceID string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -272,7 +269,6 @@ func (s *store) DeleteNamespace(namespaceID string) error {
 	}
 }
 
-// FetchRuleSet ...
 func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -288,7 +284,6 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
 	}
 }
 
-// FetchMappingRule ...
 func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -307,7 +302,6 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rul
 	}
 }
 
-// CreateMappingRule ...
 func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -338,7 +332,6 @@ func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView)
 	}
 }
 
-// UpdateMappingRule ...
 func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -368,7 +361,6 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.M
 	}
 }
 
-// DeleteMappingRule ...
 func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:

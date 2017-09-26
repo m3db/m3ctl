@@ -74,9 +74,6 @@ type configuration struct {
 	// Logging configuration.
 	Logging log.Configuration `yaml:"logging"`
 
-	// Metrics configuration.
-	// Metrics instrument.MetricsConfiguration `yaml:"metrics"`
-
 	// HTTP server configuration.
 	HTTP serverConfig `yaml:"http"`
 }
@@ -117,17 +114,8 @@ func main() {
 		logger.Fatalf("No valid port configured. Can't start.")
 	}
 
-	// scope, closer, err := cfg.Metrics.NewRootScope()
-	// if err != nil {
-	// logger.Fatalf("error creating metrics root scope: %v", err)
-	// }
-	// defer closer.Close()
-
 	instrumentOpts := instrument.NewOptions().
 		SetLogger(logger)
-		// SetMetricsScope(scope).
-		// SetMetricsSamplingRate(cfg.Metrics.SampleRate()).
-		// SetReportInterval(cfg.Metrics.ReportInterval())
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	serverOpts := cfg.HTTP.newHTTPServerOptions(instrumentOpts)

@@ -28,12 +28,12 @@ import (
 
 // NewServer creates a new http server for R2.
 func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
-	router := mux.NewRouter().StrictSlash(false)
+	router := mux.NewRouter()
 
-	r2Router := router.PathPrefix(r2Service.Root()).Subrouter()
+	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()
 	r2Service.RegisterHandlers(r2Router)
 
-	healthRouter := router.PathPrefix(healthService.Root()).Subrouter()
+	healthRouter := router.PathPrefix(healthService.URLPrefix()).Subrouter()
 	healthService.RegisterHandlers(healthRouter)
 
 	// Public route handler - This has to be registered after all of the other ones.

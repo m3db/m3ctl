@@ -59,11 +59,11 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rul
 	return nil, nil
 }
 
-func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	return nil, nil
 }
 
@@ -79,11 +79,11 @@ func (s *store) FetchRollupRule(namespaceID string, rollupRuleID string) (*rules
 	return nil, nil
 }
 
-func (s *store) CreateRollupRule(namespaceID string, rrd rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) CreateRollupRule(namespaceID string, rrd *rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	return nil, nil
 }
 
-func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrd *rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	return nil, nil
 }
 

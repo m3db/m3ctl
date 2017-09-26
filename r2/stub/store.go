@@ -302,7 +302,7 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rul
 	}
 }
 
-func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError("could not create mapping rule")
@@ -332,7 +332,7 @@ func (s *store) CreateMappingRule(namespaceID string, mrv rules.MappingRuleView)
 	}
 }
 
-func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError("could not update mapping rule.")
@@ -417,7 +417,7 @@ func (s *store) FetchRollupRule(namespaceID, rollupRuleID string) (*rules.Rollup
 	}
 }
 
-func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError("could not create rollup rule")
@@ -445,7 +445,7 @@ func (s *store) CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (
 	}
 }
 
-func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError("could not update rollup rule.")

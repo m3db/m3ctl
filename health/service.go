@@ -99,6 +99,6 @@ func (s *service) RegisterHandlers(router *mux.Router) {
 	log.Infof("Registered health endpoints")
 }
 
-func (s *service) Root() string {
+func (s *service) URLPrefix() string {
 	return healthURL
 }

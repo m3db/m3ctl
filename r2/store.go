@@ -35,9 +35,9 @@ type Store interface {
 
 	FetchMappingRule(namespaceID, mappingRuleID string) (*rules.MappingRuleView, error)
 
-	CreateMappingRule(namespaceID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error)
+	CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error)
 
-	UpdateMappingRule(namespaceID, mappingRuleID string, mrv rules.MappingRuleView) (*rules.MappingRuleView, error)
+	UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error)
 
 	DeleteMappingRule(namespaceID, mappingRuleID string) error
 
@@ -45,9 +45,9 @@ type Store interface {
 
 	FetchRollupRule(namespaceID, rollupRuleID string) (*rules.RollupRuleView, error)
 
-	CreateRollupRule(namespaceID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error)
+	CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error)
 
-	UpdateRollupRule(namespaceID, rollupRuleID string, rrv rules.RollupRuleView) (*rules.RollupRuleView, error)
+	UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error)
 
 	DeleteRollupRule(namespaceID, rollupRuleID string) error
 

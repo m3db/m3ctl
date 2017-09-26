@@ -528,7 +528,7 @@ func newMappingRuleJSON(mrv *rules.MappingRuleView) mappingRuleJSON {
 }
 
 type mappingRuleHistoryJSON struct {
-	States []mappingRuleJSON `json:"mappingRules"`
+	MappingRules []mappingRuleJSON `json:"mappingRules"`
 }
 
 func newMappingRuleHistoryJSON(hist []*rules.MappingRuleView) mappingRuleHistoryJSON {
@@ -536,7 +536,7 @@ func newMappingRuleHistoryJSON(hist []*rules.MappingRuleView) mappingRuleHistory
 	for i, mappingRule := range hist {
 		views[i] = newMappingRuleJSON(mappingRule)
 	}
-	return mappingRuleHistoryJSON{States: views}
+	return mappingRuleHistoryJSON{MappingRules: views}
 }
 
 type rollupTargetJSON struct {
@@ -598,7 +598,7 @@ func (r rollupRuleJSON) rollupRuleView() *rules.RollupRuleView {
 }
 
 type rollupRuleHistoryJSON struct {
-	States []rollupRuleJSON `json:"rollupRules"`
+	RollupRules []rollupRuleJSON `json:"rollupRules"`
 }
 
 func newRollupRuleHistoryJSON(hist []*rules.RollupRuleView) rollupRuleHistoryJSON {
@@ -606,7 +606,7 @@ func newRollupRuleHistoryJSON(hist []*rules.RollupRuleView) rollupRuleHistoryJSO
 	for i, rollupRule := range hist {
 		views[i] = newRollupRuleJSON(rollupRule)
 	}
-	return rollupRuleHistoryJSON{States: views}
+	return rollupRuleHistoryJSON{RollupRules: views}
 }
 
 type ruleSetJSON struct {

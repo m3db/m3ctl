@@ -158,14 +158,45 @@ var (
 			},
 		},
 		MappingHistory: map[string]mappingRuleHistories{
-			"ns1": nil,
+			"ns1": mappingRuleHistories{
+				"mr_id1": []*rules.MappingRuleView{
+					&rules.MappingRuleView{
+						ID:           "mr_id1",
+						Name:         "mr1",
+						CutoverNanos: cutoverTimestamp,
+						Filters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Policies: []policy.Policy{
+							makePolicy("1m:10d"),
+							makePolicy("10m:30d"),
+						},
+					},
+				},
+				"mr_id2": []*rules.MappingRuleView{
+					&rules.MappingRuleView{
+						ID:           "mr_id2",
+						Name:         "mr2",
+						CutoverNanos: cutoverTimestamp,
+						Filters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Policies: []policy.Policy{
+							makePolicy("1m:10d"),
+							makePolicy("10m:30d"),
+						},
+					},
+				},
+			},
 			"ns2": nil,
 		},
 		RollupHistory: map[string]rollupRuleHistories{
 			"ns1": rollupRuleHistories{
-				"rr_id3": []*rules.RollupRuleView{
+				"rr_id1": []*rules.RollupRuleView{
 					&rules.RollupRuleView{
-						ID:           "rr_id3",
+						ID:           "rr_id1",
 						Name:         "rr1",
 						CutoverNanos: cutoverTimestamp,
 						Filters: map[string]string{
@@ -190,7 +221,7 @@ var (
 						},
 					},
 					&rules.RollupRuleView{
-						ID:           "rr_id3",
+						ID:           "rr_id1",
 						Name:         "rr1",
 						CutoverNanos: cutoverTimestamp,
 						Filters: map[string]string{
@@ -208,7 +239,35 @@ var (
 					},
 				},
 			},
-			"ns2": nil,
+			"ns2": rollupRuleHistories{
+				"rr_id3": []*rules.RollupRuleView{
+					&rules.RollupRuleView{
+						ID:           "rr_id1",
+						Name:         "rr1",
+						CutoverNanos: cutoverTimestamp,
+						Filters: map[string]string{
+							"tag1": "val1",
+							"tag2": "val2",
+						},
+						Targets: []rules.RollupTargetView{
+							rules.RollupTargetView{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|Min,Max"),
+								},
+							},
+							rules.RollupTargetView{
+								Name: "testTarget",
+								Tags: []string{"tag1", "tag2"},
+								Policies: []policy.Policy{
+									makePolicy("1m:10d|P999"),
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 )

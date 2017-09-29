@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/urfave/negroni"
 )
 
 // NewServer creates a new http server for R2.
@@ -33,9 +32,6 @@ func NewServer(address string, serverOpts Options, auth HTTPAuthService, r2Servi
 
 	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()
 	r2Service.RegisterHandlers(r2Router)
-
-	n := negroni.New(negroni.HandlerFunc(auth.User))
-	n.UseHandler(router)
 
 	healthRouter := router.PathPrefix(healthService.URLPrefix()).Subrouter()
 	healthService.RegisterHandlers(healthRouter)
@@ -49,6 +45,6 @@ func NewServer(address string, serverOpts Options, auth HTTPAuthService, r2Servi
 		WriteTimeout: serverOpts.WriteTimeout(),
 		ReadTimeout:  serverOpts.ReadTimeout(),
 		Addr:         address,
-		Handler:      n,
+		Handler:      router,
 	}
 }

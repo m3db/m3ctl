@@ -29,6 +29,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/r2/stub"
@@ -121,13 +122,13 @@ func main() {
 	serverOpts := cfg.HTTP.newHTTPServerOptions(instrumentOpts)
 
 	doneCh := make(chan struct{})
-	authService := server.NewSimpleAuth("user")
+	authService := auth.NewSimpleAuth("user")
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
 		authService,
 		r2.NewService(instrumentOpts, "/r2/v1/", stub.NewStore(instrumentOpts)),
-		health.NewService(instrumentOpts)
+		health.NewService(instrumentOpts),
 	)
 
 	go func() {

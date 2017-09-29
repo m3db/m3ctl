@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
@@ -112,15 +113,21 @@ func writeAPIResponse(w http.ResponseWriter, code int, msg string) error {
 	return write(w, j, code)
 }
 
+type r2HandlerFunc func(http.ResponseWriter, *http.Request) error
+
 type r2Handler struct {
 	iOpts instrument.Options
-	fn    func(http.ResponseWriter, *http.Request) error
+	auth  auth.HTTPAuthService
 }
 
-func (h r2Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := h.fn(w, r); err != nil {
-		h.handleError(w, err)
-	}
+func (h r2Handler) handle(fn r2HandlerFunc) http.Handler {
+	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := fn(w, r); err != nil {
+			h.handleError(w, err)
+		}
+	})
+
+	return h.auth.WithCheck(f)
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -136,6 +143,8 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 		err = writeAPIResponse(w, http.StatusConflict, opError.Error())
 	case NotFoundError:
 		err = writeAPIResponse(w, http.StatusNotFound, opError.Error())
+	case AuthError:
+		err = writeAPIResponse(w, http.StatusUnauthorized, opError.Error())
 	default:
 		err = writeAPIResponse(w, http.StatusInternalServerError, opError.Error())
 	}
@@ -167,7 +176,7 @@ func (s *service) write(w http.ResponseWriter, data interface{}) error {
 	return writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
 }
 
-func (s *service) fetchNamespaces(w http.ResponseWriter, _ *http.Request) error {
+func (s *service) fetchNamespaces(w http.ResponseWriter, r *http.Request) error {
 	names, v, err := s.store.FetchNamespaces()
 	if err != nil {
 		return writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")
@@ -346,32 +355,34 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
 	// Namespaces action
-	router.Handle(namespacePath, r2Handler{s.iOpts, s.fetchNamespaces}).Methods(http.MethodGet)
-	router.Handle(namespacePath, r2Handler{s.iOpts, s.createNamespace}).Methods(http.MethodPost)
+	h := r2Handler{s.iOpts}
+
+	router.Handle(namespacePath, h.handle(s.fetchNamespaces)).Methods(http.MethodGet)
+	router.Handle(namespacePath, h.handle(s.createNamespace)).Methods(http.MethodPost)
 
 	// Ruleset actions
-	router.Handle(namespacePrefix, r2Handler{s.iOpts, s.fetchNamespace}).Methods(http.MethodGet)
-	router.Handle(namespacePrefix, r2Handler{s.iOpts, s.deleteNamespace}).Methods(http.MethodDelete)
+	router.Handle(namespacePrefix, h.handle(s.fetchNamespace)).Methods(http.MethodGet)
+	router.Handle(namespacePrefix, h.handle(s.deleteNamespace)).Methods(http.MethodDelete)
 
 	// Mapping Rule actions
-	router.Handle(mappingRuleRoot, r2Handler{s.iOpts, s.createMappingRule}).Methods(http.MethodPost)
+	router.Handle(mappingRuleRoot, h.handle(s.createMappingRule)).Methods(http.MethodPost)
 
-	router.Handle(mappingRuleWithIDPath, r2Handler{s.iOpts, s.fetchMappingRule}).Methods(http.MethodGet)
-	router.Handle(mappingRuleWithIDPath, r2Handler{s.iOpts, s.updateMappingRule}).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(mappingRuleWithIDPath, r2Handler{s.iOpts, s.deleteMappingRule}).Methods(http.MethodDelete)
+	router.Handle(mappingRuleWithIDPath, h.handle(s.fetchMappingRule)).Methods(http.MethodGet)
+	router.Handle(mappingRuleWithIDPath, h.handle(s.updateMappingRule)).Methods(http.MethodPut, http.MethodPatch)
+	router.Handle(mappingRuleWithIDPath, h.handle(s.deleteMappingRule)).Methods(http.MethodDelete)
 
 	// Mapping Rule history
-	router.Handle(mappingRuleHistoryPath, r2Handler{s.iOpts, s.fetchMappingRuleHistory}).Methods(http.MethodGet)
+	router.Handle(mappingRuleHistoryPath, h.handle(s.fetchMappingRuleHistory)).Methods(http.MethodGet)
 
 	// Rollup Rule actions
-	router.Handle(rollupRuleRoot, r2Handler{s.iOpts, s.createRollupRule}).Methods(http.MethodPost)
+	router.Handle(rollupRuleRoot, h.handle(s.createRollupRule)).Methods(http.MethodPost)
 
-	router.Handle(rollupRuleWithIDPath, r2Handler{s.iOpts, s.fetchRollupRule}).Methods(http.MethodGet)
-	router.Handle(rollupRuleWithIDPath, r2Handler{s.iOpts, s.updateRollupRule}).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(rollupRuleWithIDPath, r2Handler{s.iOpts, s.deleteRollupRule}).Methods(http.MethodDelete)
+	router.Handle(rollupRuleWithIDPath, h.handle(s.fetchRollupRule)).Methods(http.MethodGet)
+	router.Handle(rollupRuleWithIDPath, h.handle(s.updateRollupRule)).Methods(http.MethodPut, http.MethodPatch)
+	router.Handle(rollupRuleWithIDPath, h.handle(s.deleteRollupRule)).Methods(http.MethodDelete)
 
 	// Rollup Rule history
-	router.Handle(rollupRuleHistoryPath, r2Handler{s.iOpts, s.fetchRollupRuleHistory}).Methods(http.MethodGet)
+	router.Handle(rollupRuleHistoryPath, h.handle(s.fetchRollupRuleHistory)).Methods(http.MethodGet)
 
 	log.Infof("Registered rules endpoints")
 }

@@ -1,3 +1,5 @@
+// Copyright (c) 2017 Uber Technologies, Inc.
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -16,45 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package server
+package auth
 
 import (
-	"fmt"
+	"context"
 	"net/http"
-
-	"github.com/gorilla/context"
 )
 
+type key int
+
 const (
-	// UserIDField is the name of the variable that simple auth will put in the mux context
-	UserIDField = "userID"
+	// UserIDField is a key
+	UserIDField key = iota
 )
 
 // HTTPAuthService defines how to handle requests for various http authentication methods.
 type HTTPAuthService interface {
-	// User gets some identifying information about the user from the http request.
-	User(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
-}
+	// Authenticate should return a handler that performs some check on the request coming into the given handler
+	// and then runs the handler if it is. If the request is authenticated successfully, it should call SetUser
+	// to make the callers id available to the service in a global context.
+	Authenticate(next http.Handler) http.Handler
 
-// SimpleAuth is a basic implementation
-type SimpleAuth struct {
-	userNameHeader string
-}
+	// SetUser sets a userID that identifies the api caller in the global context.
+	SetUser(parent context.Context) context.Context
 
-// NewSimpleAuth...
-func NewSimpleAuth(name string) SimpleAuth {
-	return SimpleAuth{userNameHeader: name}
-}
-
-// User looks for a header defining a user name. If it can't find it, spits back not authorized.
-func (a SimpleAuth) User(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	userID := r.Header.Get(a.userNameHeader)
-
-	if userID == "" {
-		http.Error(rw, fmt.Sprintf("No %s Provided", a.userNameHeader), 401)
-	} else {
-		// http.Error(rw, fmt.Sprintf("%s Provided", userID), 401)
-		context.Set(r, "userID", userID)
-		next(rw, r)
-	}
+	// GetUser fetches the ID of an api caller from the global context.
+	GetUser(ctx context.Context) (string, error)
 }

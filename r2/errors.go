@@ -60,3 +60,11 @@ type NotFoundError struct{ msg string }
 func NewNotFoundError(msg string) NotFoundError { return NotFoundError{msg: msg} }
 
 func (e NotFoundError) Error() string { return e.msg }
+
+// AuthError represents an error due to missing or invalid auth information.
+type AuthError struct{ msg string }
+
+// NewAuthError creates a new not found Error.
+func NewAuthError(msg string) AuthError { return AuthError{msg: msg} }
+
+func (e AuthError) Error() string { return e.msg }

@@ -59,11 +59,7 @@ const MenuSideBar = withRouter(({location}) => {
         </Link>
       </Menu.Item>
       <Menu.Item key="api-doc">
-<<<<<<< HEAD
         <a href="/public/r2/v1/swagger">
-=======
-        <a href="/public-files/swagger">
->>>>>>> 9a7cafe96e34e8e1fe2ac22e418464571ae959f7
           <span>API Docs</span>
         </a>
       </Menu.Item>

@@ -182,7 +182,7 @@ func (s *service) write(w http.ResponseWriter, data interface{}) error {
 	return writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
 }
 
-func (s *service) fetchNamespaces(w http.ResponseWriter, r *http.Request) error {
+func (s *service) fetchNamespaces(w http.ResponseWriter, _ *http.Request) error {
 	names, v, err := s.store.FetchNamespaces()
 	if err != nil {
 		return writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")

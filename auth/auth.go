@@ -40,7 +40,7 @@ type HTTPAuthService interface {
 	Authenticate(next http.Handler) http.Handler
 
 	// SetUser sets a userID that identifies the api caller in the global context.
-	SetUser(parent context.Context) context.Context
+	SetUser(parent context.Context, userID string) context.Context
 
 	// GetUser fetches the ID of an api caller from the global context.
 	GetUser(ctx context.Context) (string, error)

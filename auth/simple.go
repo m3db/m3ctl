@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 package auth
 
 import (
@@ -37,14 +38,14 @@ type SimpleAuth struct {
 	userNameHeader string
 }
 
-// NewSimpleAuth defines an authentication method that just checks for the existence of a valid user name header
-func NewSimpleAuth(name string) SimpleAuth {
-	return SimpleAuth{userNameHeader: name}
+// NewSimpleAuth creates a new simple auth instance given using the provided config.
+func (ac SimpleAuthConfig) NewSimpleAuth() SimpleAuth {
+	return SimpleAuth{userNameHeader: ac.UserNameHeader}
 }
 
-// WithCheck looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
+// Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
 // Otherwise, it returns an Unathorized http response.
-func (a SimpleAuth) WithCheck(next http.Handler) http.Handler {
+func (a SimpleAuth) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Header.Get(a.userNameHeader)
 		if userID == "" {
@@ -56,16 +57,16 @@ func (a SimpleAuth) WithCheck(next http.Handler) http.Handler {
 	})
 }
 
+// SetUser sets the user making the changes to the api.
 func (a SimpleAuth) SetUser(parent context.Context, userID string) context.Context {
 	return context.WithValue(parent, UserIDField, userID)
 }
 
 // GetUser fetches the ID of an api caller from the global context.
 func (a SimpleAuth) GetUser(ctx context.Context) (string, error) {
-	id := ctx.Context().Value(UserIDField)
-	if id == "" {
-		return "", fmt.Errorf("Couldn't identify user. %s is not set.", UserIDField)
+	id := ctx.Value(UserIDField)
+	if id == nil {
+		return "", fmt.Errorf("couldn't identify user")
 	}
-
-	s.iOpts.Logger().Infof("%v", id)
+	return id.(string), nil
 }

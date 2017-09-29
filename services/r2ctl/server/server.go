@@ -27,7 +27,7 @@ import (
 )
 
 // NewServer creates a new http server for R2.
-func NewServer(address string, serverOpts Options, auth HTTPAuthService, r2Service, healthService Service) *http.Server {
+func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
 	router := mux.NewRouter()
 
 	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()

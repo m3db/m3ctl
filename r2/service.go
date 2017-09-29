@@ -127,7 +127,7 @@ func (h r2Handler) handle(fn r2HandlerFunc) http.Handler {
 		}
 	})
 
-	return h.auth.WithCheck(f)
+	return h.auth.Authenticate(f)
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -159,14 +159,20 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 
 // service handles all of the endpoints for r2.
 type service struct {
-	iOpts      instrument.Options
-	rootPrefix string
-	store      Store
+	iOpts       instrument.Options
+	rootPrefix  string
+	store       Store
+	authService auth.HTTPAuthService
 }
 
 // NewService creates a new r2 service using a given store.
-func NewService(iOpts instrument.Options, rootPrefix string, store Store) server.Service {
-	return &service{iOpts: iOpts, store: store, rootPrefix: rootPrefix}
+func NewService(
+	iOpts instrument.Options,
+	rootPrefix string,
+	authService auth.HTTPAuthService,
+	store Store,
+) server.Service {
+	return &service{iOpts: iOpts, store: store, authService: authService, rootPrefix: rootPrefix}
 }
 
 func (s *service) write(w http.ResponseWriter, data interface{}) error {
@@ -355,7 +361,7 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
 	// Namespaces action
-	h := r2Handler{s.iOpts}
+	h := r2Handler{s.iOpts, s.authService}
 
 	router.Handle(namespacePath, h.handle(s.fetchNamespaces)).Methods(http.MethodGet)
 	router.Handle(namespacePath, h.handle(s.createNamespace)).Methods(http.MethodPost)

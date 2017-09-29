@@ -77,6 +77,9 @@ type configuration struct {
 
 	// HTTP server configuration.
 	HTTP serverConfig `yaml:"http"`
+
+	// Simple Auth Config
+	Auth auth.SimpleAuthConfig `yaml:"auth"`
 }
 
 func main() {
@@ -121,13 +124,13 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	serverOpts := cfg.HTTP.newHTTPServerOptions(instrumentOpts)
 
+	authService := cfg.Auth.NewSimpleAuth()
+
 	doneCh := make(chan struct{})
-	authService := auth.NewSimpleAuth("user")
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
-		authService,
-		r2.NewService(instrumentOpts, "/r2/v1/", stub.NewStore(instrumentOpts)),
+		r2.NewService(instrumentOpts, "/r2/v1/", authService, stub.NewStore(instrumentOpts)),
 		health.NewService(instrumentOpts),
 	)
 

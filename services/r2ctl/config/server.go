@@ -27,11 +27,6 @@ import (
 	"github.com/m3db/m3x/instrument"
 )
 
-const (
-	defaultReadTimeout  = 10 * time.Second
-	defaultWriteTimeout = 10 * time.Second
-)
-
 type serverConfig struct {
 	// Host is the host name the HTTP server shoud listen on.
 	Host string `yaml:"host" validate:"nonzero"`

@@ -304,8 +304,8 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 			Namespace:    namespaceID,
 			Version:      1,
 			CutoverNanos: time.Now().UnixNano(),
-			MappingRules: make(map[string]*rules.MappingRuleView, 0),
-			RollupRules:  make(map[string]*rules.RollupRuleView, 0),
+			MappingRules: make(map[string]*rules.MappingRuleView),
+			RollupRules:  make(map[string]*rules.RollupRuleView),
 		}
 		return namespaceID, nil
 	}

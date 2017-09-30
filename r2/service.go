@@ -448,7 +448,7 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 }
 
 func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
-	var result map[string]*rules.MappingRuleView
+	result := make(map[string]*rules.MappingRuleView)
 	for id, m := range mrs {
 		if len(m) > 0 {
 			// views included in m are sorted latest first.
@@ -460,7 +460,7 @@ func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
 
 // nolint
 func newRollupRules(rrs rules.RollupRules) map[string]*rules.RollupRuleView {
-	var result map[string]*rules.RollupRuleView
+	result := make(map[string]*rules.RollupRuleView)
 	for id, r := range rrs {
 		if len(r) > 0 {
 			// views included in m are sorted latest first.

@@ -404,12 +404,12 @@ type CurrentRuleSet struct {
 	Namespace    string
 	Version      int
 	CutoverNanos int64
-	MappingRules []*rules.MappingRuleView
-	RollupRules  []*rules.RollupRuleView
+	MappingRules map[string]*rules.MappingRuleView
+	RollupRules  map[string]*rules.RollupRuleView
 }
 
-// nolint
-func newCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
+// NewCurrentRuleSetView creates a new current ruleset view from a given ruleset
+func NewCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
 	mrs, err := r.MappingRules()
 	if err != nil {
 		return nil, err
@@ -430,13 +430,13 @@ func newCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
 }
 
 func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
-	mrJSON := make([]mappingRuleJSON, len(c.MappingRules))
-	for i, m := range c.MappingRules {
-		mrJSON[i] = newMappingRuleJSON(m)
+	var mrJSON []mappingRuleJSON
+	for _, m := range c.MappingRules {
+		mrJSON = append(mrJSON, newMappingRuleJSON(m))
 	}
 	rrJSON := make([]rollupRuleJSON, len(c.RollupRules))
-	for i, r := range c.RollupRules {
-		rrJSON[i] = newRollupRuleJSON(r)
+	for _, r := range c.RollupRules {
+		rrJSON = append(rrJSON, newRollupRuleJSON(r))
 	}
 	return ruleSetJSON{
 		Namespace:     c.Namespace,
@@ -447,25 +447,24 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 	}
 }
 
-// nolint
-func newMappingRules(mrs rules.MappingRules) []*rules.MappingRuleView {
-	var result []*rules.MappingRuleView
-	for _, m := range mrs {
+func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
+	var result map[string]*rules.MappingRuleView
+	for id, m := range mrs {
 		if len(m) > 0 {
 			// views included in m are sorted latest first.
-			result = append(result, m[0])
+			result[id] = m[0]
 		}
 	}
 	return result
 }
 
 // nolint
-func newRollupRules(rrs rules.RollupRules) []*rules.RollupRuleView {
-	var result []*rules.RollupRuleView
-	for _, r := range rrs {
+func newRollupRules(rrs rules.RollupRules) map[string]*rules.RollupRuleView {
+	var result map[string]*rules.RollupRuleView
+	for id, r := range rrs {
 		if len(r) > 0 {
 			// views included in m are sorted latest first.
-			result = append(result, r[0])
+			result[id] = r[0]
 		}
 	}
 	return result

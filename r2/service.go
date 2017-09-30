@@ -192,6 +192,7 @@ func (s *service) fetchNamespaces(w http.ResponseWriter, _ *http.Request) error 
 	for i, n := range names {
 		nss[i] = namespaceJSON{ID: n}
 	}
+
 	return s.write(w, namespacesJSON{Version: v, Namespaces: nss})
 }
 

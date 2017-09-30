@@ -27,22 +27,21 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
-	"github.com/m3db/m3ctl/r2/stub"
+	"github.com/m3db/m3ctl/services/r2ctl/config"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
-	"github.com/m3db/m3x/config"
+	xconfig "github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
-	"github.com/m3db/m3x/log"
 )
 
 const (
 	portEnvVar = "R2CTL_PORT"
 )
 
+<<<<<<< HEAD
 type serverConfig struct {
 	// Host is the host name the HTTP server shoud listen on.
 	Host string `yaml:"host" validate:"nonzero"`
@@ -82,6 +81,8 @@ type configuration struct {
 	Auth auth.SimpleAuthConfig `yaml:"auth"`
 }
 
+=======
+>>>>>>> kv implementation support for config
 func main() {
 	configFile := flag.String("f", "config/base.yaml", "configuration file")
 	flag.Parse()
@@ -91,8 +92,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	var cfg configuration
-	if err := config.LoadFile(&cfg, *configFile); err != nil {
+	var cfg config.R2CtlConfiguration
+	if err := xconfig.LoadFile(&cfg, *configFile); err != nil {
 		fmt.Printf("error loading config file: %v\n", err)
 		os.Exit(1)
 	}
@@ -104,7 +105,6 @@ func main() {
 	}
 
 	envPort := os.Getenv(portEnvVar)
-
 	if envPort != "" {
 		if p, err := strconv.Atoi(envPort); err == nil {
 			logger.Infof("Using env supplied port var: %s=%d", portEnvVar, p)
@@ -118,22 +118,43 @@ func main() {
 		logger.Fatalf("No valid port configured. Can't start.")
 	}
 
+	scope, closer, err := cfg.Metrics.NewRootScope()
+	if err != nil {
+		logger.Fatalf("error creating metrics root scope: %v", err)
+	}
+	defer closer.Close()
+
 	instrumentOpts := instrument.NewOptions().
-		SetLogger(logger)
+		SetLogger(logger).
+		SetMetricsScope(scope).
+		SetMetricsSamplingRate(cfg.Metrics.SampleRate()).
+		SetReportInterval(cfg.Metrics.ReportInterval())
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
-	serverOpts := cfg.HTTP.newHTTPServerOptions(instrumentOpts)
+	serverOpts := cfg.HTTP.NewHTTPServerOptions(instrumentOpts)
 
+<<<<<<< HEAD
 	authService := cfg.Auth.NewSimpleAuth()
+=======
+	store, err := cfg.Store.NewR2Store(instrumentOpts)
+	if err != nil {
+		logger.Fatalf("error initializing backing store: %v", err)
+	}
+>>>>>>> kv implementation support for config
 
 	doneCh := make(chan struct{})
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
+<<<<<<< HEAD
 		r2.NewService(instrumentOpts, "/r2/v1/", authService, stub.NewStore(instrumentOpts)),
+=======
+		r2.NewService(instrumentOpts, "/r2/v1/", store),
+>>>>>>> kv implementation support for config
 		health.NewService(instrumentOpts),
 	)
 
+	doneCh := make(chan struct{})
 	go func() {
 		go func() {
 			logger.Infof("Starting http server on: %s", listenAddr)

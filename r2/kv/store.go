@@ -23,20 +23,18 @@ package kv
 import (
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3x/instrument"
 )
 
 type store struct {
-	cfg StoreConfig
-}
-
-// StoreConfig is all the configuration state needed by a kv service.
-type StoreConfig struct {
-	UpdateHelper rules.RuleSetUpdateHelper
+	iOpts        instrument.Options
+	updateHelper rules.RuleSetUpdateHelper
+	ruleStore    rules.Store
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(cfg StoreConfig) r2.Store {
-	return &store{cfg: cfg}
+func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.Store) r2.Store {
+	return &store{iOpts: iOpts, updateHelper: uh, ruleStore: rs}
 }
 
 func (s *store) FetchNamespaces() ([]string, int, error) {

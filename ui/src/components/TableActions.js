@@ -18,36 +18,40 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package server
+import React from 'react';
+import {Icon, Popconfirm, Tooltip} from 'antd';
 
-import (
-	"net/http"
-
-	"github.com/gorilla/mux"
-)
-
-// NewServer creates a new http server for R2.
-func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
-	router := mux.NewRouter()
-
-	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()
-	r2Service.RegisterHandlers(r2Router)
-
-	healthRouter := router.PathPrefix(healthService.URLPrefix()).Subrouter()
-	healthService.RegisterHandlers(healthRouter)
-
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ui/build/index.html")
-
-	})
-	router.PathPrefix("/public").Handler(http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-
-	router.PathPrefix("/static").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("ui/build/static"))))
-
-	return &http.Server{
-		WriteTimeout: serverOpts.WriteTimeout(),
-		ReadTimeout:  serverOpts.ReadTimeout(),
-		Addr:         address,
-		Handler:      router,
-	}
+function TableActions(props) {
+  const {
+    onDeleteClicked,
+    onEditClicked,
+    onHistoryClicked = noop => noop,
+  } = props;
+  return (
+    <div>
+      <a>
+        <Tooltip title="Edit">
+          <Icon type="edit" onClick={onEditClicked} />
+        </Tooltip>
+      </a>
+      <span className="ant-divider" />
+      <Popconfirm
+        title="Are you sure you want to delete?"
+        onConfirm={onDeleteClicked}>
+        <a>
+          <Tooltip title="Delete">
+            <Icon type="delete" />
+          </Tooltip>
+        </a>
+      </Popconfirm>
+      <span className="ant-divider" />
+      <a onClick={onHistoryClicked}>
+        <Tooltip title="History">
+          <Icon type="clock-circle-o" />
+        </Tooltip>
+      </a>
+    </div>
+  );
 }
+
+export default TableActions;

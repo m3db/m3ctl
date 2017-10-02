@@ -18,36 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package server
-
-import (
-	"net/http"
-
-	"github.com/gorilla/mux"
-)
-
-// NewServer creates a new http server for R2.
-func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
-	router := mux.NewRouter()
-
-	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()
-	r2Service.RegisterHandlers(r2Router)
-
-	healthRouter := router.PathPrefix(healthService.URLPrefix()).Subrouter()
-	healthService.RegisterHandlers(healthRouter)
-
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ui/build/index.html")
-
-	})
-	router.PathPrefix("/public").Handler(http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-
-	router.PathPrefix("/static").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("ui/build/static"))))
-
-	return &http.Server{
-		WriteTimeout: serverOpts.WriteTimeout(),
-		ReadTimeout:  serverOpts.ReadTimeout(),
-		Addr:         address,
-		Handler:      router,
-	}
-}
+export * from './promiseState';
+export * from './api';

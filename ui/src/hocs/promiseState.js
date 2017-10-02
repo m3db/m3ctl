@@ -18,36 +18,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package server
+import {lifecycle} from 'recompose';
+import {PromiseState} from 'react-refetch';
+import _ from 'lodash';
 
-import (
-	"net/http"
-
-	"github.com/gorilla/mux"
-)
-
-// NewServer creates a new http server for R2.
-func NewServer(address string, serverOpts Options, r2Service, healthService Service) *http.Server {
-	router := mux.NewRouter()
-
-	r2Router := router.PathPrefix(r2Service.URLPrefix()).Subrouter()
-	r2Service.RegisterHandlers(r2Router)
-
-	healthRouter := router.PathPrefix(healthService.URLPrefix()).Subrouter()
-	healthService.RegisterHandlers(healthRouter)
-
-	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ui/build/index.html")
-
-	})
-	router.PathPrefix("/public").Handler(http.StripPrefix("/public", http.FileServer(http.Dir("public"))))
-
-	router.PathPrefix("/static").Handler(http.StripPrefix("/static", http.FileServer(http.Dir("ui/build/static"))))
-
-	return &http.Server{
-		WriteTimeout: serverOpts.WriteTimeout(),
-		ReadTimeout:  serverOpts.ReadTimeout(),
-		Addr:         address,
-		Handler:      router,
-	}
+export function withPromiseStateChangeCallback(keys, fn) {
+  return lifecycle({
+    componentDidUpdate(prevProps) {
+      const props = this.props;
+      const filteredProps = keys ? _.pick(props, keys) : props;
+      _.forEach(filteredProps, (prop, propName) => {
+        if (prop instanceof PromiseState) {
+          const promiseState = prop;
+          const prevPromiseState = prevProps[propName];
+          // Dont do anything
+          if (
+            prevPromiseState &&
+            (prevPromiseState.pending !== promiseState.pending ||
+              prevPromiseState.refreshing !== promiseState.refreshing)
+          ) {
+            fn(props);
+          }
+        }
+      });
+    },
+  });
 }
+
+export default {
+  withPromiseStateChangeCallback,
+};

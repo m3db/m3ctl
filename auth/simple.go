@@ -26,7 +26,7 @@ import (
 	"net/http"
 )
 
-// SimpleAuthConfig holds this configuration necessary for a simple auth implementation
+// SimpleAuthConfig holds this configuration necessary for a simple auth implementation.
 type SimpleAuthConfig struct {
 	// This is an http header that identifies the user performing the operation
 	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`

@@ -135,15 +135,15 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 
 	var err error
 	switch opError.(type) {
-	case ConflictError:
+	case conflictError:
 		err = writeAPIResponse(w, http.StatusConflict, opError.Error())
-	case BadInputError:
+	case badInputError:
 		err = writeAPIResponse(w, http.StatusBadRequest, opError.Error())
-	case VersionError:
+	case versionError:
 		err = writeAPIResponse(w, http.StatusConflict, opError.Error())
-	case NotFoundError:
+	case notFoundError:
 		err = writeAPIResponse(w, http.StatusNotFound, opError.Error())
-	case AuthError:
+	case authError:
 		err = writeAPIResponse(w, http.StatusUnauthorized, opError.Error())
 	default:
 		err = writeAPIResponse(w, http.StatusInternalServerError, opError.Error())

@@ -25,11 +25,11 @@ import (
 	"net/http"
 )
 
-type key int
+type keyType int
 
 const (
 	// UserIDField is a key
-	UserIDField key = iota
+	UserIDField keyType = iota
 )
 
 // HTTPAuthService defines how to handle requests for various http authentication methods.

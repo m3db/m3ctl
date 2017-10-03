@@ -29,27 +29,27 @@ import (
 // SimpleAuthConfig holds this configuration necessary for a simple auth implementation
 type SimpleAuthConfig struct {
 	// This is an http header that identifies the user performing the operation
-	UserNameHeader string `yaml:"userNameHeader" validate:"nonzero"`
+	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
 }
 
-// SimpleAuth is an naive authentication method that just checks for a HTTPHeader identifying the user
+// simpleAuth is an naive authentication method that just checks for a HTTPHeader identifying the user
 // performing the action.
-type SimpleAuth struct {
-	userNameHeader string
+type simpleAuth struct {
+	userIDHeader string
 }
 
 // NewSimpleAuth creates a new simple auth instance given using the provided config.
-func (ac SimpleAuthConfig) NewSimpleAuth() SimpleAuth {
-	return SimpleAuth{userNameHeader: ac.UserNameHeader}
+func (ac SimpleAuthConfig) NewSimpleAuth() HTTPAuthService {
+	return simpleAuth{userIDHeader: ac.UserIDHeader}
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
 // Otherwise, it returns an Unathorized http response.
-func (a SimpleAuth) Authenticate(next http.Handler) http.Handler {
+func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Header.Get(a.userNameHeader)
+		userID := r.Header.Get(a.userIDHeader)
 		if userID == "" {
-			http.Error(w, fmt.Sprintf("Must provide header: [%s]", a.userNameHeader), http.StatusUnauthorized)
+			http.Error(w, fmt.Sprintf("Must provide header: [%s]", a.userIDHeader), http.StatusUnauthorized)
 			return
 		}
 		ctx := a.SetUser(r.Context(), userID)
@@ -58,12 +58,12 @@ func (a SimpleAuth) Authenticate(next http.Handler) http.Handler {
 }
 
 // SetUser sets the user making the changes to the api.
-func (a SimpleAuth) SetUser(parent context.Context, userID string) context.Context {
+func (a simpleAuth) SetUser(parent context.Context, userID string) context.Context {
 	return context.WithValue(parent, UserIDField, userID)
 }
 
 // GetUser fetches the ID of an api caller from the global context.
-func (a SimpleAuth) GetUser(ctx context.Context) (string, error) {
+func (a simpleAuth) GetUser(ctx context.Context) (string, error) {
 	id := ctx.Value(UserIDField)
 	if id == nil {
 		return "", fmt.Errorf("couldn't identify user")

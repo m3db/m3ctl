@@ -34,10 +34,10 @@ const (
 
 // HTTPAuthService defines how to handle requests for various http authentication methods.
 type HTTPAuthService interface {
-	// Authenticate should return a handler that performs some check on the request coming into the given handler
+	// NewAuthHandler should return a handler that performs some check on the request coming into the given handler
 	// and then runs the handler if it is. If the request is authenticated successfully, it should call SetUser
 	// to make the callers id available to the service in a global context.
-	Authenticate(next http.Handler) http.Handler
+	NewAuthHandler(next http.Handler) http.Handler
 
 	// SetUser sets a userID that identifies the api caller in the global context.
 	SetUser(parent context.Context, userID string) context.Context

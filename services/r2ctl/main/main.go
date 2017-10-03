@@ -78,7 +78,7 @@ type configuration struct {
 	// HTTP server configuration.
 	HTTP serverConfig `yaml:"http"`
 
-	// Simple Auth Config
+	// Simple Auth Config.
 	Auth auth.SimpleAuthConfig `yaml:"auth"`
 }
 

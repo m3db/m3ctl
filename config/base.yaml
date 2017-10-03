@@ -9,4 +9,4 @@ http:
   writeTimeout: 10s
 
 auth:
-  userNameHeader: user
+  userIDHeader: user

@@ -120,14 +120,14 @@ type r2Handler struct {
 	auth  auth.HTTPAuthService
 }
 
-func (h r2Handler) handle(fn r2HandlerFunc) http.Handler {
+func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {
 			h.handleError(w, err)
 		}
 	})
 
-	return h.auth.Authenticate(f)
+	return h.auth.NewAuthHandler(f)
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -363,32 +363,32 @@ func (s *service) RegisterHandlers(router *mux.Router) {
 	// Namespaces action
 	h := r2Handler{s.iOpts, s.authService}
 
-	router.Handle(namespacePath, h.handle(s.fetchNamespaces)).Methods(http.MethodGet)
-	router.Handle(namespacePath, h.handle(s.createNamespace)).Methods(http.MethodPost)
+	router.Handle(namespacePath, h.wrap(s.fetchNamespaces)).Methods(http.MethodGet)
+	router.Handle(namespacePath, h.wrap(s.createNamespace)).Methods(http.MethodPost)
 
 	// Ruleset actions
-	router.Handle(namespacePrefix, h.handle(s.fetchNamespace)).Methods(http.MethodGet)
-	router.Handle(namespacePrefix, h.handle(s.deleteNamespace)).Methods(http.MethodDelete)
+	router.Handle(namespacePrefix, h.wrap(s.fetchNamespace)).Methods(http.MethodGet)
+	router.Handle(namespacePrefix, h.wrap(s.deleteNamespace)).Methods(http.MethodDelete)
 
 	// Mapping Rule actions
-	router.Handle(mappingRuleRoot, h.handle(s.createMappingRule)).Methods(http.MethodPost)
+	router.Handle(mappingRuleRoot, h.wrap(s.createMappingRule)).Methods(http.MethodPost)
 
-	router.Handle(mappingRuleWithIDPath, h.handle(s.fetchMappingRule)).Methods(http.MethodGet)
-	router.Handle(mappingRuleWithIDPath, h.handle(s.updateMappingRule)).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(mappingRuleWithIDPath, h.handle(s.deleteMappingRule)).Methods(http.MethodDelete)
+	router.Handle(mappingRuleWithIDPath, h.wrap(s.fetchMappingRule)).Methods(http.MethodGet)
+	router.Handle(mappingRuleWithIDPath, h.wrap(s.updateMappingRule)).Methods(http.MethodPut, http.MethodPatch)
+	router.Handle(mappingRuleWithIDPath, h.wrap(s.deleteMappingRule)).Methods(http.MethodDelete)
 
 	// Mapping Rule history
-	router.Handle(mappingRuleHistoryPath, h.handle(s.fetchMappingRuleHistory)).Methods(http.MethodGet)
+	router.Handle(mappingRuleHistoryPath, h.wrap(s.fetchMappingRuleHistory)).Methods(http.MethodGet)
 
 	// Rollup Rule actions
-	router.Handle(rollupRuleRoot, h.handle(s.createRollupRule)).Methods(http.MethodPost)
+	router.Handle(rollupRuleRoot, h.wrap(s.createRollupRule)).Methods(http.MethodPost)
 
-	router.Handle(rollupRuleWithIDPath, h.handle(s.fetchRollupRule)).Methods(http.MethodGet)
-	router.Handle(rollupRuleWithIDPath, h.handle(s.updateRollupRule)).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(rollupRuleWithIDPath, h.handle(s.deleteRollupRule)).Methods(http.MethodDelete)
+	router.Handle(rollupRuleWithIDPath, h.wrap(s.fetchRollupRule)).Methods(http.MethodGet)
+	router.Handle(rollupRuleWithIDPath, h.wrap(s.updateRollupRule)).Methods(http.MethodPut, http.MethodPatch)
+	router.Handle(rollupRuleWithIDPath, h.wrap(s.deleteRollupRule)).Methods(http.MethodDelete)
 
 	// Rollup Rule history
-	router.Handle(rollupRuleHistoryPath, h.handle(s.fetchRollupRuleHistory)).Methods(http.MethodGet)
+	router.Handle(rollupRuleHistoryPath, h.wrap(s.fetchRollupRuleHistory)).Methods(http.MethodGet)
 
 	log.Infof("Registered rules endpoints")
 }

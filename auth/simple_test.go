@@ -31,13 +31,13 @@ import (
 
 var (
 	testConfig = SimpleAuthConfig{
-		UserNameHeader: "testHeader",
+		UserIDHeader: "testHeader",
 	}
 )
 
 func TestNewSimpleAuth(t *testing.T) {
-	a := testConfig.NewSimpleAuth()
-	require.Equal(t, a.userNameHeader, "testHeader")
+	a := testConfig.NewSimpleAuth().(simpleAuth)
+	require.Equal(t, a.userIDHeader, "testHeader")
 }
 
 func TestSetUser(t *testing.T) {
@@ -70,6 +70,6 @@ func TestHealthCheck(t *testing.T) {
 		require.Equal(t, "testHeader", v)
 	})
 
-	wrappedCall := a.Authenticate(f)
+	wrappedCall := a.NewAuthHandler(f)
 	wrappedCall.ServeHTTP(httptest.NewRecorder(), &http.Request{})
 }

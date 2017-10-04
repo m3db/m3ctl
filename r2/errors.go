@@ -29,7 +29,7 @@ func NewInternalError(msg string) error { return errors.New(msg) }
 type conflictError string
 
 // NewConflictError creates a new Conflict Error
-func NewConflictError(msg string) error { return errors.New(msg) }
+func NewConflictError(msg string) error { return conflictError(msg) }
 
 func (e conflictError) Error() string { return string(e) }
 
@@ -38,7 +38,7 @@ func (e conflictError) Error() string { return string(e) }
 type versionError string
 
 // NewVersionError creates a new Version Error
-func NewVersionError(msg string) error { return errors.New(msg) }
+func NewVersionError(msg string) error { return versionError(msg) }
 
 func (e versionError) Error() string { return string(e) }
 
@@ -46,7 +46,7 @@ func (e versionError) Error() string { return string(e) }
 type badInputError string
 
 // NewBadInputError creates a new Bad Input Error.
-func NewBadInputError(msg string) error { return errors.New(msg) }
+func NewBadInputError(msg string) error { return badInputError(msg) }
 
 func (e badInputError) Error() string { return string(e) }
 
@@ -54,7 +54,7 @@ func (e badInputError) Error() string { return string(e) }
 type notFoundError string
 
 // NewNotFoundError creates a new not found Error.
-func NewNotFoundError(msg string) error { return errors.New(msg) }
+func NewNotFoundError(msg string) error { return notFoundError(msg) }
 
 func (e notFoundError) Error() string { return string(e) }
 
@@ -62,6 +62,6 @@ func (e notFoundError) Error() string { return string(e) }
 type authError string
 
 // NewAuthError creates a new not found Error.
-func NewAuthError(msg string) error { return errors.New(msg) }
+func NewAuthError(msg string) error { return authError(msg) }
 
 func (e authError) Error() string { return string(e) }

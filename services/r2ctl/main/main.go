@@ -28,7 +28,6 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/services/r2ctl/config"
@@ -41,48 +40,6 @@ const (
 	portEnvVar = "R2CTL_PORT"
 )
 
-<<<<<<< HEAD
-type serverConfig struct {
-	// Host is the host name the HTTP server shoud listen on.
-	Host string `yaml:"host" validate:"nonzero"`
-
-	// Port is the port the HTTP server should listen on.
-	Port int `yaml:"port"`
-
-	// ReadTimeout is the HTTP server read timeout.
-	ReadTimeout time.Duration `yaml:"readTimeout"`
-
-	// WriteTimeout HTTP server write timeout.
-	WriteTimeout time.Duration `yaml:"writeTimeout"`
-}
-
-func (c *serverConfig) newHTTPServerOptions(
-	instrumentOpts instrument.Options,
-) server.Options {
-	opts := server.NewOptions().SetInstrumentOptions(instrumentOpts)
-	if c.ReadTimeout != 0 {
-		opts = opts.SetReadTimeout(c.ReadTimeout)
-	}
-	if c.WriteTimeout != 0 {
-		opts = opts.SetWriteTimeout(c.WriteTimeout)
-	}
-
-	return opts
-}
-
-type configuration struct {
-	// Logging configuration.
-	Logging log.Configuration `yaml:"logging"`
-
-	// HTTP server configuration.
-	HTTP serverConfig `yaml:"http"`
-
-	// Simple Auth Config.
-	Auth auth.SimpleAuthConfig `yaml:"auth"`
-}
-
-=======
->>>>>>> kv implementation support for config
 func main() {
 	configFile := flag.String("f", "config/base.yaml", "configuration file")
 	flag.Parse()
@@ -133,24 +90,17 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	serverOpts := cfg.HTTP.NewHTTPServerOptions(instrumentOpts)
 
-<<<<<<< HEAD
 	authService := cfg.Auth.NewSimpleAuth()
-=======
 	store, err := cfg.Store.NewR2Store(instrumentOpts)
 	if err != nil {
 		logger.Fatalf("error initializing backing store: %v", err)
 	}
->>>>>>> kv implementation support for config
 
 	doneCh := make(chan struct{})
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
-<<<<<<< HEAD
-		r2.NewService(instrumentOpts, "/r2/v1/", authService, stub.NewStore(instrumentOpts)),
-=======
 		r2.NewService(instrumentOpts, "/r2/v1/", store),
->>>>>>> kv implementation support for config
 		health.NewService(instrumentOpts),
 	)
 

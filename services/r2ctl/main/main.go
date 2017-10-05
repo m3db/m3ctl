@@ -96,11 +96,10 @@ func main() {
 		logger.Fatalf("error initializing backing store: %v", err)
 	}
 
-	doneCh := make(chan struct{})
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
-		r2.NewService(instrumentOpts, "/r2/v1/", store),
+		r2.NewService(instrumentOpts, "/r2/v1/", authService, store),
 		health.NewService(instrumentOpts),
 	)
 

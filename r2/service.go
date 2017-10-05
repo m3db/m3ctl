@@ -220,7 +220,7 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error 
 
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	namespaceID := vars["namespaceIDVar"]
+	namespaceID := vars[namespaceIDVar]
 	if err := s.store.DeleteNamespace(namespaceID); err != nil {
 		return err
 	}

@@ -25,6 +25,8 @@ import (
 	"time"
 
 	"github.com/m3db/m3cluster/client/etcd"
+	clusterKV "github.com/m3db/m3cluster/kv"
+	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/r2/kv"
 	"github.com/m3db/m3ctl/r2/stub"
@@ -46,6 +48,9 @@ type R2CtlConfiguration struct {
 
 	// Store configuration.
 	Store R2StoreConfiguration `yaml:"store"`
+
+	// Simple Auth Config.
+	Auth auth.SimpleAuthConfig `yaml:"auth"`
 }
 
 // R2StoreConfiguration has all the fields necessary for an R2Store
@@ -60,13 +65,13 @@ type R2StoreConfiguration struct {
 // KVStoreConfig is the configuration for the etcd backed implementation of the kvStore.
 type KVStoreConfig struct {
 	// KV namespace.
-	KVNamespace string `yaml:"kvNamespace" validate:"nonzero"`
+	RulesKVConfig clusterKV.Configuration `yaml:"rulesKVConfig"`
 
 	// KVClient configuration for key value store.
 	KVClient *etcd.Configuration `yaml:"etcd" validate:"nonzero"`
 
 	// Propagation delay for rule updates.
-	PropagationDelay time.Duration `yaml:"propdelay" validate:"nonzero"`
+	PropagationDelay time.Duration `yaml:"propagationDelay" validate:"nonzero"`
 
 	// NamespacesKey is where the namespace data lives in kv
 	NamespacesKey string `yaml:"namespacesKey" validate:"nonzero"`
@@ -90,7 +95,7 @@ func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options) (r2.Store, er
 		return nil, err
 	}
 
-	store, err := client.TxnStore(c.KV.KVNamespace)
+	store, err := client.TxnStore(c.KV.RulesKVConfig.NewOptions())
 	if err != nil {
 		return nil, err
 	}

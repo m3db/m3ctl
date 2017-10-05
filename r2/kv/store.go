@@ -41,7 +41,7 @@ func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.S
 }
 
 func (s *store) updateMeta() rules.UpdateMetadata {
-	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano())
+	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano(), "testUser")
 }
 
 func (s *store) FetchNamespaces() ([]string, int, error) {
@@ -50,9 +50,11 @@ func (s *store) FetchNamespaces() ([]string, int, error) {
 		return nil, 0, nil
 	}
 	namespaces := nss.Namespaces()
-	namespaceIds := make([]string, len(namespaces))
-	for i, n := range nss.Namespaces() {
-		namespaceIds[i] = string(n.Name())
+	var namespaceIds []string
+	for _, n := range namespaces {
+		if !n.Tombstoned() {
+			namespaceIds = append(namespaceIds, string(n.Name()))
+		}
 	}
 	return namespaceIds, nss.Version(), nil
 }
@@ -70,6 +72,7 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 
 	rs := rules.NewEmptyRuleSet(namespaceID, s.updateMeta())
 	if err = s.ruleStore.WriteAll(nss, rs); err != nil {
+		s.iOpts.Logger().Info("here")
 		return "", r2.NewInternalError(err.Error())
 	}
 
@@ -138,9 +141,14 @@ func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView
 		return nil, r2.NewInternalError(err.Error())
 	}
 
+	err = s.ruleStore.WriteRuleSet(mutable)
+	if err != nil {
+		return nil, r2.NewInternalError(err.Error())
+	}
+
 	crs, err := s.FetchRuleSet(namespaceID)
 	if err != nil {
-		return nil, err
+		return nil, r2.NewInternalError(err.Error())
 	}
 
 	mr, exists := crs.MappingRules[newID]

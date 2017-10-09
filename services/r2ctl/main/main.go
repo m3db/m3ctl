@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/services/r2ctl/config"
@@ -90,10 +91,14 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	serverOpts := cfg.HTTP.NewHTTPServerOptions(instrumentOpts)
 
-	authService := cfg.Auth.NewSimpleAuth()
 	store, err := cfg.Store.NewR2Store(instrumentOpts)
 	if err != nil {
 		logger.Fatalf("error initializing backing store: %v", err)
+	}
+
+	authService := auth.NewNoopAuth()
+	if cfg.Auth != nil {
+		authService = cfg.Auth.NewSimpleAuth()
 	}
 
 	r2ApiServer := server.NewServer(

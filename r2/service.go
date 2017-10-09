@@ -127,7 +127,11 @@ func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
 		}
 	})
 
-	return h.auth.NewAuthHandler(f)
+	if h.auth != nil {
+		return h.auth.NewAuthHandler(f)
+	}
+
+	return f
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -182,16 +186,10 @@ func (s *service) write(w http.ResponseWriter, retCode int, data interface{}) er
 	return writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
 }
 
-func (s *service) fetchNamespaces(w http.ResponseWriter, r *http.Request) error {
-	name, err := s.authService.GetUser(r.Context())
-	if err != nil {
-		return err
-	}
-	s.iOpts.Logger().Infof("Email: %s", name)
-
+func (s *service) fetchNamespaces(w http.ResponseWriter, _ *http.Request) error {
 	view, err := s.store.FetchNamespaces()
 	if err != nil {
-		return writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")
+		return err
 	}
 
 	return s.write(w, http.StatusOK, newNamespacesJSON(view))
@@ -437,7 +435,7 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 	for _, m := range c.MappingRules {
 		mrJSON = append(mrJSON, newMappingRuleJSON(m))
 	}
-	rrJSON := make([]rollupRuleJSON, len(c.RollupRules))
+	var rrJSON []rollupRuleJSON
 	for _, r := range c.RollupRules {
 		rrJSON = append(rrJSON, newRollupRuleJSON(r))
 	}

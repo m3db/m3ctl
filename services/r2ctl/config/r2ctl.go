@@ -50,7 +50,7 @@ type R2CtlConfiguration struct {
 	Store R2StoreConfiguration `yaml:"store"`
 
 	// Simple Auth Config.
-	Auth auth.SimpleAuthConfig `yaml:"auth"`
+	Auth *auth.SimpleAuthConfig `yaml:"auth"`
 }
 
 // R2StoreConfiguration has all the fields necessary for an R2Store

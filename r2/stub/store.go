@@ -35,7 +35,7 @@ type mappingRuleHistories map[string][]*rules.MappingRuleView
 type rollupRuleHistories map[string][]*rules.RollupRuleView
 
 type stubData struct {
-	Namespaces        []string
+	Namespaces        *rules.NamespacesView
 	ErrorNamespace    string
 	ConflictNamespace string
 	RuleSets          map[string]*r2.CurrentRuleSet
@@ -53,7 +53,21 @@ var (
 	dummyData        = stubData{
 		ErrorNamespace:    "errNs",
 		ConflictNamespace: "conflictNs",
-		Namespaces:        []string{"ns1", "ns2"},
+		Namespaces: &rules.NamespacesView{
+			Version: 1,
+			Namespaces: []*rules.NamespaceView{
+				&rules.NamespaceView{
+					Name:              "ns1",
+					ForRuleSetVersion: 1,
+					Tombstoned:        false,
+				},
+				&rules.NamespaceView{
+					Name:              "ns2",
+					ForRuleSetVersion: 1,
+					Tombstoned:        false,
+				},
+			},
+		},
 		RuleSets: map[string]*r2.CurrentRuleSet{
 			"ns1": &r2.CurrentRuleSet{
 				Namespace:    "ns1",
@@ -283,23 +297,29 @@ func NewStore(iOpts instrument.Options) r2.Store {
 	return &store{data: &dummyData, iOpts: iOpts}
 }
 
-func (s *store) FetchNamespaces() ([]string, int, error) {
-	return s.data.Namespaces, 1, nil
+func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
+	return s.data.Namespaces, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string) (string, error) {
+func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
-		return "", r2.NewInternalError(fmt.Sprintf("could not create namespace: %s", namespaceID))
+		return nil, r2.NewInternalError(fmt.Sprintf("could not create namespace: %s", namespaceID))
 	case s.data.ConflictNamespace:
-		return "", r2.NewVersionError(fmt.Sprintf("namespaces version mismatch"))
+		return nil, r2.NewVersionError(fmt.Sprintf("namespaces version mismatch"))
 	default:
-		for _, n := range s.data.Namespaces {
-			if namespaceID == n {
-				return "", r2.NewConflictError(fmt.Sprintf("namespace %s already exists", namespaceID))
+		for _, n := range s.data.Namespaces.Namespaces {
+			if namespaceID == n.Name {
+				return nil, r2.NewConflictError(fmt.Sprintf("namespace %s already exists", namespaceID))
 			}
 		}
-		s.data.Namespaces = append(s.data.Namespaces, namespaceID)
+
+		newView := &rules.NamespaceView{
+			Name:              namespaceID,
+			ForRuleSetVersion: 1,
+		}
+
+		s.data.Namespaces.Namespaces = append(s.data.Namespaces.Namespaces, newView)
 		s.data.RuleSets[namespaceID] = &r2.CurrentRuleSet{
 			Namespace:    namespaceID,
 			Version:      1,
@@ -307,7 +327,7 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 			MappingRules: make(map[string]*rules.MappingRuleView),
 			RollupRules:  make(map[string]*rules.RollupRuleView),
 		}
-		return namespaceID, nil
+		return newView, nil
 	}
 }
 
@@ -318,9 +338,9 @@ func (s *store) DeleteNamespace(namespaceID string) error {
 	case s.data.ConflictNamespace:
 		return r2.NewVersionError("namespace version mismatch")
 	default:
-		for i, n := range s.data.Namespaces {
-			if namespaceID == n {
-				s.data.Namespaces = append(s.data.Namespaces[:i], s.data.Namespaces[i+1:]...)
+		for i, n := range s.data.Namespaces.Namespaces {
+			if namespaceID == n.Name {
+				s.data.Namespaces.Namespaces = append(s.data.Namespaces.Namespaces[:i], s.data.Namespaces.Namespaces[i+1:]...)
 				return nil
 			}
 		}
@@ -333,8 +353,8 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("could not fetch namespace: %s", namespaceID))
 	default:
-		for _, n := range s.data.Namespaces {
-			if namespaceID == n {
+		for _, n := range s.data.Namespaces.Namespaces {
+			if namespaceID == n.Name {
 				rs := s.data.RuleSets[namespaceID]
 				return rs, nil
 			}

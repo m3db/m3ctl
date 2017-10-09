@@ -25,9 +25,9 @@ import "github.com/m3db/m3metrics/rules"
 // Store is a construct that can perform operations against a backing rule store.
 type Store interface {
 	// Fetch namespaces and their version
-	FetchNamespaces() ([]string, int, error)
+	FetchNamespaces() (*rules.NamespacesView, error)
 
-	CreateNamespace(namespaceID string) (string, error)
+	CreateNamespace(namespaceID string) (*rules.NamespaceView, error)
 
 	DeleteNamespace(namespaceID string) error
 

@@ -29,10 +29,6 @@ import (
 	"github.com/m3db/m3x/instrument"
 )
 
-const (
-	emptyErrorMsg = ""
-)
-
 type store struct {
 	iOpts        instrument.Options
 	updateHelper rules.RuleSetUpdateHelper
@@ -48,32 +44,30 @@ func (s *store) updateMeta() rules.UpdateMetadata {
 	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano(), "testUser")
 }
 
-func (s *store) FetchNamespaces() ([]string, int, error) {
+func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return nil, 0, nil
+		return nil, nil
 	}
 
 	// Todo(dgromov): Use NamespaceView here.
-	namespaces := nss.Namespaces()
-	var namespaceIds []string
-	for _, n := range namespaces {
-		if !n.Tombstoned() {
-			namespaceIds = append(namespaceIds, string(n.Name()))
-		}
+	namespaces, err := nss.NamespacesView()
+	if err != nil {
+		s.handleUpstreamError(err)
 	}
-	return namespaceIds, nss.Version(), nil
+
+	return namespaces, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string) (string, error) {
+func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return namespaceID, err
+		return nil, err
 	}
 
 	revived, err := nss.AddNamespace(namespaceID)
 	if err != nil {
-		return "", r2.NewConflictError(err.Error())
+		return nil, s.handleUpstreamError(err)
 	}
 
 	rs := rules.NewEmptyRuleSet(namespaceID, s.updateMeta())
@@ -81,19 +75,34 @@ func (s *store) CreateNamespace(namespaceID string) (string, error) {
 	if revived {
 		rawRs, err := s.ruleStore.ReadRuleSet(namespaceID)
 		if err != nil {
-			return "", r2.NewInternalError(err.Error())
+			return nil, s.handleUpstreamError(err)
 		}
 		rs = rawRs.ToMutableRuleSet().Clone()
 		if err = rs.Revive(s.updateMeta()); err != nil {
-			return "", r2.NewInternalError(err.Error())
+			return nil, s.handleUpstreamError(err)
 		}
 	}
 
 	if err = s.ruleStore.WriteAll(nss, rs); err != nil {
-		return "", r2.NewInternalError(err.Error())
+		return nil, s.handleUpstreamError(err)
 	}
 
-	return namespaceID, nil
+	nss, err = s.ruleStore.ReadNamespaces()
+	if err != nil {
+		return nil, err
+	}
+
+	ns, err := nss.Namespace(namespaceID)
+	if err != nil {
+		return nil, r2.NewNotFoundError(fmt.Sprintf("namespace: %s does not exist", namespaceID))
+	}
+
+	view, err := ns.NamespaceView(0)
+	if err != nil {
+		return nil, s.handleUpstreamError(err)
+	}
+
+	return view, nil
 }
 
 func (s *store) DeleteNamespace(namespaceID string) error {
@@ -379,6 +388,8 @@ func (s *store) handleUpstreamError(err error) error {
 	switch err.(type) {
 	case rules.RuleConflictError:
 		return r2.NewConflictError(err.Error())
+	case rules.ValidationError:
+		return r2.NewBadInputError(err.Error())
 	default:
 		return r2.NewInternalError(err.Error())
 	}

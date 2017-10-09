@@ -175,9 +175,9 @@ func NewService(
 	return &service{iOpts: iOpts, store: store, authService: authService, rootPrefix: rootPrefix}
 }
 
-func (s *service) write(w http.ResponseWriter, data interface{}) error {
+func (s *service) write(w http.ResponseWriter, retCode int, data interface{}) error {
 	if j, err := json.Marshal(data); err == nil {
-		return write(w, j, http.StatusOK)
+		return write(w, j, retCode)
 	}
 	return writeAPIResponse(w, http.StatusInternalServerError, "Could not create response object")
 }
@@ -189,17 +189,12 @@ func (s *service) fetchNamespaces(w http.ResponseWriter, r *http.Request) error 
 	}
 	s.iOpts.Logger().Infof("Email: %s", name)
 
-	names, v, err := s.store.FetchNamespaces()
+	view, err := s.store.FetchNamespaces()
 	if err != nil {
 		return writeAPIResponse(w, http.StatusInternalServerError, "Could not read namespaces")
 	}
 
-	nss := make([]namespaceJSON, len(names))
-	for i, n := range names {
-		nss[i] = namespaceJSON{ID: n}
-	}
-
-	return s.write(w, namespacesJSON{Version: v, Namespaces: nss})
+	return s.write(w, http.StatusOK, newNamespacesJSON(view))
 }
 
 func (s *service) fetchNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -208,7 +203,7 @@ func (s *service) fetchNamespace(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return s.write(w, rs.ruleSetJSON())
+	return s.write(w, http.StatusOK, rs.ruleSetJSON())
 }
 
 func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -217,11 +212,12 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	id, err := s.store.CreateNamespace(n.ID)
+	view, err := s.store.CreateNamespace(n.ID)
 	if err != nil {
 		return err
 	}
-	return writeAPIResponse(w, http.StatusCreated, fmt.Sprintf("Created namespace %s", id))
+
+	return s.write(w, http.StatusCreated, newNamespaceJSON(view))
 }
 
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -239,7 +235,7 @@ func (s *service) fetchMappingRule(w http.ResponseWriter, r *http.Request) error
 	if err != nil {
 		return err
 	}
-	return s.write(w, newMappingRuleJSON(mr))
+	return s.write(w, http.StatusOK, newMappingRuleJSON(mr))
 }
 
 func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) error {
@@ -257,7 +253,7 @@ func (s *service) createMappingRule(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	return s.write(w, newMappingRuleJSON(mr))
+	return s.write(w, http.StatusCreated, newMappingRuleJSON(mr))
 }
 
 func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) error {
@@ -276,7 +272,8 @@ func (s *service) updateMappingRule(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	return s.write(w, newMappingRuleJSON(mr))
+
+	return s.write(w, http.StatusOK, newMappingRuleJSON(mr))
 }
 
 func (s *service) deleteMappingRule(w http.ResponseWriter, r *http.Request) error {
@@ -296,7 +293,7 @@ func (s *service) fetchMappingRuleHistory(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		return err
 	}
-	return s.write(w, newMappingRuleHistoryJSON(hist))
+	return s.write(w, http.StatusOK, newMappingRuleHistoryJSON(hist))
 }
 
 func (s *service) fetchRollupRule(w http.ResponseWriter, r *http.Request) error {
@@ -305,7 +302,7 @@ func (s *service) fetchRollupRule(w http.ResponseWriter, r *http.Request) error 
 	if err != nil {
 		return err
 	}
-	return s.write(w, newRollupRuleJSON(rr))
+	return s.write(w, http.StatusOK, newRollupRuleJSON(rr))
 }
 
 func (s *service) createRollupRule(w http.ResponseWriter, r *http.Request) error {
@@ -321,7 +318,7 @@ func (s *service) createRollupRule(w http.ResponseWriter, r *http.Request) error
 	if err != nil {
 		return err
 	}
-	return s.write(w, newRollupRuleJSON(rr))
+	return s.write(w, http.StatusCreated, newRollupRuleJSON(rr))
 }
 
 func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) error {
@@ -341,7 +338,7 @@ func (s *service) updateRollupRule(w http.ResponseWriter, r *http.Request) error
 	if err != nil {
 		return err
 	}
-	return s.write(w, newRollupRuleJSON(rr))
+	return s.write(w, http.StatusOK, newRollupRuleJSON(rr))
 }
 
 func (s *service) deleteRollupRule(w http.ResponseWriter, r *http.Request) error {
@@ -361,7 +358,7 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return err
 	}
-	return s.write(w, newRollupRuleHistoryJSON(hist))
+	return s.write(w, http.StatusOK, newRollupRuleHistoryJSON(hist))
 }
 
 // RegisterHandlers registers rule handler.
@@ -515,12 +512,31 @@ type apiResponse struct {
 }
 
 type namespaceJSON struct {
-	ID string `json:"id" validate:"required"`
+	ID                string `json:"id" validate:"required"`
+	ForRuleSetVersion int    `json:"forRuleSetVersion" validate:"required"`
+}
+
+func newNamespaceJSON(nv *rules.NamespaceView) namespaceJSON {
+	return namespaceJSON{
+		ID:                nv.Name,
+		ForRuleSetVersion: nv.ForRuleSetVersion,
+	}
 }
 
 type namespacesJSON struct {
 	Version    int             `json:"version"`
 	Namespaces []namespaceJSON `json:"namespaces"`
+}
+
+func newNamespacesJSON(nss *rules.NamespacesView) namespacesJSON {
+	views := make([]namespaceJSON, len(nss.Namespaces))
+	for i, namespace := range nss.Namespaces {
+		views[i] = newNamespaceJSON(namespace)
+	}
+	return namespacesJSON{
+		Version:    nss.Version,
+		Namespaces: views,
+	}
 }
 
 type mappingRuleJSON struct {

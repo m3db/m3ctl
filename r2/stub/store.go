@@ -301,7 +301,7 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	return s.data.Namespaces, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error) {
+func (s *store) CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("could not create namespace: %s", namespaceID))
@@ -331,7 +331,7 @@ func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error
 	}
 }
 
-func (s *store) DeleteNamespace(namespaceID string) error {
+func (s *store) DeleteNamespace(namespaceID string, author string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return r2.NewInternalError("could not delete namespace")
@@ -440,7 +440,7 @@ func (s *store) UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.
 	}
 }
 
-func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string) error {
+func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, author string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return r2.NewInternalError("could not delete mapping rule.")
@@ -553,7 +553,7 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.Ro
 	}
 }
 
-func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string) error {
+func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, author string) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return r2.NewInternalError("could not delete rollup rule.")

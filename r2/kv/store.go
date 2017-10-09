@@ -40,8 +40,8 @@ func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.S
 	return &store{iOpts: iOpts, updateHelper: uh, ruleStore: rs}
 }
 
-func (s *store) updateMeta() rules.UpdateMetadata {
-	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano(), "testUser")
+func (s *store) updateMeta(author string) rules.UpdateMetadata {
+	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano(), author)
 }
 
 func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
@@ -50,7 +50,6 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 		return nil, nil
 	}
 
-	// Todo(dgromov): Use NamespaceView here.
 	namespaces, err := nss.NamespacesView()
 	if err != nil {
 		s.handleUpstreamError(err)
@@ -59,7 +58,7 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	return namespaces, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error) {
+func (s *store) CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
 		return nil, err
@@ -70,7 +69,7 @@ func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error
 		return nil, s.handleUpstreamError(err)
 	}
 
-	rs := rules.NewEmptyRuleSet(namespaceID, s.updateMeta())
+	rs := rules.NewEmptyRuleSet(namespaceID, s.updateMeta(author))
 
 	if revived {
 		rawRs, err := s.ruleStore.ReadRuleSet(namespaceID)
@@ -78,7 +77,7 @@ func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error
 			return nil, s.handleUpstreamError(err)
 		}
 		rs = rawRs.ToMutableRuleSet().Clone()
-		if err = rs.Revive(s.updateMeta()); err != nil {
+		if err = rs.Revive(s.updateMeta(author)); err != nil {
 			return nil, s.handleUpstreamError(err)
 		}
 	}
@@ -105,7 +104,7 @@ func (s *store) CreateNamespace(namespaceID string) (*rules.NamespaceView, error
 	return view, nil
 }
 
-func (s *store) DeleteNamespace(namespaceID string) error {
+func (s *store) DeleteNamespace(namespaceID string, author string) error {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
 		return s.handleUpstreamError(err)
@@ -122,7 +121,7 @@ func (s *store) DeleteNamespace(namespaceID string) error {
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.Delete(s.updateMeta())
+	err = mutable.Delete(s.updateMeta(author))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -162,7 +161,7 @@ func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	newID, err := mutable.AddMappingRule(*mrv, s.updateMeta())
+	newID, err := mutable.AddMappingRule(*mrv, s.updateMeta(mrv.LastUpdatedBy))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -192,7 +191,7 @@ func (s *store) UpdateMappingRule(namespaceID, ruleID string, mrv *rules.Mapping
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.UpdateMappingRule(*mrv, s.updateMeta())
+	err = mutable.UpdateMappingRule(*mrv, s.updateMeta(mrv.LastUpdatedBy))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -215,14 +214,14 @@ func (s *store) UpdateMappingRule(namespaceID, ruleID string, mrv *rules.Mapping
 	return mr, nil
 }
 
-func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string) error {
+func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, author string) error {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.DeleteMappingRule(mappingRuleID, s.updateMeta())
+	err = mutable.DeleteMappingRule(mappingRuleID, s.updateMeta(author))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -274,7 +273,7 @@ func (s *store) CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) 
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	newID, err := mutable.AddRollupRule(*rrv, s.updateMeta())
+	newID, err := mutable.AddRollupRule(*rrv, s.updateMeta(rrv.LastUpdatedBy))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -304,7 +303,7 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.Ro
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.UpdateRollupRule(*rrv, s.updateMeta())
+	err = mutable.UpdateRollupRule(*rrv, s.updateMeta(rrv.LastUpdatedBy))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -327,14 +326,14 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.Ro
 	return mr, nil
 }
 
-func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string) error {
+func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, author string) error {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.DeleteRollupRule(rollupRuleID, s.updateMeta())
+	err = mutable.DeleteRollupRule(rollupRuleID, s.updateMeta(author))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -384,12 +383,9 @@ func (s *store) mappingRuleNotFoundError(namespaceID, ruleID string) error {
 }
 
 func (s *store) handleUpstreamError(err error) error {
-	// Todo(dgromov): handle validation error
 	switch err.(type) {
 	case rules.RuleConflictError:
 		return r2.NewConflictError(err.Error())
-	case rules.ValidationError:
-		return r2.NewBadInputError(err.Error())
 	default:
 		return r2.NewInternalError(err.Error())
 	}

@@ -27,9 +27,9 @@ type Store interface {
 	// Fetch namespaces and their version
 	FetchNamespaces() (*rules.NamespacesView, error)
 
-	CreateNamespace(namespaceID string) (*rules.NamespaceView, error)
+	CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error)
 
-	DeleteNamespace(namespaceID string) error
+	DeleteNamespace(namespaceID string, author string) error
 
 	FetchRuleSet(namespaceID string) (*CurrentRuleSet, error)
 
@@ -39,7 +39,7 @@ type Store interface {
 
 	UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error)
 
-	DeleteMappingRule(namespaceID, mappingRuleID string) error
+	DeleteMappingRule(namespaceID, mappingRuleID string, author string) error
 
 	FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error)
 
@@ -49,7 +49,7 @@ type Store interface {
 
 	UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error)
 
-	DeleteRollupRule(namespaceID, rollupRuleID string) error
+	DeleteRollupRule(namespaceID, rollupRuleID string, author string) error
 
 	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rules.RollupRuleView, error)
 }

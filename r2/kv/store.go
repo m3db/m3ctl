@@ -55,7 +55,17 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 		s.handleUpstreamError(err)
 	}
 
-	return namespaces, nil
+	var liveNss []*rules.NamespaceView
+	for _, ns := range namespaces.Namespaces {
+		if !ns.Tombstoned {
+			liveNss = append(liveNss, ns)
+		}
+	}
+
+	return &rules.NamespacesView{
+		Namespaces: liveNss,
+		Version:    namespaces.Version,
+	}, nil
 }
 
 func (s *store) CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error) {

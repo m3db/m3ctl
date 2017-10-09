@@ -126,12 +126,7 @@ func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
 			h.handleError(w, err)
 		}
 	})
-
-	if h.auth != nil {
-		return h.auth.NewAuthHandler(f)
-	}
-
-	return f
+	return h.auth.NewAuthHandler(f)
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -495,7 +490,7 @@ func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
 func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
 	result := make(map[string]*rules.MappingRuleView)
 	for id, m := range mrs {
-		if len(m) > 0 {
+		if len(m) > 0 && !m[0].Tombstoned {
 			// views included in m are sorted latest first.
 			result[id] = m[0]
 		}
@@ -507,7 +502,7 @@ func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
 func newRollupRules(rrs rules.RollupRules) map[string]*rules.RollupRuleView {
 	result := make(map[string]*rules.RollupRuleView)
 	for id, r := range rrs {
-		if len(r) > 0 {
+		if len(r) > 0 && !r[0].Tombstoned {
 			// views included in m are sorted latest first.
 			result[id] = r[0]
 		}
@@ -555,7 +550,7 @@ type apiResponse struct {
 
 type namespaceJSON struct {
 	ID                string `json:"id" validate:"required"`
-	ForRuleSetVersion int    `json:"forRuleSetVersion" validate:"required"`
+	ForRuleSetVersion int    `json:"forRuleSetVersion"`
 }
 
 func newNamespaceJSON(nv *rules.NamespaceView) namespaceJSON {

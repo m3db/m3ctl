@@ -543,13 +543,13 @@ func (f *filters) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-
+	trimmed := strings.TrimSpace(unquoted)
 	tmp := make(map[string]string)
-	tagPairs := strings.Split(unquoted, tagFilterListSeparator)
+	tagPairs := strings.Split(trimmed, tagFilterListSeparator)
 	for _, p := range tagPairs {
 		parts := strings.Split(p, tagFilterSeparator)
 		if len(parts) != 2 {
-			return NewBadInputError(fmt.Sprintf("invalid filter: Expecting tag:value pairs. Got: %s", unquoted))
+			return NewBadInputError(fmt.Sprintf("invalid filter: Expecting tag:value pairs. Got: %s", trimmed))
 		}
 		tmp[parts[0]] = parts[1]
 	}

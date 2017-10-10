@@ -31,12 +31,17 @@ import (
 	"github.com/m3db/m3ctl/r2/kv"
 	"github.com/m3db/m3ctl/r2/stub"
 	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
 )
 
-// R2CtlConfiguration is the global configuration for r2ctl.
-type R2CtlConfiguration struct {
+var (
+	errKVConfigRequired = errors.New("must provide kv configuration if not using stub store")
+)
+
+// Configuration is the global configuration for r2ctl.
+type Configuration struct {
 	// Logging configuration.
 	Logging log.Configuration `yaml:"logging"`
 
@@ -51,6 +56,9 @@ type R2CtlConfiguration struct {
 
 	// Simple Auth Config.
 	Auth *auth.SimpleAuthConfig `yaml:"auth"`
+
+	// Clock configuration used by the api.
+	Clock clock.Configuration
 }
 
 // R2StoreConfiguration has all the fields necessary for an R2Store
@@ -58,7 +66,7 @@ type R2StoreConfiguration struct {
 	// Stub means use the stub store.
 	Stub bool `yaml:"stub"`
 
-	// KVStoreConfig is the configuration for the etcd backed implementation of the kvStore.
+	// KV is the configuration for the etcd backed implementation of the kvStore.
 	KV *KVStoreConfig `yaml:"kv,omitempty"`
 }
 
@@ -81,13 +89,13 @@ type KVStoreConfig struct {
 }
 
 // NewR2Store creates
-func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options) (r2.Store, error) {
+func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options, clockOpts clock.Options) (r2.Store, error) {
 	if c.Stub {
 		return stub.NewStore(iOpts), nil
 	}
 
 	if c.KV == nil {
-		return nil, errors.New("must provide kv configuration if not using stub store")
+		return nil, errKVConfigRequired
 	}
 
 	client, err := c.KV.KVClient.NewClient(iOpts)
@@ -104,5 +112,5 @@ func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options) (r2.Store, er
 	kvStore := rules.NewStore(store, storeOpts)
 	updateHelper := rules.NewRuleSetUpdateHelper(c.KV.PropagationDelay)
 
-	return kv.NewStore(iOpts, updateHelper, kvStore), nil
+	return kv.NewStore(iOpts, updateHelper, kvStore, clockOpts), nil
 }

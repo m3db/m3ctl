@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	noopUser = "someone"
+	noopUser = "noopUser"
 )
 
 // noopAuth lets everything through

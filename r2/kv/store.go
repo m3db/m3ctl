@@ -22,10 +22,10 @@ package kv
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 )
 
@@ -33,29 +33,26 @@ type store struct {
 	iOpts        instrument.Options
 	updateHelper rules.RuleSetUpdateHelper
 	ruleStore    rules.Store
+	clockOpts    clock.Options
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.Store) r2.Store {
-	return &store{iOpts: iOpts, updateHelper: uh, ruleStore: rs}
-}
-
-func (s *store) updateMeta(author string) rules.UpdateMetadata {
-	return s.updateHelper.NewUpdateMetadata(time.Now().UnixNano(), author)
+func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.Store, cOpts clock.Options) r2.Store {
+	return &store{iOpts: iOpts, updateHelper: uh, ruleStore: rs, clockOpts: cOpts}
 }
 
 func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	namespaces, err := nss.NamespacesView()
 	if err != nil {
-		s.handleUpstreamError(err)
+		return nil, s.handleUpstreamError(err)
 	}
 
-	var liveNss []*rules.NamespaceView
+	liveNss := make([]*rules.NamespaceView, 0, len(namespaces.Namespaces))
 	for _, ns := range namespaces.Namespaces {
 		if !ns.Tombstoned {
 			liveNss = append(liveNss, ns)
@@ -68,10 +65,10 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	}, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error) {
+func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*rules.NamespaceView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return nil, err
+		return nil, s.handleUpstreamError(err)
 	}
 
 	revived, err := nss.AddNamespace(namespaceID)
@@ -79,7 +76,8 @@ func (s *store) CreateNamespace(namespaceID string, author string) (*rules.Names
 		return nil, s.handleUpstreamError(err)
 	}
 
-	rs := rules.NewEmptyRuleSet(namespaceID, s.updateMeta(author))
+	um := s.newUpdateMeta(uOpts)
+	rs := rules.NewEmptyRuleSet(namespaceID, um)
 
 	if revived {
 		rawRs, err := s.ruleStore.ReadRuleSet(namespaceID)
@@ -87,7 +85,7 @@ func (s *store) CreateNamespace(namespaceID string, author string) (*rules.Names
 			return nil, s.handleUpstreamError(err)
 		}
 		rs = rawRs.ToMutableRuleSet().Clone()
-		if err = rs.Revive(s.updateMeta(author)); err != nil {
+		if err = rs.Revive(um); err != nil {
 			return nil, s.handleUpstreamError(err)
 		}
 	}
@@ -98,7 +96,7 @@ func (s *store) CreateNamespace(namespaceID string, author string) (*rules.Names
 
 	nss, err = s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return nil, err
+		return nil, s.handleUpstreamError(err)
 	}
 
 	ns, err := nss.Namespace(namespaceID)
@@ -114,13 +112,13 @@ func (s *store) CreateNamespace(namespaceID string, author string) (*rules.Names
 	return view, nil
 }
 
-func (s *store) DeleteNamespace(namespaceID string, author string) error {
+func (s *store) DeleteNamespace(namespaceID string, uOpts r2.UpdateOptions) error {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
-	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 
+	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -131,7 +129,7 @@ func (s *store) DeleteNamespace(namespaceID string, author string) error {
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.Delete(s.updateMeta(author))
+	err = mutable.Delete(s.newUpdateMeta(uOpts))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -164,14 +162,18 @@ func (s *store) FetchMappingRule(namespaceID string, ruleID string) (*rules.Mapp
 	return mr, nil
 }
 
-func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) CreateMappingRule(
+	namespaceID string,
+	mrv *rules.MappingRuleView,
+	uOpts r2.UpdateOptions,
+) (*rules.MappingRuleView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	newID, err := mutable.AddMappingRule(*mrv, s.updateMeta(mrv.LastUpdatedBy))
+	newID, err := mutable.AddMappingRule(*mrv, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -194,14 +196,19 @@ func (s *store) CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView
 	return mr, nil
 }
 
-func (s *store) UpdateMappingRule(namespaceID, ruleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error) {
+func (s *store) UpdateMappingRule(
+	namespaceID,
+	ruleID string,
+	mrv *rules.MappingRuleView,
+	uOpts r2.UpdateOptions,
+) (*rules.MappingRuleView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.UpdateMappingRule(*mrv, s.updateMeta(mrv.LastUpdatedBy))
+	err = mutable.UpdateMappingRule(*mrv, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -224,14 +231,18 @@ func (s *store) UpdateMappingRule(namespaceID, ruleID string, mrv *rules.Mapping
 	return mr, nil
 }
 
-func (s *store) DeleteMappingRule(namespaceID, mappingRuleID string, author string) error {
+func (s *store) DeleteMappingRule(
+	namespaceID,
+	mappingRuleID string,
+	uOpts r2.UpdateOptions,
+) error {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.DeleteMappingRule(mappingRuleID, s.updateMeta(author))
+	err = mutable.DeleteMappingRule(mappingRuleID, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -276,14 +287,18 @@ func (s *store) FetchRollupRule(namespaceID string, ruleID string) (*rules.Rollu
 	return rr, nil
 }
 
-func (s *store) CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) CreateRollupRule(
+	namespaceID string,
+	rrv *rules.RollupRuleView,
+	uOpts r2.UpdateOptions,
+) (*rules.RollupRuleView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	newID, err := mutable.AddRollupRule(*rrv, s.updateMeta(rrv.LastUpdatedBy))
+	newID, err := mutable.AddRollupRule(*rrv, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -306,14 +321,19 @@ func (s *store) CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) 
 	return rr, nil
 }
 
-func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error) {
+func (s *store) UpdateRollupRule(
+	namespaceID,
+	rollupRuleID string,
+	rrv *rules.RollupRuleView,
+	uOpts r2.UpdateOptions,
+) (*rules.RollupRuleView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.UpdateRollupRule(*rrv, s.updateMeta(rrv.LastUpdatedBy))
+	err = mutable.UpdateRollupRule(*rrv, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
@@ -336,14 +356,18 @@ func (s *store) UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.Ro
 	return mr, nil
 }
 
-func (s *store) DeleteRollupRule(namespaceID, rollupRuleID string, author string) error {
+func (s *store) DeleteRollupRule(
+	namespaceID,
+	rollupRuleID string,
+	uOpts r2.UpdateOptions,
+) error {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
 
 	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.DeleteRollupRule(rollupRuleID, s.updateMeta(author))
+	err = mutable.DeleteRollupRule(rollupRuleID, s.newUpdateMeta(uOpts))
 	if err != nil {
 		return s.handleUpstreamError(err)
 	}
@@ -374,6 +398,10 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rul
 	return hist, nil
 }
 
+func (s *store) newUpdateMeta(uOpts r2.UpdateOptions) rules.UpdateMetadata {
+	return s.updateHelper.NewUpdateMetadata(s.clockOpts.NowFn()().UnixNano(), uOpts.Author())
+}
+
 func (s *store) rollupRuleNotFoundError(namespaceID, ruleID string) error {
 	return r2.NewNotFoundError(
 		fmt.Sprintf("rollup rule: %s doesn't exist in Namespace: %s",
@@ -393,6 +421,10 @@ func (s *store) mappingRuleNotFoundError(namespaceID, ruleID string) error {
 }
 
 func (s *store) handleUpstreamError(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	switch err.(type) {
 	case rules.RuleConflictError:
 		return r2.NewConflictError(err.Error())

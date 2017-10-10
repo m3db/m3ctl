@@ -33,12 +33,14 @@ import (
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/services/r2ctl/config"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
+	"github.com/m3db/m3x/clock"
 	xconfig "github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 )
 
 const (
-	portEnvVar = "R2CTL_PORT"
+	portEnvVar  = "R2CTL_PORT"
+	r2apiPrefix = "/r2/v1/"
 )
 
 func main() {
@@ -50,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var cfg config.R2CtlConfiguration
+	var cfg config.Configuration
 	if err := xconfig.LoadFile(&cfg, *configFile); err != nil {
 		fmt.Printf("error loading config file: %v\n", err)
 		os.Exit(1)
@@ -88,10 +90,12 @@ func main() {
 		SetMetricsSamplingRate(cfg.Metrics.SampleRate()).
 		SetReportInterval(cfg.Metrics.ReportInterval())
 
+	clockOpts := clock.NewOptions()
+
 	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	serverOpts := cfg.HTTP.NewHTTPServerOptions(instrumentOpts)
 
-	store, err := cfg.Store.NewR2Store(instrumentOpts)
+	store, err := cfg.Store.NewR2Store(instrumentOpts, clockOpts)
 	if err != nil {
 		logger.Fatalf("error initializing backing store: %v", err)
 	}
@@ -104,7 +108,7 @@ func main() {
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
-		r2.NewService(instrumentOpts, "/r2/v1/", authService, store),
+		r2.NewService(instrumentOpts, r2apiPrefix, authService, store),
 		health.NewService(instrumentOpts),
 	)
 

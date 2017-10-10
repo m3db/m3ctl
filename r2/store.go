@@ -27,29 +27,29 @@ type Store interface {
 	// Fetch namespaces and their version
 	FetchNamespaces() (*rules.NamespacesView, error)
 
-	CreateNamespace(namespaceID string, author string) (*rules.NamespaceView, error)
+	CreateNamespace(namespaceID string, uOpts UpdateOptions) (*rules.NamespaceView, error)
 
-	DeleteNamespace(namespaceID string, author string) error
+	DeleteNamespace(namespaceID string, uOpts UpdateOptions) error
 
 	FetchRuleSet(namespaceID string) (*CurrentRuleSet, error)
 
 	FetchMappingRule(namespaceID, mappingRuleID string) (*rules.MappingRuleView, error)
 
-	CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error)
+	CreateMappingRule(namespaceID string, mrv *rules.MappingRuleView, uOpts UpdateOptions) (*rules.MappingRuleView, error)
 
-	UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView) (*rules.MappingRuleView, error)
+	UpdateMappingRule(namespaceID, mappingRuleID string, mrv *rules.MappingRuleView, uOpts UpdateOptions) (*rules.MappingRuleView, error)
 
-	DeleteMappingRule(namespaceID, mappingRuleID string, author string) error
+	DeleteMappingRule(namespaceID, mappingRuleID string, uOpts UpdateOptions) error
 
 	FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error)
 
 	FetchRollupRule(namespaceID, rollupRuleID string) (*rules.RollupRuleView, error)
 
-	CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error)
+	CreateRollupRule(namespaceID string, rrv *rules.RollupRuleView, uOpts UpdateOptions) (*rules.RollupRuleView, error)
 
-	UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView) (*rules.RollupRuleView, error)
+	UpdateRollupRule(namespaceID, rollupRuleID string, rrv *rules.RollupRuleView, uOpts UpdateOptions) (*rules.RollupRuleView, error)
 
-	DeleteRollupRule(namespaceID, rollupRuleID string, author string) error
+	DeleteRollupRule(namespaceID, rollupRuleID string, uOpts UpdateOptions) error
 
 	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rules.RollupRuleView, error)
 }

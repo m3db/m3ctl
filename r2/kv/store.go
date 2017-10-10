@@ -149,15 +149,15 @@ func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
 	return r2.NewCurrentRuleSetView(rs)
 }
 
-func (s *store) FetchMappingRule(namespaceID string, ruleID string) (*rules.MappingRuleView, error) {
+func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rules.MappingRuleView, error) {
 	crs, err := s.FetchRuleSet(namespaceID)
 	if err != nil {
 		return nil, err
 	}
 
-	mr, exists := crs.MappingRules[ruleID]
+	mr, exists := crs.MappingRules[mappingRuleID]
 	if !exists {
-		return nil, s.mappingRuleNotFoundError(namespaceID, ruleID)
+		return nil, s.mappingRuleNotFoundError(namespaceID, mappingRuleID)
 	}
 	return mr, nil
 }
@@ -183,22 +183,12 @@ func (s *store) CreateMappingRule(
 		return nil, s.handleUpstreamError(err)
 	}
 
-	crs, err := s.FetchRuleSet(namespaceID)
-	if err != nil {
-		return nil, s.handleUpstreamError(err)
-	}
-
-	mr, exists := crs.MappingRules[newID]
-	if !exists {
-		return nil, s.mappingRuleNotFoundError(namespaceID, newID)
-	}
-
-	return mr, nil
+	return s.FetchMappingRule(namespaceID, newID)
 }
 
 func (s *store) UpdateMappingRule(
 	namespaceID,
-	ruleID string,
+	mappingRuleID string,
 	mrv *rules.MappingRuleView,
 	uOpts r2.UpdateOptions,
 ) (*rules.MappingRuleView, error) {
@@ -218,17 +208,7 @@ func (s *store) UpdateMappingRule(
 		return nil, s.handleUpstreamError(err)
 	}
 
-	crs, err := s.FetchRuleSet(namespaceID)
-	if err != nil {
-		return nil, s.handleUpstreamError(err)
-	}
-
-	mr, exists := crs.MappingRules[ruleID]
-	if !exists {
-		return nil, s.mappingRuleNotFoundError(namespaceID, ruleID)
-	}
-
-	return mr, nil
+	return s.FetchMappingRule(namespaceID, mappingRuleID)
 }
 
 func (s *store) DeleteMappingRule(
@@ -255,7 +235,7 @@ func (s *store) DeleteMappingRule(
 	return nil
 }
 
-func (s *store) FetchMappingRuleHistory(namespaceID, ruleID string) ([]*rules.MappingRuleView, error) {
+func (s *store) FetchMappingRuleHistory(namespaceID, mappingRuleID string) ([]*rules.MappingRuleView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
@@ -266,23 +246,23 @@ func (s *store) FetchMappingRuleHistory(namespaceID, ruleID string) ([]*rules.Ma
 		return nil, s.handleUpstreamError(err)
 	}
 
-	hist, exists := mrs[ruleID]
+	hist, exists := mrs[mappingRuleID]
 	if !exists {
-		return nil, s.mappingRuleNotFoundError(namespaceID, ruleID)
+		return nil, s.mappingRuleNotFoundError(namespaceID, mappingRuleID)
 	}
 
 	return hist, nil
 }
 
-func (s *store) FetchRollupRule(namespaceID string, ruleID string) (*rules.RollupRuleView, error) {
+func (s *store) FetchRollupRule(namespaceID string, mappingRuleID string) (*rules.RollupRuleView, error) {
 	crs, err := s.FetchRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
 
-	rr, exists := crs.RollupRules[ruleID]
+	rr, exists := crs.RollupRules[mappingRuleID]
 	if !exists {
-		return nil, s.rollupRuleNotFoundError(namespaceID, ruleID)
+		return nil, s.rollupRuleNotFoundError(namespaceID, mappingRuleID)
 	}
 	return rr, nil
 }
@@ -308,17 +288,7 @@ func (s *store) CreateRollupRule(
 		return nil, s.handleUpstreamError(err)
 	}
 
-	crs, err := s.FetchRuleSet(namespaceID)
-	if err != nil {
-		return nil, s.handleUpstreamError(err)
-	}
-
-	rr, exists := crs.RollupRules[newID]
-	if !exists {
-		return nil, s.rollupRuleNotFoundError(namespaceID, newID)
-	}
-
-	return rr, nil
+	return s.FetchRollupRule(namespaceID, newID)
 }
 
 func (s *store) UpdateRollupRule(
@@ -343,17 +313,7 @@ func (s *store) UpdateRollupRule(
 		return nil, s.handleUpstreamError(err)
 	}
 
-	crs, err := s.FetchRuleSet(namespaceID)
-	if err != nil {
-		return nil, s.handleUpstreamError(err)
-	}
-
-	mr, exists := crs.RollupRules[rollupRuleID]
-	if !exists {
-		return nil, s.rollupRuleNotFoundError(namespaceID, rollupRuleID)
-	}
-
-	return mr, nil
+	return s.FetchRollupRule(namespaceID, rollupRuleID)
 }
 
 func (s *store) DeleteRollupRule(
@@ -402,19 +362,19 @@ func (s *store) newUpdateMeta(uOpts r2.UpdateOptions) rules.UpdateMetadata {
 	return s.updateHelper.NewUpdateMetadata(s.clockOpts.NowFn()().UnixNano(), uOpts.Author())
 }
 
-func (s *store) rollupRuleNotFoundError(namespaceID, ruleID string) error {
+func (s *store) rollupRuleNotFoundError(namespaceID, rollupRuleID string) error {
 	return r2.NewNotFoundError(
 		fmt.Sprintf("rollup rule: %s doesn't exist in Namespace: %s",
-			ruleID,
+			rollupRuleID,
 			namespaceID,
 		),
 	)
 }
 
-func (s *store) mappingRuleNotFoundError(namespaceID, ruleID string) error {
+func (s *store) mappingRuleNotFoundError(namespaceID, mappingRuleID string) error {
 	return r2.NewNotFoundError(
 		fmt.Sprintf("mapping rule: %s doesn't exist in Namespace: %s",
-			ruleID,
+			mappingRuleID,
 			namespaceID,
 		),
 	)

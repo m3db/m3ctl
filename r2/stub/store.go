@@ -68,8 +68,8 @@ var (
 				},
 			},
 		},
-		RuleSets: map[string]*r2.CurrentRuleSet{
-			"ns1": &r2.CurrentRuleSet{
+		RuleSets: map[string]*rules.RuleSetSnapshot{
+			"ns1": &rules.RuleSetSnapshot{
 				Namespace:    "ns1",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
@@ -137,7 +137,7 @@ var (
 					},
 				},
 			},
-			"ns2": &r2.CurrentRuleSet{
+			"ns2": &rules.RuleSetSnapshot{
 				Namespace:    "ns2",
 				Version:      1,
 				CutoverNanos: cutoverTimestamp,
@@ -320,7 +320,7 @@ func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*ru
 		}
 
 		s.data.Namespaces.Namespaces = append(s.data.Namespaces.Namespaces, newView)
-		s.data.RuleSets[namespaceID] = &r2.CurrentRuleSet{
+		s.data.RuleSets[namespaceID] = &rules.RuleSetSnapshot{
 			Namespace:    namespaceID,
 			Version:      1,
 			CutoverNanos: time.Now().UnixNano(),
@@ -348,7 +348,7 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2.UpdateOptions) erro
 	}
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
+func (s *store) FetchRuleSet(namespaceID string) (*rules.RuleSetSnapshot, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("could not fetch namespace: %s", namespaceID))

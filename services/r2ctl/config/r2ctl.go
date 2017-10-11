@@ -116,5 +116,5 @@ func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options, clockOpts clo
 	kvStore := rules.NewStore(store, storeOpts)
 	updateHelper := rules.NewRuleSetUpdateHelper(c.KV.PropagationDelay)
 
-	return kv.NewStore(r2StoreOpts, updateHelper, kvStore), nil
+	return kv.NewStore(kvStore, updateHelper, r2StoreOpts), nil
 }

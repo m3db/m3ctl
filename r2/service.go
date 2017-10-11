@@ -53,6 +53,8 @@ const (
 
 	namespaceIDVar = "namespaceID"
 	ruleIDVar      = "ruleID"
+
+	nanosPerMilli = int64(time.Millisecond / time.Nanosecond)
 )
 
 var (
@@ -65,8 +67,6 @@ var (
 	rollupRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, rollupRulePrefix)
 	rollupRuleWithIDPath  = fmt.Sprintf("%s/{%s}", rollupRuleRoot, ruleIDVar)
 	rollupRuleHistoryPath = fmt.Sprintf("%s/history", rollupRuleWithIDPath)
-
-	nanosPerMilli = int64(time.Millisecond / time.Nanosecond)
 )
 
 func sendResponse(w http.ResponseWriter, data []byte, status int) error {

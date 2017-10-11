@@ -28,13 +28,13 @@ import (
 // StoreOptions is a set of options for a kv backed store.
 type StoreOptions interface {
 	// SetInstrumentOptions sets the instrument options.
-	SetInstrumentOptions(value string) StoreOptions
+	SetInstrumentOptions(value instrument.Options) StoreOptions
 
 	// InstrumentOptions returns the instrument options.
 	InstrumentOptions() instrument.Options
 
 	// SetClockOptions sets the clock options.
-	SetClockOptions() StoreOptions
+	SetClockOptions(value clock.Options) StoreOptions
 
 	// ClockOptions returns the clock options
 	ClockOptions() clock.Options
@@ -47,7 +47,10 @@ type storeOptions struct {
 
 // NewStoreOptions creates a new set of store options.
 func NewStoreOptions() StoreOptions {
-	return &storeOptions{}
+	return &storeOptions{
+		instrumentOpts: instrument.NewOptions(),
+		clockOpts:      clock.NewOptions(),
+	}
 }
 
 func (o *storeOptions) SetInstrumentOptions(value instrument.Options) StoreOptions {

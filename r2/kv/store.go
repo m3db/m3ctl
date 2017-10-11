@@ -25,17 +25,25 @@ import (
 
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3x/clock"
 )
 
 type store struct {
+	nowFn clock.NowFn
+
 	sOpts        StoreOptions
 	updateHelper rules.RuleSetUpdateHelper
 	ruleStore    rules.Store
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(sOpts StoreOptions, uh rules.RuleSetUpdateHelper, rs rules.Store) r2.Store {
-	return &store{sOpts: sOpts, updateHelper: uh, ruleStore: rs}
+func NewStore(rs rules.Store, uh rules.RuleSetUpdateHelper, sOpts StoreOptions) r2.Store {
+	clockOpts := sOpts.ClockOptions()
+	return &store{
+		nowFn:        clockOpts.NowFn(),
+		ruleStore:    rs,
+		updateHelper: uh,
+		sOpts:        sOpts}
 }
 
 func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
@@ -356,7 +364,7 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rul
 }
 
 func (s *store) newUpdateMeta(uOpts r2.UpdateOptions) rules.UpdateMetadata {
-	return s.updateHelper.NewUpdateMetadata(s.sOpts.ClockOptions().NowFn()().UnixNano(), uOpts.Author())
+	return s.updateHelper.NewUpdateMetadata(s.nowFn().UnixNano(), uOpts.Author())
 }
 
 func (s *store) rollupRuleNotFoundError(namespaceID, rollupRuleID string) error {

@@ -20,60 +20,91 @@
 
 import React from 'react';
 import {Button, Input, Form, Select} from 'antd';
+import {withFormik} from 'formik';
+import _ from 'lodash';
+const POLICIES = [
+  '1s:1h',
+  '10s:6h',
+  '10s:12h',
+  '10s:1d',
+  '10s:2d',
+  '1m:2d',
+  '1m:7d',
+  '1m:14d',
+  '1m:40d',
+  '10m:2d',
+  '10m:7d',
+  '10m:14d',
+  '10m:40d',
+];
+
+const AGGREGATION_FUNCTIONS = [
+  'Min',
+  'Max',
+  'Mean',
+  'Median',
+  'Count',
+  'Sum',
+  'Sumsq',
+  'Stdev',
+  'P10',
+  'P20',
+  'P30',
+  'P40',
+  'P50',
+  'P60',
+  'P70',
+  'P80',
+  'P90',
+  'P95',
+  'P99',
+  'P999',
+  'P9999',
+];
 
 const FormItem = Form.Item;
 const Option = Select.Option;
 const formItemLayout = {
   labelCol: {
     xs: {span: 24},
-    sm: {span: 6},
+    sm: {span: 4},
   },
   wrapperCol: {
     xs: {span: 24},
-    sm: {span: 14},
+    sm: {span: 18},
   },
 };
-function MappingRuleEditor({mappingRule, form, onSubmit}) {
-  const {getFieldDecorator} = form;
+function MappingRuleEditor({mappingRule, values, handleChange, setFieldValue}) {
   return (
-    <Form
-      layout="horizontal"
-      onSubmit={e => {
-        e.preventDefault();
-        form.validateFields((err, values) => {
-          if (!err) {
-            onSubmit({
-              ...mappingRule,
-              ...values,
-            });
-          }
-        });
-      }}>
+    <Form layout="horizontal">
       <div className="clearfix">
         <div className="col col-12">
-          <FormItem colon={false} label="Name" {...formItemLayout}>
-            {getFieldDecorator('name', {
-              rules: [
-                {
-                  required: true,
-                },
-              ],
-            })(<Input autoComplete="off" />)}
+          <FormItem
+            required="true"
+            colon={false}
+            label="Name"
+            {...formItemLayout}>
+            <Input
+              name="name"
+              autoComplete="off"
+              value={values.name}
+              onChange={handleChange}
+            />
           </FormItem>
         </div>
         <div className="col col-12">
           <FormItem
+            required="true"
             colon={false}
             label="Metric Filter"
             {...formItemLayout}
             help="eg. tag1:value1 tag2:value2">
-            {getFieldDecorator('filter', {
-              rules: [
-                {
-                  required: true,
-                },
-              ],
-            })(<Input autoComplete="off" />)}
+            <Input
+              name="filter"
+              autoComplete="off"
+              value={values.filter}
+              onChange={handleChange}
+            />
           </FormItem>
         </div>
         <div className="col col-12">
@@ -82,28 +113,53 @@ function MappingRuleEditor({mappingRule, form, onSubmit}) {
             label="Policies"
             {...formItemLayout}
             help="eg:1m:10d = 1 min granularity for 10 days">
-            {getFieldDecorator('policies', {
-              rules: [
-                {
-                  required: true,
-                },
-              ],
-            })(
-              <Select
-                autoComplete="off"
-                mode="tags"
-                style={{width: '100%'}}
-                tokenSeparators={[',']}
-                notFoundContent={false}>
-                {['1m:10d'].map(opt =>
-                  <Option key={opt}>
-                    {opt}
-                  </Option>,
-                )}
-              </Select>,
-            )}
+            {_.map(values.policies, (p, i) => {
+              const policyParsed = p.split('|');
+              const time = policyParsed[0];
+              let aggFunctions;
+              if (policyParsed.length > 1) {
+                aggFunctions = policyParsed[0].split(',');
+              }
+              console.log(time, aggFunctions);
+              return (
+                <div
+                  className="clearfix mt1 p1"
+                  style={{border: '1px dashed lightgray'}}>
+                  <div className="col col-6 px1">
+                    <label className="block">Granularity/Retention Time</label>
+                    <Select
+                      value={time}
+                      autoComplete="off"
+                      onChange={e => {
+                        values.policies[i] = e;
+                        setFieldValue('policies', values.policies);
+                      }}
+                      style={{width: '100%'}}
+                      notFoundContent={false}>
+                      {POLICIES.map(opt => <Option key={opt}>{opt}</Option>)}
+                    </Select>
+                  </div>
+                  <div className="col col-6">
+                    <label className="block">Aggregation Function</label>
+
+                    <Select
+                      values={aggFunctions}
+                      autoComplete="off"
+                      mode="tags"
+                      style={{width: '100%'}}
+                      tokenSeparators={[',']}
+                      notFoundContent={false}>
+                      {AGGREGATION_FUNCTIONS.map(opt => (
+                        <Option key={opt}>{opt}</Option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              );
+            })}
           </FormItem>
         </div>
+
         <div className="clearfix my1">
           <Button type="primary" htmlType="submit" className="right">
             Add
@@ -114,7 +170,12 @@ function MappingRuleEditor({mappingRule, form, onSubmit}) {
   );
 }
 
-export default Form.create({
+export default withFormik({
+  mapPropsToValues: ({mappingRule}) => ({
+    name: mappingRule.name,
+    filter: mappingRule.filter,
+    policies: mappingRule.policies,
+  }),
   mapPropsToFields({mappingRule = {}}) {
     return {
       name: {

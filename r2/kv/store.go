@@ -109,7 +109,8 @@ func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*ru
 		return nil, r2.NewNotFoundError(fmt.Sprintf("namespace: %s does not exist", namespaceID))
 	}
 
-	view, err := ns.NamespaceView(0)
+	// Get the latest view of the namespace.
+	view, err := ns.NamespaceView(len(ns.Snapshots()) - 1)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}

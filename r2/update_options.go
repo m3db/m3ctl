@@ -22,10 +22,10 @@ package r2
 
 // UpdateOptions is a set of ruleset or namespace update options.
 type UpdateOptions interface {
-	// SetAuthor sets the author.
+	// SetAuthor sets the author for an update.
 	SetAuthor(value string) UpdateOptions
 
-	// ReadTimeout returns the read timeout.
+	// Author returns the author for an update.
 	Author() string
 }
 
@@ -33,7 +33,7 @@ type updateOptions struct {
 	author string
 }
 
-// NewUpdateOptions creates a new set of server options.
+// NewUpdateOptions creates a new set of update options.
 func NewUpdateOptions() UpdateOptions {
 	return &updateOptions{}
 }

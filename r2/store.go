@@ -31,7 +31,7 @@ type Store interface {
 
 	DeleteNamespace(namespaceID string, uOpts UpdateOptions) error
 
-	FetchRuleSet(namespaceID string) (*CurrentRuleSet, error)
+	FetchRuleSet(namespaceID string) (*rules.RuleSetSnapshot, error)
 
 	FetchMappingRule(namespaceID, mappingRuleID string) (*rules.MappingRuleView, error)
 

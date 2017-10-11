@@ -38,7 +38,7 @@ type stubData struct {
 	Namespaces        *rules.NamespacesView
 	ErrorNamespace    string
 	ConflictNamespace string
-	RuleSets          map[string]*r2.CurrentRuleSet
+	RuleSets          map[string]*rules.RuleSetSnapshot
 	MappingHistory    map[string]mappingRuleHistories
 	RollupHistory     map[string]rollupRuleHistories
 }

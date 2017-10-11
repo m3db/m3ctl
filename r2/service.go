@@ -35,7 +35,6 @@ import (
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/instrument"
-	xtime "github.com/m3db/m3x/time"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/validator.v9"
@@ -66,6 +65,8 @@ var (
 	rollupRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, rollupRulePrefix)
 	rollupRuleWithIDPath  = fmt.Sprintf("%s/{%s}", rollupRuleRoot, ruleIDVar)
 	rollupRuleHistoryPath = fmt.Sprintf("%s/history", rollupRuleWithIDPath)
+
+	nanosPerMilli = int64(time.Millisecond / time.Nanosecond)
 )
 
 func sendResponse(w http.ResponseWriter, data []byte, status int) error {
@@ -197,7 +198,7 @@ func (s *service) fetchNamespace(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	return s.sendResponse(w, http.StatusOK, rs.ruleSetJSON())
+	return s.sendResponse(w, http.StatusOK, newRuleSetJSON(rs))
 }
 
 func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -452,76 +453,22 @@ func (s *service) newUpdateOptions(r *http.Request) (UpdateOptions, error) {
 	return uOpts.SetAuthor(author), nil
 }
 
-// CurrentRuleSet represents the current state of a rule set. A rule with all the latest snapshots
-// of its ruleset.
-type CurrentRuleSet struct {
-	Namespace    string
-	Version      int
-	CutoverNanos int64
-	MappingRules map[string]*rules.MappingRuleView
-	RollupRules  map[string]*rules.RollupRuleView
-}
-
-// NewCurrentRuleSetView creates a new current ruleset view from a given ruleset
-func NewCurrentRuleSetView(r rules.RuleSet) (*CurrentRuleSet, error) {
-	mrs, err := r.MappingRules()
-	if err != nil {
-		return nil, err
-	}
-
-	rrs, err := r.RollupRules()
-	if err != nil {
-		return nil, err
-	}
-
-	return &CurrentRuleSet{
-		Namespace:    string(r.Namespace()),
-		Version:      r.Version(),
-		CutoverNanos: r.CutoverNanos(),
-		MappingRules: newMappingRules(mrs),
-		RollupRules:  newRollupRules(rrs),
-	}, nil
-}
-
-func (c CurrentRuleSet) ruleSetJSON() ruleSetJSON {
+func newRuleSetJSON(latest *rules.RuleSetSnapshot) ruleSetJSON {
 	var mrJSON []mappingRuleJSON
-	for _, m := range c.MappingRules {
+	for _, m := range latest.MappingRules {
 		mrJSON = append(mrJSON, newMappingRuleJSON(m))
 	}
 	var rrJSON []rollupRuleJSON
-	for _, r := range c.RollupRules {
+	for _, r := range latest.RollupRules {
 		rrJSON = append(rrJSON, newRollupRuleJSON(r))
 	}
 	return ruleSetJSON{
-		Namespace:     c.Namespace,
-		Version:       c.Version,
-		CutoverMillis: xtime.ToUnixMillis(xtime.FromNanoseconds(c.CutoverNanos)),
+		Namespace:     latest.Namespace,
+		Version:       latest.Version,
+		CutoverMillis: latest.CutoverNanos / nanosPerMilli,
 		MappingRules:  mrJSON,
 		RollupRules:   rrJSON,
 	}
-}
-
-func newMappingRules(mrs rules.MappingRules) map[string]*rules.MappingRuleView {
-	result := make(map[string]*rules.MappingRuleView)
-	for id, m := range mrs {
-		if len(m) > 0 && !m[0].Tombstoned {
-			// views included in m are sorted latest first.
-			result[id] = m[0]
-		}
-	}
-	return result
-}
-
-// nolint
-func newRollupRules(rrs rules.RollupRules) map[string]*rules.RollupRuleView {
-	result := make(map[string]*rules.RollupRuleView)
-	for id, r := range rrs {
-		if len(r) > 0 && !r[0].Tombstoned {
-			// views included in m are sorted latest first.
-			result[id] = r[0]
-		}
-	}
-	return result
 }
 
 // filters is an object that represents the key value tag filters for a rule.
@@ -615,9 +562,9 @@ func newMappingRuleJSON(mrv *rules.MappingRuleView) mappingRuleJSON {
 		Name:                mrv.Name,
 		Filters:             mrv.Filters,
 		Policies:            mrv.Policies,
-		CutoverMillis:       mrv.CutoverNanos / int64(time.Millisecond),
+		CutoverMillis:       mrv.CutoverNanos / nanosPerMilli,
 		LastUpdatedBy:       mrv.LastUpdatedBy,
-		LastUpdatedAtMillis: mrv.LastUpdatedAtNanos / int64(time.Millisecond),
+		LastUpdatedAtMillis: mrv.LastUpdatedAtNanos / nanosPerMilli,
 	}
 }
 
@@ -675,9 +622,9 @@ func newRollupRuleJSON(rrv *rules.RollupRuleView) rollupRuleJSON {
 		Name:                rrv.Name,
 		Filters:             rrv.Filters,
 		Targets:             targets,
-		CutoverMillis:       rrv.CutoverNanos / int64(time.Millisecond),
+		CutoverMillis:       rrv.CutoverNanos / nanosPerMilli,
 		LastUpdatedBy:       rrv.LastUpdatedBy,
-		LastUpdatedAtMillis: rrv.LastUpdatedAtNanos / int64(time.Millisecond),
+		LastUpdatedAtMillis: rrv.LastUpdatedAtNanos / nanosPerMilli,
 	}
 }
 

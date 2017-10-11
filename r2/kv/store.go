@@ -25,26 +25,23 @@ import (
 
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3metrics/rules"
-	"github.com/m3db/m3x/clock"
-	"github.com/m3db/m3x/instrument"
 )
 
 type store struct {
-	iOpts        instrument.Options
+	sOpts        StoreOptions
 	updateHelper rules.RuleSetUpdateHelper
 	ruleStore    rules.Store
-	clockOpts    clock.Options
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(iOpts instrument.Options, uh rules.RuleSetUpdateHelper, rs rules.Store, cOpts clock.Options) r2.Store {
-	return &store{iOpts: iOpts, updateHelper: uh, ruleStore: rs, clockOpts: cOpts}
+func NewStore(sOpts StoreOptions, uh rules.RuleSetUpdateHelper, rs rules.Store) r2.Store {
+	return &store{sOpts: sOpts, updateHelper: uh, ruleStore: rs}
 }
 
 func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
-		return nil, err
+		return nil, s.handleUpstreamError(err)
 	}
 
 	namespaces, err := nss.NamespacesView()
@@ -141,12 +138,12 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2.UpdateOptions) erro
 	return nil
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (*r2.CurrentRuleSet, error) {
+func (s *store) FetchRuleSet(namespaceID string) (*rules.RuleSetSnapshot, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
 		return nil, s.handleUpstreamError(err)
 	}
-	return r2.NewCurrentRuleSetView(rs)
+	return rs.Latest()
 }
 
 func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*rules.MappingRuleView, error) {
@@ -359,7 +356,7 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*rul
 }
 
 func (s *store) newUpdateMeta(uOpts r2.UpdateOptions) rules.UpdateMetadata {
-	return s.updateHelper.NewUpdateMetadata(s.clockOpts.NowFn()().UnixNano(), uOpts.Author())
+	return s.updateHelper.NewUpdateMetadata(s.sOpts.ClockOptions().NowFn()().UnixNano(), uOpts.Author())
 }
 
 func (s *store) rollupRuleNotFoundError(namespaceID, rollupRuleID string) error {
@@ -388,6 +385,8 @@ func (s *store) handleUpstreamError(err error) error {
 	switch err.(type) {
 	case rules.RuleConflictError:
 		return r2.NewConflictError(err.Error())
+	case rules.ValidationError:
+		return r2.NewBadInputError(err.Error())
 	default:
 		return r2.NewInternalError(err.Error())
 	}

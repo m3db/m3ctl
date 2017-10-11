@@ -58,7 +58,7 @@ type Configuration struct {
 	Auth *auth.SimpleAuthConfig `yaml:"auth"`
 
 	// Clock configuration used by the api.
-	Clock clock.Configuration
+	Clock clock.Configuration `yaml:"clock"`
 }
 
 // R2StoreConfiguration has all the fields necessary for an R2Store
@@ -108,9 +108,13 @@ func (c R2StoreConfiguration) NewR2Store(iOpts instrument.Options, clockOpts clo
 		return nil, err
 	}
 
+	r2StoreOpts := kv.NewStoreOptions().
+		SetInstrumentOptions(iOpts).
+		SetClockOptions(clockOpts)
+
 	storeOpts := rules.NewStoreOptions(c.KV.NamespacesKey, c.KV.RuleSetKeyFmt)
 	kvStore := rules.NewStore(store, storeOpts)
 	updateHelper := rules.NewRuleSetUpdateHelper(c.KV.PropagationDelay)
 
-	return kv.NewStore(iOpts, updateHelper, kvStore, clockOpts), nil
+	return kv.NewStore(r2StoreOpts, updateHelper, kvStore), nil
 }

@@ -32,6 +32,7 @@ function MappingRuleHistoryBase(props) {
   const mappingRules = _.get(props.mappingRuleHistory, 'value.mappingRules');
   return (
     <MappingRulesTable
+      rowKey={(__, index) => index}
       mappingRules={mappingRules}
       loading={loading}
       showActions={false}
@@ -77,6 +78,11 @@ function MappingRulesTable(props) {
         render={policies => {
           return _.map(policies, policy => <Tag key={policy}>{policy}</Tag>);
         }}
+      />
+      <Column
+        title="Last Updated By"
+        dataIndex="lastUpdatedBy"
+        render={user => user || 'N/A'}
       />
       {showActions && (
         <Column

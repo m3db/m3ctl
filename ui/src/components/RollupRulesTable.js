@@ -57,6 +57,7 @@ function RollupRuleHistoryBase(props) {
 
   return (
     <RollupRulesTable
+      rowKey={(__, index) => index}
       rollupRules={rollupRules}
       loading={loading}
       showActions={false}
@@ -117,6 +118,12 @@ function RollupRulesTable(props) {
           ));
         }}
       />
+      <Column
+        title="Last Updated By"
+        dataIndex="lastUpdatedBy"
+        render={user => user || 'N/A'}
+      />
+
       {showActions && (
         <Column
           width={200}

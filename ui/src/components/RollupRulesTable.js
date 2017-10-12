@@ -102,7 +102,7 @@ function RollupRulesTable(props) {
       dataSource={rollupRules}
       rowKey={rowKey}
       locale={{emptyText: 'No rollup rules'}}>
-      <Column title="Name" dataIndex="name" />
+      <Column title="Rule Name" dataIndex="name" />
       <Column
         title="Metric Filter"
         dataIndex="filter"

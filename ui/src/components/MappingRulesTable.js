@@ -65,7 +65,7 @@ function MappingRulesTable(props) {
       dataSource={mappingRules}
       rowKey={rowKey}
       locale={{emptyText: 'No mapping rules'}}>
-      <Column title="Name" dataIndex="name" />
+      <Column title="Rule Name" dataIndex="name" />
       <Column
         title="Metric Filter"
         dataIndex="filter"

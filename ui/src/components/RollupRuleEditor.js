@@ -44,7 +44,11 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
     <Form onSubmit={handleSubmit}>
       <div className="clearfix">
         <div className="col col-12 px1">
-          <FormItem colon={false} label="Metric Name" {...formItemLayout}>
+          <FormItem
+            required
+            colon={false}
+            label="Rule Name"
+            {...formItemLayout}>
             <Input
               name="name"
               autoComplete="off"
@@ -54,7 +58,12 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
           </FormItem>
         </div>
         <div className="col col-12 px1">
-          <FormItem colon={false} label="Metric Filter" {...formItemLayout}>
+          <FormItem
+            required
+            colon={false}
+            label="Metric Filter"
+            help="eg. tag1:value1 tag2:value2"
+            {...formItemLayout}>
             <Input
               name="filter"
               autoComplete="off"
@@ -64,7 +73,7 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
           </FormItem>
         </div>
         <div className="col col-12 px1">
-          <FormItem label="Targets" colon={false} {...formItemLayout}>
+          <FormItem required label="Targets" colon={false} {...formItemLayout}>
             <TargetsEditor
               typeTag={typeTag}
               value={values.targets}
@@ -105,13 +114,13 @@ const TargetsEditorBase = props => {
                 <Icon type="delete" />
               </a>
             }>
-            <label>Name</label>
+            <label>Metric Name</label>
             <Input
               onBlur={onBlur}
               value={t.name}
               onChange={e => handleChange(i, 'name', e.target.value)}
             />
-            <label>Tags</label>
+            <label>Rollup Tags</label>
             <Select
               onBlur={onBlur}
               onChange={e => handleChange(i, 'tags', e)}

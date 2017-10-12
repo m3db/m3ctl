@@ -75,7 +75,7 @@ type Props = {
 };
 
 type PolicyObject = {
-  resolutionGranularity: string,
+  timePolicy: string,
   aggFunctions: array<string>,
 };
 
@@ -136,7 +136,7 @@ export function PolicyEditor(props: Props) {
         </a>
       )}
       <div className="col col-6 px1">
-        <label className="block pb1">Granularity/Retention Period</label>
+        <label className="block pb1">Resolution:Retention Period</label>
         <Select
           placeholder="Select a policy"
           value={policy.timePolicy}

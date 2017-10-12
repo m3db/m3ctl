@@ -190,7 +190,7 @@ export default compose(
         return {
           saveRollupRuleFetch: {
             meta: {
-              successMessage: 'Mapping rule saved!',
+              successMessage: 'Rollup rule saved!',
             },
             url: `/namespaces/${namespaceID}/rollup-rules${urlPath}`,
             method,

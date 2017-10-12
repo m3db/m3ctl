@@ -36,16 +36,12 @@ function Namespace(props) {
   return (
     <div>
       <div className="mb2">
-        <h2>
-          Namespace: {namespaceID}
-        </h2>
+        <h2>Namespace: {namespaceID}</h2>
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/namespaces">All Namespaces</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            {namespaceID}
-          </Breadcrumb.Item>
+          <Breadcrumb.Item>{namespaceID}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
       <Card className="mb2" style={{minHeight: 500}}>
@@ -243,15 +239,14 @@ export default compose(
     },
     props => ({open: false, content: null}),
   ),
-  withPromiseStateChangeCallback(
-    ['saveMappingRuleFetch', 'saveRollupRuleFetch'],
-    props => {
-      if (
-        props.saveMappingRuleFetch.fulfilled ||
-        props.saveRollupRuleFetch.fulfilled
-      ) {
-        props.setModal({open: false});
-      }
-    },
-  ),
+  withPromiseStateChangeCallback(['saveRollupRuleFetch'], props => {
+    if (props.saveRollupRuleFetch.fulfilled) {
+      props.setModal({open: false});
+    }
+  }),
+  withPromiseStateChangeCallback(['saveMappingRuleFetch'], props => {
+    if (props.saveMappingRuleFetch.fulfilled) {
+      props.setModal({open: false});
+    }
+  }),
 )(Namespace);

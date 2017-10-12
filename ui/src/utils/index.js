@@ -1,3 +1,7 @@
-export function parseMetricType(tagString) {
-  return tagString.indexOf('type:timer') !== 1;
+import _ from 'lodash';
+
+export function getTypeTag(tagString) {
+  const regex = /type:([^\s]*)/g;
+  const results = regex.exec(tagString);
+  return _.nth(results, 1) || null;
 }

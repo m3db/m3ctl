@@ -68,7 +68,22 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
               name="filter"
               autoComplete="off"
               value={values.filter}
-              onChange={handleChange}
+              onChange={(...e) => {
+                const newTypeTag = util.getTypeTag(e[0].target.value);
+                if (!_.includes(['gauge', 'counter'], newTypeTag)) {
+                  const targets = _.map(values.targets, t => {
+                    const newPolicies = t.policies.filter(
+                      p => !p.startsWith('10m'),
+                    );
+                    return {
+                      ...t,
+                      policies: newPolicies,
+                    };
+                  });
+                  setFieldValue('targets', targets);
+                }
+                handleChange(...e);
+              }}
             />
           </FormItem>
         </div>
@@ -92,7 +107,7 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
 }
 
 const TargetsEditorBase = props => {
-  const {value: targets = [], onChange, onBlur = noop => noop} = props;
+  const {value: targets = [], onChange, typeTag} = props;
   const handleChange = (index, property, newValue) => {
     targets[index][property] = newValue;
     onChange(targets);
@@ -116,13 +131,11 @@ const TargetsEditorBase = props => {
             }>
             <label>Metric Name</label>
             <Input
-              onBlur={onBlur}
               value={t.name}
               onChange={e => handleChange(i, 'name', e.target.value)}
             />
             <label>Rollup Tags</label>
             <Select
-              onBlur={onBlur}
               onChange={e => handleChange(i, 'tags', e)}
               value={t.tags}
               autoComplete="off"
@@ -133,6 +146,7 @@ const TargetsEditorBase = props => {
             />
             <label>Policies</label>
             <PoliciesEditor
+              typeTag={typeTag}
               value={t.policies}
               onChange={e => handleChange(i, 'policies', e)}
             />

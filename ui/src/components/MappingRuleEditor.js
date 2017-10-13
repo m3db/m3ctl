@@ -99,7 +99,7 @@ function MappingRuleEditor({
             required={true}
             label="Policies"
             {...formItemLayout}
-            help="eg:1m:10d = 1 min granularity for 10 days">
+            help="eg:1m:10d = 1 min resolution for 10 days">
             <PoliciesEditor
               typeTag={typeTag}
               value={values.policies}

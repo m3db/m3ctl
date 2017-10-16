@@ -25,6 +25,8 @@ import MappingRuleEditor from 'components/MappingRuleEditor';
 import TableActions from './TableActions';
 import {compose} from 'recompose';
 import {connectR2API} from 'hocs';
+import {formatTimestampMilliseconds} from 'utils';
+
 const {Column} = Table;
 
 function MappingRuleHistoryBase(props) {
@@ -62,11 +64,12 @@ function MappingRulesTable(props) {
   } = props;
   return (
     <Table
+      scroll={{x: 1300}}
       loading={loading}
       dataSource={mappingRules}
       rowKey={rowKey}
       locale={{emptyText: 'No mapping rules'}}>
-      <Column title="Rule Name" dataIndex="name" />
+      <Column fixed="left" title="Rule Name" dataIndex="name" width={100} />
       <Column
         title="Metric Filter"
         dataIndex="filter"
@@ -83,6 +86,16 @@ function MappingRulesTable(props) {
         title="Last Updated By"
         dataIndex="lastUpdatedBy"
         render={user => user || 'N/A'}
+      />
+      <Column
+        title="Last Updated At"
+        dataIndex="lastUpdatedAt"
+        render={timestamp => formatTimestampMilliseconds(timestamp)}
+      />
+      <Column
+        title="Cutover Date"
+        dataIndex="cutoverMillis"
+        render={cutoverMillis => formatTimestampMilliseconds(cutoverMillis)}
       />
       {showActions && (
         <Column

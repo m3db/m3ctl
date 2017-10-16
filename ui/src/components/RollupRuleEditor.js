@@ -25,6 +25,7 @@ import _ from 'lodash';
 import {withFormik} from 'formik';
 import * as util from 'utils';
 import PoliciesEditor from './PolicyEditor';
+import {filterPoliciesBasedOnTag} from 'utils';
 
 const FormItem = Form.Item;
 const formItemLayout = {
@@ -68,21 +69,14 @@ function RollupRuleEditor({values, handleChange, handleSubmit, setFieldValue}) {
               name="filter"
               autoComplete="off"
               value={values.filter}
-              onChange={(...e) => {
-                const newTypeTag = util.getTypeTag(e[0].target.value);
-                if (!_.includes(['gauge', 'counter'], newTypeTag)) {
-                  const targets = _.map(values.targets, t => {
-                    const newPolicies = t.policies.filter(
-                      p => !p.startsWith('10m'),
-                    );
-                    return {
-                      ...t,
-                      policies: newPolicies,
-                    };
-                  });
-                  setFieldValue('targets', targets);
-                }
-                handleChange(...e);
+              onChange={e => {
+                const newTypeTag = util.getTypeTag(e.target.value);
+                const targets = _.map(values.targets, t => ({
+                  ...t,
+                  policies: filterPoliciesBasedOnTag(t.policies, newTypeTag),
+                }));
+                setFieldValue('targets', targets);
+                handleChange(e);
               }}
             />
           </FormItem>

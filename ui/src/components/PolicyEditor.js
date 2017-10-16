@@ -185,7 +185,7 @@ function PoliciesEditor(props) {
       {_.map(policies, (p, i) => {
         return (
           <div
-            key={i}
+            key={JSON.stringify(p)}
             className="clearfix relative mb1"
             style={{
               backgroundColor: 'whitesmoke',

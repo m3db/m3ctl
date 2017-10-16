@@ -21,10 +21,10 @@
 import React from 'react';
 import {Button, Input, Form} from 'antd';
 import {withFormik} from 'formik';
-import _ from 'lodash';
 import * as util from 'utils';
 import yup from 'yup';
 import PoliciesEditor from './PolicyEditor';
+import {filterPoliciesBasedOnTag} from 'utils';
 
 const schema = yup.object().shape({
   name: yup.string('Name filter is required').required(),
@@ -80,15 +80,13 @@ function MappingRuleEditor({
               name="filter"
               autoComplete="off"
               value={values.filter}
-              onChange={(...e) => {
-                const newTypeTag = util.getTypeTag(e[0].target.value);
-                if (!_.includes(['gauge', 'counter'], newTypeTag)) {
-                  const newValues = values.policies.filter(
-                    p => !p.startsWith('10m'),
-                  );
-                  setFieldValue('policies', newValues);
-                }
-                handleChange(...e);
+              onChange={e => {
+                const newTypeTag = util.getTypeTag(e.target.value);
+                setFieldValue(
+                  'policies',
+                  filterPoliciesBasedOnTag(values.policies, newTypeTag),
+                );
+                handleChange(e);
               }}
             />
           </FormItem>

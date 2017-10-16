@@ -10,5 +10,5 @@ export function filterPoliciesBasedOnTag(policies, typeTag) {
   if (_.includes(['gauge', 'counter'], typeTag)) {
     return policies;
   }
-  return policies.filter(p => !p.startsWith('10m'));
+  return _.filter(policies, p => !p.startsWith('10m'));
 }

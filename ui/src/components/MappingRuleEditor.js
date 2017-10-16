@@ -116,7 +116,7 @@ function MappingRuleEditor({
 export default withFormik({
   enableReinitialize: true,
   mapPropsToValues: ({mappingRule}) => {
-    return mappingRule;
+    return mappingRule || {};
   },
   handleSubmit: (values, {props}) => {
     props.onSubmit(values);

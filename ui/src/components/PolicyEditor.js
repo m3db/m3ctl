@@ -193,15 +193,15 @@ function PoliciesEditor(props) {
             }}>
             <PolicyEditor
               onDeleteClicked={() => {
-                _.pullAt(policies, i);
-                onChange(policies);
+                onChange(policies.filter((__, idx) => i !== idx));
               }}
               showDelete={_.size(policies) > 1}
               value={p}
               typeTag={typeTag}
               onChange={e => {
-                policies[i] = e;
-                onChange(policies);
+                const newPolicy = policies.slice();
+                newPolicy[i] = e;
+                onChange(newPolicy);
               }}
             />
           </div>
@@ -213,8 +213,7 @@ function PoliciesEditor(props) {
           size="small"
           type="dashed"
           onClick={() => {
-            policies.push(_.first(POLICIES));
-            onChange(policies);
+            onChange(policies.concat(_.first(POLICIES)));
           }}>
           Add Policy
         </Button>

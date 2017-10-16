@@ -161,7 +161,7 @@ const TargetsEditor = toClass(TargetsEditorBase);
 export default withFormik({
   enableReinitialize: true,
   mapPropsToValues: ({rollupRule}) => {
-    return rollupRule;
+    return rollupRule || {};
   },
   handleSubmit: (values, {props}) => {
     props.onSubmit(values);

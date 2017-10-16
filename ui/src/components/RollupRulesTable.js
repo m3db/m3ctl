@@ -57,6 +57,7 @@ function RollupRuleHistoryBase(props) {
 
   return (
     <RollupRulesTable
+      rowKey={(__, index) => index}
       rollupRules={rollupRules}
       loading={loading}
       showActions={false}
@@ -102,7 +103,7 @@ function RollupRulesTable(props) {
       dataSource={rollupRules}
       rowKey={rowKey}
       locale={{emptyText: 'No rollup rules'}}>
-      <Column title="Name" dataIndex="name" />
+      <Column title="Rule Name" dataIndex="name" />
       <Column
         title="Metric Filter"
         dataIndex="filter"
@@ -117,6 +118,12 @@ function RollupRulesTable(props) {
           ));
         }}
       />
+      <Column
+        title="Last Updated By"
+        dataIndex="lastUpdatedBy"
+        render={user => user || 'N/A'}
+      />
+
       {showActions && (
         <Column
           width={200}

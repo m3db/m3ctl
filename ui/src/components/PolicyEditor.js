@@ -159,7 +159,7 @@ export function PolicyEditor(props: Props) {
               handleChange('aggFunctions', e);
             }}
             autoComplete="off"
-            mode="tags"
+            mode="multiple"
             style={{width: '100%'}}
             tokenSeparators={[',']}
             notFoundContent={false}>
@@ -185,7 +185,7 @@ function PoliciesEditor(props) {
       {_.map(policies, (p, i) => {
         return (
           <div
-            key={JSON.stringify(p)}
+            key={i}
             className="clearfix relative mb1"
             style={{
               backgroundColor: 'whitesmoke',

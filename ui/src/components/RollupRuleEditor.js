@@ -134,12 +134,12 @@ const TargetsEditorBase = props => {
                 <Icon type="delete" />
               </a>
             }>
-            <label>New Metric Name</label>
+            <label>New Rollup Metric Name</label>
             <Input
               value={t.name}
               onChange={e => handleChange(i, 'name', e.target.value)}
             />
-            <label>GroupBy Tags</label>
+            <label>Rollup Tags</label>
             <div>
               {_.map(REQUIRED_TAGS, requiredTag => <Tag>{requiredTag}</Tag>)}
               <Select

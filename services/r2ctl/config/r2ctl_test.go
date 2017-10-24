@@ -29,6 +29,30 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func TestValidationConfigurationRequiredRollupTags(t *testing.T) {
+	cfg := `
+requiredRollupTags:
+  - tag1
+  - tag2
+`
+	var c validationConfiguration
+	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
+}
+
+func TestValidationConfigurationTagNameInvalidChars(t *testing.T) {
+	cfg := `tagNameInvalidChars: "%\n"`
+	var c validationConfiguration
+	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
+	require.Equal(t, []rune{'%', '\n'}, runesFrom(c.TagNameInvalidChars))
+}
+
+func TestValidationConfigurationMetricNameInvalidChars(t *testing.T) {
+	cfg := `metricNameInvalidChars: "%\n"`
+	var c validationConfiguration
+	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
+	require.Equal(t, []rune{'%', '\n'}, runesFrom(c.MetricNameInvalidChars))
+}
+
 func TestNewMetricTypesFn(t *testing.T) {
 	cfg := `
 typeTag: type
@@ -115,4 +139,9 @@ allowed:
 		require.Error(t, err)
 		require.Nil(t, res)
 	}
+}
+
+func TestRunesFrom(t *testing.T) {
+	s := "%\n 6s[:\\"
+	require.Equal(t, []rune{'%', '\n', ' ', '6', 's', '[', ':', '\\'}, runesFrom(s))
 }

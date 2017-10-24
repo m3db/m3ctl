@@ -37,20 +37,21 @@ requiredRollupTags:
 `
 	var c validationConfiguration
 	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
+	require.Equal(t, []string{"tag1", "tag2"}, c.RequiredRollupTags)
 }
 
 func TestValidationConfigurationTagNameInvalidChars(t *testing.T) {
 	cfg := `tagNameInvalidChars: "%\n"`
 	var c validationConfiguration
 	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
-	require.Equal(t, []rune{'%', '\n'}, runesFrom(c.TagNameInvalidChars))
+	require.Equal(t, []rune{'%', '\n'}, decodeRuneInString(c.TagNameInvalidChars))
 }
 
 func TestValidationConfigurationMetricNameInvalidChars(t *testing.T) {
 	cfg := `metricNameInvalidChars: "%\n"`
 	var c validationConfiguration
 	require.NoError(t, yaml.Unmarshal([]byte(cfg), &c))
-	require.Equal(t, []rune{'%', '\n'}, runesFrom(c.MetricNameInvalidChars))
+	require.Equal(t, []rune{'%', '\n'}, decodeRuneInString(c.MetricNameInvalidChars))
 }
 
 func TestNewMetricTypesFn(t *testing.T) {
@@ -141,7 +142,7 @@ allowed:
 	}
 }
 
-func TestRunesFrom(t *testing.T) {
+func TestDecodeRuneInString(t *testing.T) {
 	s := "%\n 6s[:\\"
-	require.Equal(t, []rune{'%', '\n', ' ', '6', 's', '[', ':', '\\'}, runesFrom(s))
+	require.Equal(t, []rune{'%', '\n', ' ', '6', 's', '[', ':', '\\'}, decodeRuneInString(s))
 }

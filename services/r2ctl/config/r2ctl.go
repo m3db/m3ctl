@@ -142,8 +142,8 @@ func (c validationConfiguration) NewValidator() rules.Validator {
 		SetMetricTypesFn(c.MetricTypes.NewMetricTypesFn()).
 		SetDefaultAllowedStoragePolicies(c.Policies.DefaultAllowed.StoragePolicies).
 		SetDefaultAllowedCustomAggregationTypes(c.Policies.DefaultAllowed.AggregationTypes).
-		SetTagNameInvalidChars(decodeRuneInString(c.TagNameInvalidChars)).
-		SetMetricNameInvalidChars(decodeRuneInString(c.MetricNameInvalidChars))
+		SetTagNameInvalidChars(toRunes(c.TagNameInvalidChars)).
+		SetMetricNameInvalidChars(toRunes(c.MetricNameInvalidChars))
 	for _, override := range c.Policies.Overrides {
 		opts = opts.
 			SetAllowedStoragePoliciesFor(override.Type, override.Allowed.StoragePolicies).
@@ -200,8 +200,8 @@ type policiesConfiguration struct {
 	AggregationTypes []policy.AggregationType `yaml:"aggregationTypes"`
 }
 
-func decodeRuneInString(s string) []rune {
-	var r []rune
+func toRunes(s string) []rune {
+	r := make([]rune, 0, len(s))
 	for _, c := range s {
 		r = append(r, c)
 	}

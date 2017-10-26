@@ -68,8 +68,9 @@ function NamespaceTable(props) {
 function CreateNamespaceFormBase(props) {
   const {namespace, onNamespaceChange, onSaveClick} = props;
   return (
-    <div>
+    <div className="mb1">
       <Input
+        placeholder="Namespace Name"
         onPressEnter={onSaveClick}
         style={{width: 200}}
         className="inline-block mr1"
@@ -107,6 +108,8 @@ function Namespaces(props) {
         <p style={{color: 'gray'}}>A list of all namespaces</p>
       </div>
       <Card>
+        <CreateNamespaceForm onSaveNamespace={props.saveNamespace} />
+
         <Input
           className="mb1"
           value={props.nameFilter}
@@ -114,7 +117,6 @@ function Namespaces(props) {
           placeholder="Namespace Filter"
         />
         <NamespaceTable {...props} />
-        <CreateNamespaceForm onSaveNamespace={props.saveNamespace} />
       </Card>
     </div>
   );

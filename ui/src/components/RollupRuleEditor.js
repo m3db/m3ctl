@@ -144,7 +144,7 @@ const TargetsEditorBase = props => {
                 <Icon type="delete" />
               </a>
             }>
-            <label className="mb1">New Rollup Metric Name</label>
+            <label className="mb1">Rollup Metric Name</label>
             <Input
               className="mb2"
               value={t.name}

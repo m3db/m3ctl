@@ -1,6 +1,6 @@
 const helpText = {
   namespace:
-    'Logical grouping of rules. This is often times your service name.',
+    'Logical grouping of rules. The namespace name must be a valid service name.',
   'mapping-rule':
     'Configure the resolution, retention, and optional custom aggregation functions for metrics matching the filter.',
   'rollup-rule':

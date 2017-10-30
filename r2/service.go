@@ -28,15 +28,13 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
-
-	"github.com/uber-go/tally"
 
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 
 	"github.com/gorilla/mux"
@@ -127,58 +125,16 @@ type r2Handler struct {
 
 type routeFunc func(s *service, r *http.Request) (data interface{}, err error)
 
-type serviceMetrics struct {
-	sync.RWMutex
-	scope tally.Scope
-
-	// Endpoints mapped to metrics (endpoint = path + method + status).
-	metrics map[string]serviceMetric
-}
-
-type serviceMetric struct {
-	timer   tally.Timer
-	counter tally.Counter
-}
-
 // TODO(sandusky) Wrap each route with this function.
 func handleRoute(rf routeFunc, s *service, r *http.Request, namespace string) (interface{}, error) {
-	start := time.Now()
+	start := s.nowFn()
 	data, err := rf(s, r)
 	dur := time.Since(start)
-	s.serviceMetrics.recordMetric(r.RequestURI, r.Method, namespace, dur, err)
+	s.metrics.recordMetric(r.RequestURI, r.Method, namespace, dur, err)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
-}
-
-func (sm *serviceMetrics) recordMetric(path, method, namespace string, d time.Duration, err error) {
-	status := "success"
-	if err != nil {
-		status = "error"
-	}
-	endpoint := path + method + status
-
-	sm.Lock()
-	defer sm.Unlock()
-
-	scope := sm.scope
-	m, exists := sm.metrics[endpoint]
-	if !exists {
-		scope = scope.Tagged(map[string]string{
-			"namespace":   namespace,
-			"http-method": method,
-			"route-path":  path,
-		})
-		m = serviceMetric{
-			timer:   scope.Timer(status),
-			counter: scope.Counter(status),
-		}
-		sm.metrics[endpoint] = m
-	}
-
-	m.timer.Record(d)
-	m.counter.Inc(1)
 }
 
 func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
@@ -219,11 +175,12 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 
 // service handles all of the endpoints for r2.
 type service struct {
-	iOpts          instrument.Options
-	rootPrefix     string
-	store          Store
-	authService    auth.HTTPAuthService
-	serviceMetrics serviceMetrics
+	iOpts       instrument.Options
+	rootPrefix  string
+	store       Store
+	authService auth.HTTPAuthService
+	metrics     serviceMetrics
+	nowFn       clock.NowFn
 }
 
 // NewService creates a new r2 service using a given store.
@@ -232,13 +189,15 @@ func NewService(
 	rootPrefix string,
 	authService auth.HTTPAuthService,
 	store Store,
+	clock clock.Options,
 ) server.Service {
 	return &service{
-		iOpts:          iOpts,
-		store:          store,
-		authService:    authService,
-		rootPrefix:     rootPrefix,
-		serviceMetrics: serviceMetrics{scope: iOpts.MetricsScope()},
+		iOpts:       iOpts,
+		store:       store,
+		authService: authService,
+		rootPrefix:  rootPrefix,
+		metrics:     newServiceMetrics(iOpts.MetricsScope()),
+		nowFn:       clock.NowFn(),
 	}
 }
 

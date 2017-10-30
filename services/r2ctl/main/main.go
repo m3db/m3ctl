@@ -27,12 +27,14 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
 	"github.com/m3db/m3ctl/r2"
 	"github.com/m3db/m3ctl/services/r2ctl/config"
 	"github.com/m3db/m3ctl/services/r2ctl/server"
+	"github.com/m3db/m3x/clock"
 	xconfig "github.com/m3db/m3x/config"
 	"github.com/m3db/m3x/instrument"
 )
@@ -105,7 +107,13 @@ func main() {
 	r2ApiServer := server.NewServer(
 		listenAddr,
 		serverOpts,
-		r2.NewService(instrumentOpts, r2apiPrefix, authService, store),
+		r2.NewService(
+			instrumentOpts,
+			r2apiPrefix,
+			authService,
+			store,
+			clock.NewOptions().SetNowFn(time.Now),
+		),
 		health.NewService(instrumentOpts),
 	)
 

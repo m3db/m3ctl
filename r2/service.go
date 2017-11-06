@@ -189,7 +189,7 @@ func NewService(
 	rootPrefix string,
 	authService auth.HTTPAuthService,
 	store Store,
-	clock clock.Options,
+	clockOpts clock.Options,
 ) server.Service {
 	return &service{
 		iOpts:       iOpts,
@@ -197,7 +197,7 @@ func NewService(
 		authService: authService,
 		rootPrefix:  rootPrefix,
 		metrics:     newServiceMetrics(iOpts.MetricsScope()),
-		nowFn:       clock.NowFn(),
+		nowFn:       clockOpts.NowFn(),
 	}
 }
 

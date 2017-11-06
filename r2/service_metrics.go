@@ -34,6 +34,7 @@ const (
 
 type serviceMetrics struct {
 	sync.RWMutex
+
 	scope   tally.Scope
 	metrics map[serviceMetricID]serviceMetric
 }
@@ -78,7 +79,7 @@ func (sm *serviceMetrics) recordMetric(path, method, namespace string, d time.Du
 }
 
 func newServiceMetrics(scope tally.Scope) serviceMetrics {
-	return serviceMetrics{scope: scope}
+	return serviceMetrics{scope: scope, metrics: map[serviceMetricID]serviceMetric{}}
 }
 
 func newServiceMetricID(path, method, status string) serviceMetricID {

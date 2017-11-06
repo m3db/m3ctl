@@ -27,7 +27,6 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/health"
@@ -112,7 +111,7 @@ func main() {
 			r2apiPrefix,
 			authService,
 			store,
-			clock.NewOptions().SetNowFn(time.Now),
+			clock.NewOptions(),
 		),
 		health.NewService(instrumentOpts),
 	)

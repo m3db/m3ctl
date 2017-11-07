@@ -123,20 +123,6 @@ type r2Handler struct {
 	auth  auth.HTTPAuthService
 }
 
-type routeFunc func(s *service, r *http.Request) (data interface{}, err error)
-
-// TODO(sandusky) Wrap each route with this function.
-func handleRoute(rf routeFunc, s *service, r *http.Request, namespace string) (interface{}, error) {
-	start := s.nowFn()
-	data, err := rf(s, r)
-	dur := time.Since(start)
-	s.metrics.recordMetric(r.RequestURI, r.Method, namespace, dur, err)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
 func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {

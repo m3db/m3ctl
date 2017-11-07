@@ -79,7 +79,7 @@ func (sm *serviceMetrics) recordMetric(path, method, namespace string, d time.Du
 }
 
 func newServiceMetrics(scope tally.Scope) serviceMetrics {
-	return serviceMetrics{scope: scope, metrics: map[serviceMetricID]serviceMetric{}}
+	return serviceMetrics{scope: scope, metrics: make(map[serviceMetricID]serviceMetric)}
 }
 
 func newServiceMetricID(path, method, status string) serviceMetricID {

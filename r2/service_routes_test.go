@@ -43,42 +43,42 @@ func TestHandleRoute(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
-func TestFetchNamespaces_Success(t *testing.T) {
+func TestFetchNamespacesSuccess(t *testing.T) {
 	expected := newNamespacesJSON(&rules.NamespacesView{})
 	actual, err := fetchNamespaces(newTestService(), nil)
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestFetchNamespace_Success(t *testing.T) {
+func TestFetchNamespaceSuccess(t *testing.T) {
 	expected := newRuleSetJSON(&rules.RuleSetSnapshot{})
 	actual, err := fetchNamespace(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestCreateNamespace_Success(t *testing.T) {
+func TestCreateNamespaceSuccess(t *testing.T) {
 	expected := newNamespaceJSON(&rules.NamespaceView{})
 	actual, err := createNamespace(newTestService(), newTestPostRequest([]byte(`{"id": "id"}`)))
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestDeleteNamespace_Success(t *testing.T) {
+func TestDeleteNamespaceSuccess(t *testing.T) {
 	expected := fmt.Sprintf("Deleted namespace %s", "")
 	actual, err := deleteNamespace(newTestService(), newTestDeleteRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestFetchMappingRule_Success(t *testing.T) {
+func TestFetchMappingRuleSuccess(t *testing.T) {
 	expected := newMappingRuleJSON(&rules.MappingRuleView{})
 	actual, err := fetchMappingRule(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestCreateMappingRule_Success(t *testing.T) {
+func TestCreateMappingRuleSuccess(t *testing.T) {
 	expected := newMappingRuleJSON(&rules.MappingRuleView{})
 	actual, err := createMappingRule(newTestService(), newTestPostRequest(
 		[]byte(`{"filter": "key:val", "name": "name", "policies": []}`),
@@ -87,7 +87,7 @@ func TestCreateMappingRule_Success(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func TestUpdateMappingRule_Success(t *testing.T) {
+func TestUpdateMappingRuleSuccess(t *testing.T) {
 	expected := newMappingRuleJSON(&rules.MappingRuleView{})
 	actual, err := updateMappingRule(newTestService(), newTestPutRequest(
 		[]byte(`{"filter": "key:val", "name": "name", "policies": []}`),
@@ -96,28 +96,28 @@ func TestUpdateMappingRule_Success(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func TestDeleteMappingRule_Success(t *testing.T) {
+func TestDeleteMappingRuleSuccess(t *testing.T) {
 	expected := fmt.Sprintf("Deleted mapping rule: %s in namespace %s", "", "")
 	actual, err := deleteMappingRule(newTestService(), newTestDeleteRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestFetchMappingRuleHistory_Success(t *testing.T) {
+func TestFetchMappingRuleHistorySuccess(t *testing.T) {
 	expected := newMappingRuleHistoryJSON(make([]*rules.MappingRuleView, 0))
 	actual, err := fetchMappingRuleHistory(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestFetchRollupRule_Success(t *testing.T) {
+func TestFetchRollupRuleSuccess(t *testing.T) {
 	expected := newRollupRuleJSON(&rules.RollupRuleView{})
 	actual, err := fetchRollupRule(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestCreateRollupRule_Success(t *testing.T) {
+func TestCreateRollupRuleSuccess(t *testing.T) {
 	expected := newRollupRuleJSON(&rules.RollupRuleView{})
 	actual, err := createRollupRule(newTestService(), newTestPostRequest(
 		[]byte(`{"filter": "key:val", "name": "name", "targets": []}`),
@@ -126,7 +126,7 @@ func TestCreateRollupRule_Success(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func TestUpdateRollupRule_Success(t *testing.T) {
+func TestUpdateRollupRuleSuccess(t *testing.T) {
 	expected := newRollupRuleJSON(&rules.RollupRuleView{})
 	actual, err := updateRollupRule(newTestService(), newTestPutRequest(
 		[]byte(`{"filter": "key:val", "name": "name", "targets": []}`),
@@ -135,14 +135,14 @@ func TestUpdateRollupRule_Success(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func TestDeleteRollupRule_Success(t *testing.T) {
+func TestDeleteRollupRuleSuccess(t *testing.T) {
 	expected := fmt.Sprintf("Deleted rollup rule: %s in namespace %s", "", "")
 	actual, err := deleteRollupRule(newTestService(), newTestDeleteRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
 }
 
-func TestFetchRollupRuleHistory_Success(t *testing.T) {
+func TestFetchRollupRuleHistorySuccess(t *testing.T) {
 	expected := newRollupRuleHistoryJSON([]*rules.RollupRuleView{})
 	actual, err := fetchRollupRuleHistory(newTestService(), newTestGetRequest())
 	require.NoError(t, err)

@@ -194,8 +194,8 @@ func (s *service) sendResponse(w http.ResponseWriter, statusCode int, data inter
 	return writeAPIResponse(w, http.StatusInternalServerError, "could not create response object")
 }
 
-func (s *service) fetchNamespaces(w http.ResponseWriter, _ *http.Request) error {
-	data, err := handleRoute(fetchNamespaces, s, nil, "")
+func (s *service) fetchNamespaces(w http.ResponseWriter, r *http.Request) error {
+	data, err := handleRoute(fetchNamespaces, s, r, "")
 	if err != nil {
 		return err
 	}

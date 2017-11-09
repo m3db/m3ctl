@@ -30,17 +30,20 @@ import (
 type SimpleAuthConfig struct {
 	// This is an http header that identifies the user performing the operation
 	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
+	// This is a list of users that are allowed to perform the operation
+	WhitelistedUserIDs []string `yaml:"whitelistedUserIDs,omitempty"`
 }
 
 // simpleAuth is an naive authentication method that just checks for a HTTPHeader identifying the user
 // performing the action.
 type simpleAuth struct {
-	userIDHeader string
+	userIDHeader       string
+	whitelistedUserIDs []string
 }
 
 // NewSimpleAuth creates a new simple auth instance given using the provided config.
 func (ac SimpleAuthConfig) NewSimpleAuth() HTTPAuthService {
-	return simpleAuth{userIDHeader: ac.UserIDHeader}
+	return simpleAuth{userIDHeader: ac.UserIDHeader, whitelistedUserIDs: ac.WhitelistedUserIDs}
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
@@ -52,6 +55,15 @@ func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 			http.Error(w, fmt.Sprintf("Must provide header: [%s]", a.userIDHeader), http.StatusUnauthorized)
 			return
 		}
+
+		// Authorize based on configured whitelisted users (if any).
+		if len(a.whitelistedUserIDs) != 0 {
+			if !userIsAuthorized(userID, a.whitelistedUserIDs) {
+				http.Error(w, fmt.Sprintf("Supplied userID (%s) is not authorized", userID), http.StatusUnauthorized)
+				return
+			}
+		}
+
 		ctx := a.SetUser(r.Context(), userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -69,4 +81,15 @@ func (a simpleAuth) GetUser(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("couldn't identify user")
 	}
 	return id.(string), nil
+}
+
+func userIsAuthorized(userID string, whitelistedUserIDs []string) bool {
+	isAuthorized := false
+	for _, wu := range whitelistedUserIDs {
+		if userID == wu {
+			isAuthorized = true
+			break
+		}
+	}
+	return isAuthorized
 }

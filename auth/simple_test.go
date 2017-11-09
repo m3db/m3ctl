@@ -62,6 +62,15 @@ func TestGetUser(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestUserIsAuthorized(t *testing.T) {
+	userID1 := "foo"
+	userID2 := "bar"
+	whitelistedUserIDs := []string{"baz", "foo"}
+
+	require.True(t, userIsAuthorized(userID1, whitelistedUserIDs))
+	require.False(t, userIsAuthorized(userID2, whitelistedUserIDs))
+}
+
 func TestHealthCheck(t *testing.T) {
 	a := testConfig.NewSimpleAuth()
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -21,10 +21,8 @@
 package r2
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -246,19 +244,4 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 		return nil, err
 	}
 	return newRollupRuleHistoryJSON(hist), nil
-}
-
-type routeFunc func(s *service, r *http.Request) (data interface{}, err error)
-
-func handleRoute(rf routeFunc, s *service, r *http.Request, namespace string) (interface{}, error) {
-	if r == nil || s == nil {
-		return nil, errors.New("Must pass non nil service and request to route handler")
-	}
-	start := s.nowFn()
-	data, err := rf(s, r)
-	s.metrics.recordMetric(r.RequestURI, r.Method, namespace, time.Since(start), err)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
 }

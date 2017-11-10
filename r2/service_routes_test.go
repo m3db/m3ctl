@@ -46,8 +46,11 @@ func TestHandleRoute(t *testing.T) {
 
 func TestHandleRouteNilRequest(t *testing.T) {
 	s := newTestService()
-	_, err := handleRoute(fetchNamespaces, s, nil, "ns")
-	require.EqualError(t, err, "Nil request passed to handler")
+	r := newTestGetRequest()
+	_, err1 := handleRoute(fetchNamespaces, s, nil, "ns")
+	_, err2 := handleRoute(fetchNamespaces, nil, r, "ns")
+	require.EqualError(t, err1, "Must pass non nil service and request to route handler")
+	require.EqualError(t, err2, "Must pass non nil service and request to route handler")
 }
 func TestFetchNamespacesSuccess(t *testing.T) {
 	expected := newNamespacesJSON(&rules.NamespacesView{})

@@ -251,8 +251,8 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 type routeFunc func(s *service, r *http.Request) (data interface{}, err error)
 
 func handleRoute(rf routeFunc, s *service, r *http.Request, namespace string) (interface{}, error) {
-	if r == nil {
-		return nil, errors.New("Nil request passed to handler")
+	if r == nil || s == nil {
+		return nil, errors.New("Must pass non nil service and request to route handler")
 	}
 	start := s.nowFn()
 	data, err := rf(s, r)

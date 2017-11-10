@@ -21,6 +21,7 @@
 package r2
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -250,6 +251,9 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 type routeFunc func(s *service, r *http.Request) (data interface{}, err error)
 
 func handleRoute(rf routeFunc, s *service, r *http.Request, namespace string) (interface{}, error) {
+	if r == nil {
+		return nil, errors.New("Nil request passed to handler")
+	}
 	start := s.nowFn()
 	data, err := rf(s, r)
 	s.metrics.recordMetric(r.RequestURI, r.Method, namespace, time.Since(start), err)

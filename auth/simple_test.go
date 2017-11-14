@@ -31,13 +31,26 @@ import (
 
 var (
 	testConfig = SimpleAuthConfig{
-		UserIDHeader: "testHeader",
+		SimpleAuthNConfig: SimpleAuthNConfig{
+			UserIDHeader: "testHeader",
+		},
+		SimpleAuthZConfig: SimpleAuthZConfig{
+			WhitelistReads:          true,
+			WhitelistWrites:         false,
+			ReadWhitelistedUserIDs:  []string{"testUser"},
+			WriteWhitelistedUserIDs: []string{},
+		},
 	}
 )
 
 func TestNewSimpleAuth(t *testing.T) {
-	a := testConfig.NewSimpleAuth().(simpleAuth)
-	require.Equal(t, a.userIDHeader, "testHeader")
+	an := testConfig.NewSimpleAuth().(simpleAuth).authN
+	az := testConfig.NewSimpleAuth().(simpleAuth).authZ
+	require.Equal(t, an.userIDHeader, "testHeader")
+	require.Equal(t, az.whitelistReads, true)
+	require.Equal(t, az.whitelistWrites, false)
+	require.Equal(t, az.readWhitelistedUserIDs, []string{"testUser"})
+	require.Equal(t, az.writeWhitelistedUserIDs, []string{})
 }
 
 func TestSetUser(t *testing.T) {
@@ -62,13 +75,27 @@ func TestGetUser(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestUserIsAuthorized(t *testing.T) {
-	userID1 := "foo"
-	userID2 := "bar"
-	whitelistedUserIDs := []string{"baz", "foo"}
+func TestSimpleAuthNAuthenticate(t *testing.T) {
+	authN := simpleAuthN{
+		userIDHeader: "foo",
+	}
 
-	require.True(t, userIsAuthorized(userID1, whitelistedUserIDs))
-	require.False(t, userIsAuthorized(userID2, whitelistedUserIDs))
+	require.Nil(t, authN.authenticate("bar"))
+	require.EqualError(t, authN.authenticate(""), "Must provide header: [foo]")
+}
+
+func TestSimpleAuthZAuthorize(t *testing.T) {
+	authZ := simpleAuthZ{
+		whitelistReads:          true,
+		whitelistWrites:         false,
+		readWhitelistedUserIDs:  []string{"foo", "bar"},
+		writeWhitelistedUserIDs: []string{"foo", "bar"},
+	}
+
+	require.Nil(t, authZ.authorize("GET", "foo"))
+	require.Nil(t, authZ.authorize("POST", "foo"))
+	require.Nil(t, authZ.authorize("OPTIONS", "foo"))
+	require.EqualError(t, authZ.authorize("", "baz"), "Supplied userID: [baz] is not authorized")
 }
 
 func TestHealthCheck(t *testing.T) {

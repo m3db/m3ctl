@@ -28,40 +28,75 @@ import (
 
 // SimpleAuthConfig holds this configuration necessary for a simple auth implementation.
 type SimpleAuthConfig struct {
-	// This is an http header that identifies the user performing the operation
-	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
-	// This is a list of users that are allowed to perform the operation
-	WhitelistedUserIDs []string `yaml:"whitelistedUserIDs,omitempty"`
+	// AuthN configuration
+	SimpleAuthNConfig SimpleAuthNConfig `yaml:"authN"`
+	// AuthZ configuration
+	SimpleAuthZConfig SimpleAuthZConfig `yaml:"authZ"`
 }
 
-// simpleAuth is an naive authentication method that just checks for a HTTPHeader identifying the user
-// performing the action.
-type simpleAuth struct {
-	userIDHeader       string
-	whitelistedUserIDs []string
+// SimpleAuthNConfig holds this configuration necessary for a simple authentication implementation.
+type SimpleAuthNConfig struct {
+	// This is an http header that identifies the user performing the operation
+	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
+}
+
+// SimpleAuthZConfig holds this configuration necessary for a simple authorization implementation.
+type SimpleAuthZConfig struct {
+	// This indicates whether reads should use a read whitelist
+	WhitelistReads bool `yaml:"whitelistReads,omitempty"`
+	// This indicates whether writes should use a read whitelist
+	WhitelistWrites bool `yaml:"whitelistWrites,omitempty"`
+	// This is a list of users that are allowed to perform read operations
+	ReadWhitelistedUserIDs []string `yaml:"readWhitelistedUserIDs,omitempty"`
+	// This is a list of users that are allowed to perform write operations
+	WriteWhitelistedUserIDs []string `yaml:"readWhitelistedUserIDs,omitempty"`
 }
 
 // NewSimpleAuth creates a new simple auth instance given using the provided config.
 func (ac SimpleAuthConfig) NewSimpleAuth() HTTPAuthService {
-	return simpleAuth{userIDHeader: ac.UserIDHeader, whitelistedUserIDs: ac.WhitelistedUserIDs}
+	return simpleAuth{
+		authN: simpleAuthN{
+			userIDHeader: ac.SimpleAuthNConfig.UserIDHeader,
+		},
+		authZ: simpleAuthZ{
+			whitelistReads:          ac.SimpleAuthZConfig.WhitelistReads,
+			whitelistWrites:         ac.SimpleAuthZConfig.WhitelistWrites,
+			readWhitelistedUserIDs:  ac.SimpleAuthZConfig.ReadWhitelistedUserIDs,
+			writeWhitelistedUserIDs: ac.SimpleAuthZConfig.WriteWhitelistedUserIDs,
+		},
+	}
+}
+
+type simpleAuth struct {
+	authN simpleAuthN
+	authZ simpleAuthZ
+}
+
+type simpleAuthN struct {
+	userIDHeader string
+}
+
+type simpleAuthZ struct {
+	whitelistReads          bool
+	whitelistWrites         bool
+	readWhitelistedUserIDs  []string
+	writeWhitelistedUserIDs []string
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
-// Otherwise, it returns an Unathorized http response.
+// Otherwise, it returns an Unauthorized http response.
 func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Header.Get(a.userIDHeader)
-		if userID == "" {
-			http.Error(w, fmt.Sprintf("Must provide header: [%s]", a.userIDHeader), http.StatusUnauthorized)
+		userID := r.Header.Get(a.authN.userIDHeader)
+		err := a.authN.authenticate(userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		// Authorize based on configured whitelisted users (if any).
-		if len(a.whitelistedUserIDs) != 0 {
-			if !userIsAuthorized(userID, a.whitelistedUserIDs) {
-				http.Error(w, fmt.Sprintf("Supplied userID (%s) is not authorized", userID), http.StatusUnauthorized)
-				return
-			}
+		err = a.authZ.authorize(r.Method, userID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
 		}
 
 		ctx := a.SetUser(r.Context(), userID)
@@ -83,13 +118,39 @@ func (a simpleAuth) GetUser(ctx context.Context) (string, error) {
 	return id.(string), nil
 }
 
-func userIsAuthorized(userID string, whitelistedUserIDs []string) bool {
+func (a simpleAuthN) authenticate(userID string) error {
+	if userID == "" {
+		return fmt.Errorf("Must provide header: [%s]", a.userIDHeader)
+	}
+	return nil
+}
+
+func (a simpleAuthZ) authorize(httpMethod, userID string) error {
+	switch httpMethod {
+	case "GET", "":
+		return a.authorizeUser(a.whitelistReads, a.readWhitelistedUserIDs, userID)
+	case "POST", "PUT", "PATCH", "DELETE":
+		return a.authorizeUser(a.whitelistWrites, a.writeWhitelistedUserIDs, userID)
+	default:
+		return nil
+	}
+}
+
+func (a simpleAuthZ) authorizeUser(useWhitelist bool, whitelistedUsers []string, userID string) error {
+	if !useWhitelist {
+		return nil
+	}
+
 	isAuthorized := false
-	for _, wu := range whitelistedUserIDs {
-		if userID == wu {
+	for _, u := range whitelistedUsers {
+		if u == userID {
 			isAuthorized = true
 			break
 		}
 	}
-	return isAuthorized
+	if !isAuthorized {
+		return fmt.Errorf("Supplied userID: [%s] is not authorized", userID)
+	}
+
+	return nil
 }

@@ -22,7 +22,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 )
@@ -33,17 +32,17 @@ type SimpleAuthConfig struct {
 	Authorization  authorizationConfig  `yaml:"authorization"`
 }
 
-// Authentication holds this configuration necessary for a simple authentication implementation.
+// authenticationConfig holds this configuration necessary for a simple authentication implementation.
 type authenticationConfig struct {
 	// This is an http header that identifies the user performing the operation.
 	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
 }
 
-// Authorization holds this configuration necessary for a simple authorization implementation.
+// authorizationConfig holds this configuration necessary for a simple authorization implementation.
 type authorizationConfig struct {
 	// This indicates whether reads should use a read whitelist.
 	ReadWhitelistEnabled bool `yaml:"readWhitelistEnabled,omitempty"`
-	// This indicates whether writes should use a read whitelist.
+	// This indicates whether writes should use a write whitelist.
 	WriteWhitelistEnabled bool `yaml:"writeWhitelistEnabled,omitempty"`
 	// This is a list of users that are allowed to perform read operations.
 	ReadWhitelistedUserIDs []string `yaml:"readWhitelistedUserIDs,omitempty"`
@@ -96,7 +95,7 @@ func (a simpleAuthorization) authorize(httpMethod, userID string) error {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
 		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
 	default:
-		return errors.New("unsupported request method")
+		return fmt.Errorf("unsupported request method: %s", httpMethod)
 	}
 }
 
@@ -127,6 +126,7 @@ func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 		err = a.authorization.authorize(r.Method, userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusForbidden)
+			return
 		}
 
 		ctx := a.SetUser(r.Context(), userID)

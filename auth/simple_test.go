@@ -31,12 +31,12 @@ import (
 
 var (
 	testConfig = SimpleAuthConfig{
-		SimpleAuthNConfig: SimpleAuthNConfig{
+		Authentication: authenticationConfig{
 			UserIDHeader: "testHeader",
 		},
-		SimpleAuthZConfig: SimpleAuthZConfig{
-			WhitelistReads:          true,
-			WhitelistWrites:         false,
+		Authorization: authorizationConfig{
+			ReadWhitelistEnabled:    true,
+			WriteWhitelistEnabled:   false,
 			ReadWhitelistedUserIDs:  []string{"testUser"},
 			WriteWhitelistedUserIDs: []string{},
 		},
@@ -44,11 +44,11 @@ var (
 )
 
 func TestNewSimpleAuth(t *testing.T) {
-	an := testConfig.NewSimpleAuth().(simpleAuth).authN
-	az := testConfig.NewSimpleAuth().(simpleAuth).authZ
+	an := testConfig.NewSimpleAuth().(simpleAuth).authentication
+	az := testConfig.NewSimpleAuth().(simpleAuth).authorization
 	require.Equal(t, an.userIDHeader, "testHeader")
-	require.Equal(t, az.whitelistReads, true)
-	require.Equal(t, az.whitelistWrites, false)
+	require.Equal(t, az.readWhitelistEnabled, true)
+	require.Equal(t, az.writeWhitelistEnabled, false)
 	require.Equal(t, az.readWhitelistedUserIDs, []string{"testUser"})
 	require.Equal(t, az.writeWhitelistedUserIDs, []string{})
 }
@@ -75,27 +75,27 @@ func TestGetUser(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestSimpleAuthNAuthenticate(t *testing.T) {
-	authN := simpleAuthN{
+func TestSimpleAuthenticationAuthenticate(t *testing.T) {
+	authentication := simpleAuthentication{
 		userIDHeader: "foo",
 	}
 
-	require.Nil(t, authN.authenticate("bar"))
-	require.EqualError(t, authN.authenticate(""), "Must provide header: [foo]")
+	require.Nil(t, authentication.authenticate("bar"))
+	require.EqualError(t, authentication.authenticate(""), "must provide header: [foo]")
 }
 
-func TestSimpleAuthZAuthorize(t *testing.T) {
-	authZ := simpleAuthZ{
-		whitelistReads:          true,
-		whitelistWrites:         false,
+func TestSimpleAuthorizationAuthorize(t *testing.T) {
+	authorization := simpleAuthorization{
+		readWhitelistEnabled:    true,
+		writeWhitelistEnabled:   false,
 		readWhitelistedUserIDs:  []string{"foo", "bar"},
 		writeWhitelistedUserIDs: []string{"foo", "bar"},
 	}
 
-	require.Nil(t, authZ.authorize("GET", "foo"))
-	require.Nil(t, authZ.authorize("POST", "foo"))
-	require.Nil(t, authZ.authorize("OPTIONS", "foo"))
-	require.EqualError(t, authZ.authorize("", "baz"), "Supplied userID: [baz] is not authorized")
+	require.Nil(t, authorization.authorize("GET", "foo"))
+	require.Nil(t, authorization.authorize("POST", "foo"))
+	require.EqualError(t, authorization.authorize("OPTIONS", "foo"), "unsupported request method")
+	require.EqualError(t, authorization.authorize("GET", "baz"), "supplied userID: [baz] is not authorized")
 }
 
 func TestHealthCheck(t *testing.T) {

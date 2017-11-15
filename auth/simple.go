@@ -22,79 +22,109 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 )
 
 // SimpleAuthConfig holds this configuration necessary for a simple auth implementation.
 type SimpleAuthConfig struct {
-	// AuthN configuration
-	SimpleAuthNConfig SimpleAuthNConfig `yaml:"authN"`
-	// AuthZ configuration
-	SimpleAuthZConfig SimpleAuthZConfig `yaml:"authZ"`
+	Authentication authenticationConfig `yaml:"authentication"`
+	Authorization  authorizationConfig  `yaml:"authorization"`
 }
 
-// SimpleAuthNConfig holds this configuration necessary for a simple authentication implementation.
-type SimpleAuthNConfig struct {
-	// This is an http header that identifies the user performing the operation
+// Authentication holds this configuration necessary for a simple authentication implementation.
+type authenticationConfig struct {
+	// This is an http header that identifies the user performing the operation.
 	UserIDHeader string `yaml:"userIDHeader" validate:"nonzero"`
 }
 
-// SimpleAuthZConfig holds this configuration necessary for a simple authorization implementation.
-type SimpleAuthZConfig struct {
-	// This indicates whether reads should use a read whitelist
-	WhitelistReads bool `yaml:"whitelistReads,omitempty"`
-	// This indicates whether writes should use a read whitelist
-	WhitelistWrites bool `yaml:"whitelistWrites,omitempty"`
-	// This is a list of users that are allowed to perform read operations
+// Authorization holds this configuration necessary for a simple authorization implementation.
+type authorizationConfig struct {
+	// This indicates whether reads should use a read whitelist.
+	ReadWhitelistEnabled bool `yaml:"readWhitelistEnabled,omitempty"`
+	// This indicates whether writes should use a read whitelist.
+	WriteWhitelistEnabled bool `yaml:"writeWhitelistEnabled,omitempty"`
+	// This is a list of users that are allowed to perform read operations.
 	ReadWhitelistedUserIDs []string `yaml:"readWhitelistedUserIDs,omitempty"`
-	// This is a list of users that are allowed to perform write operations
+	// This is a list of users that are allowed to perform write operations.
 	WriteWhitelistedUserIDs []string `yaml:"readWhitelistedUserIDs,omitempty"`
 }
 
 // NewSimpleAuth creates a new simple auth instance given using the provided config.
 func (ac SimpleAuthConfig) NewSimpleAuth() HTTPAuthService {
 	return simpleAuth{
-		authN: simpleAuthN{
-			userIDHeader: ac.SimpleAuthNConfig.UserIDHeader,
+		authentication: simpleAuthentication{
+			userIDHeader: ac.Authentication.UserIDHeader,
 		},
-		authZ: simpleAuthZ{
-			whitelistReads:          ac.SimpleAuthZConfig.WhitelistReads,
-			whitelistWrites:         ac.SimpleAuthZConfig.WhitelistWrites,
-			readWhitelistedUserIDs:  ac.SimpleAuthZConfig.ReadWhitelistedUserIDs,
-			writeWhitelistedUserIDs: ac.SimpleAuthZConfig.WriteWhitelistedUserIDs,
+		authorization: simpleAuthorization{
+			readWhitelistEnabled:    ac.Authorization.ReadWhitelistEnabled,
+			writeWhitelistEnabled:   ac.Authorization.WriteWhitelistEnabled,
+			readWhitelistedUserIDs:  ac.Authorization.ReadWhitelistedUserIDs,
+			writeWhitelistedUserIDs: ac.Authorization.WriteWhitelistedUserIDs,
 		},
 	}
 }
 
 type simpleAuth struct {
-	authN simpleAuthN
-	authZ simpleAuthZ
+	authentication simpleAuthentication
+	authorization  simpleAuthorization
 }
 
-type simpleAuthN struct {
+type simpleAuthentication struct {
 	userIDHeader string
 }
 
-type simpleAuthZ struct {
-	whitelistReads          bool
-	whitelistWrites         bool
+func (a simpleAuthentication) authenticate(userID string) error {
+	if userID == "" {
+		return fmt.Errorf("must provide header: [%s]", a.userIDHeader)
+	}
+	return nil
+}
+
+type simpleAuthorization struct {
+	readWhitelistEnabled    bool
+	writeWhitelistEnabled   bool
 	readWhitelistedUserIDs  []string
 	writeWhitelistedUserIDs []string
+}
+
+func (a simpleAuthorization) authorize(httpMethod, userID string) error {
+	switch httpMethod {
+	case http.MethodGet:
+		return a.authorizeUser(a.readWhitelistEnabled, a.readWhitelistedUserIDs, userID)
+	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
+	default:
+		return errors.New("unsupported request method")
+	}
+}
+
+func (a simpleAuthorization) authorizeUser(useWhitelist bool, whitelistedUsers []string, userID string) error {
+	if !useWhitelist {
+		return nil
+	}
+
+	for _, u := range whitelistedUsers {
+		if u == userID {
+			return nil
+		}
+	}
+	return fmt.Errorf("supplied userID: [%s] is not authorized", userID)
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
 // Otherwise, it returns an Unauthorized http response.
 func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Header.Get(a.authN.userIDHeader)
-		err := a.authN.authenticate(userID)
+		userID := r.Header.Get(a.authentication.userIDHeader)
+		err := a.authentication.authenticate(userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		err = a.authZ.authorize(r.Method, userID)
+		err = a.authorization.authorize(r.Method, userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusForbidden)
 		}
@@ -116,41 +146,4 @@ func (a simpleAuth) GetUser(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("couldn't identify user")
 	}
 	return id.(string), nil
-}
-
-func (a simpleAuthN) authenticate(userID string) error {
-	if userID == "" {
-		return fmt.Errorf("Must provide header: [%s]", a.userIDHeader)
-	}
-	return nil
-}
-
-func (a simpleAuthZ) authorize(httpMethod, userID string) error {
-	switch httpMethod {
-	case "GET", "":
-		return a.authorizeUser(a.whitelistReads, a.readWhitelistedUserIDs, userID)
-	case "POST", "PUT", "PATCH", "DELETE":
-		return a.authorizeUser(a.whitelistWrites, a.writeWhitelistedUserIDs, userID)
-	default:
-		return nil
-	}
-}
-
-func (a simpleAuthZ) authorizeUser(useWhitelist bool, whitelistedUsers []string, userID string) error {
-	if !useWhitelist {
-		return nil
-	}
-
-	isAuthorized := false
-	for _, u := range whitelistedUsers {
-		if u == userID {
-			isAuthorized = true
-			break
-		}
-	}
-	if !isAuthorized {
-		return fmt.Errorf("Supplied userID: [%s] is not authorized", userID)
-	}
-
-	return nil
 }

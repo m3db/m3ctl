@@ -94,7 +94,7 @@ func TestSimpleAuthorizationAuthorize(t *testing.T) {
 
 	require.Nil(t, authorization.authorize("GET", "foo"))
 	require.Nil(t, authorization.authorize("POST", "foo"))
-	require.EqualError(t, authorization.authorize("OPTIONS", "foo"), "unsupported request method")
+	require.EqualError(t, authorization.authorize("OPTIONS", "foo"), "unsupported request method: OPTIONS")
 	require.EqualError(t, authorization.authorize("GET", "baz"), "supplied userID: [baz] is not authorized")
 }
 

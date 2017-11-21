@@ -130,6 +130,14 @@ func TestHealthCheck(t *testing.T) {
 		require.Equal(t, "testHeader", v)
 	})
 
-	wrappedCall := a.NewAuthHandler(f)
+	wrappedCall := a.NewAuthHandler(f, writeAPIResponse)
 	wrappedCall.ServeHTTP(httptest.NewRecorder(), &http.Request{})
+}
+
+func writeAPIResponse(w http.ResponseWriter, code int, msg string) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_, err := w.Write([]byte(msg))
+
+	return err
 }

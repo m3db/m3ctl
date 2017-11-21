@@ -27,6 +27,8 @@ import (
 
 type keyType int
 
+type errorResponseHandler func(w http.ResponseWriter, code int, msg string) error
+
 const (
 	// UserIDField is a key
 	UserIDField keyType = iota
@@ -37,7 +39,7 @@ type HTTPAuthService interface {
 	// NewAuthHandler should return a handler that performs some check on the request coming into the given handler
 	// and then runs the handler if it is. If the request passes authentication/authorization successfully, it should call SetUser
 	// to make the callers id available to the service in a global context.
-	NewAuthHandler(next http.Handler) http.Handler
+	NewAuthHandler(next http.Handler, errHandler errorResponseHandler) http.Handler
 
 	// SetUser sets a userID that identifies the api caller in the global context.
 	SetUser(parent context.Context, userID string) context.Context

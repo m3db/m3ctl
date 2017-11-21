@@ -114,7 +114,7 @@ func (a simpleAuthorization) authorizeUser(useWhitelist bool, whitelistedUsers [
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
 // Otherwise, it returns an Unauthorized http response.
-func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
+func (a simpleAuth) NewAuthHandler(next http.Handler, errHandler errorResponseHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Header.Get(a.authentication.userIDHeader)
 		err := a.authentication.authenticate(userID)
@@ -125,7 +125,7 @@ func (a simpleAuth) NewAuthHandler(next http.Handler) http.Handler {
 
 		err = a.authorization.authorize(r.Method, userID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusForbidden)
+			errHandler(w, http.StatusForbidden, err.Error())
 			return
 		}
 

@@ -38,7 +38,8 @@ const (
 type HTTPAuthService interface {
 	// NewAuthHandler should return a handler that performs some check on the request coming into the given handler
 	// and then runs the handler if it is. If the request passes authentication/authorization successfully, it should call SetUser
-	// to make the callers id available to the service in a global context.
+	// to make the callers id available to the service in a global context. errHandler should be passed in to properly format the
+	// the error and respond the the request in the event of bad auth.
 	NewAuthHandler(next http.Handler, errHandler errorResponseHandler) http.Handler
 
 	// SetUser sets a userID that identifies the api caller in the global context.

@@ -119,7 +119,7 @@ func (a simpleAuth) NewAuthHandler(next http.Handler, errHandler errorResponseHa
 		userID := r.Header.Get(a.authentication.userIDHeader)
 		err := a.authentication.authenticate(userID)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			errHandler(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 

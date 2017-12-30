@@ -48,6 +48,8 @@ type server struct {
 
 // NewServer creates a new HTTP server.
 func NewServer(address string, opts Options, services ...service.Service) mserver.Server {
+	// Make a copy of the services passed in so they cannot be mutated externally
+	// once the server is constructed.
 	cloned := make([]service.Service, len(services))
 	copy(cloned, services)
 	s := &http.Server{

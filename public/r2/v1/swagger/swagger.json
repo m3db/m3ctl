@@ -23,6 +23,10 @@
         {
             "name": "rollup-rules",
             "description": "Operations on rollup rules"
+        },
+        {
+            "name": "rule-sets",
+            "description": "Operations at the rule-set level"
         }
     ],
     "schemes": [
@@ -771,6 +775,52 @@
                     }
                 }
             }
+        },
+        "/rulesets/validate": {
+            "post": {
+                "tags": [
+                    "rulesets"
+                ],
+                "summary": "Performs rules validation on the given list of RuleSets.",
+                "operationId": "validateRuleSets",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "rule-sets",
+                        "description": "The rule-sets to validate.",
+                        "required": true,
+                        "schema": {
+                           "$ref": "#/definitions/RuleSets"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RuleSets are valid",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "RuleSets are not valid.",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Something went horribly wrong",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -822,6 +872,12 @@
                         "$ref": "#/definitions/RollupRule"
                     }
                 }
+            }
+        },
+        "RuleSets": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/RuleSet"
             }
         },
         "Policies": {

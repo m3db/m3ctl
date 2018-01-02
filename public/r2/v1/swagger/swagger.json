@@ -23,10 +23,6 @@
         {
             "name": "rollup-rules",
             "description": "Operations on rollup rules"
-        },
-        {
-            "name": "rule-sets",
-            "description": "Operations at the rule-set level"
         }
     ],
     "schemes": [
@@ -175,6 +171,61 @@
                     },
                     "404": {
                         "description": "No such namespace",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Something went horribly wrong",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/namespaces/validate": {
+            "post": {
+                "tags": [
+                    "namespaces"
+                ],
+                "summary": "Performs rules validation on the given Namespace and list of RuleSets.",
+                "operationId": "validateNamespace",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "rule-sets",
+                        "description": "The rule-sets to validate.",
+                        "required": true,
+                        "schema": {
+                           "$ref": "#/definitions/RuleSets"
+                        }
+                    },
+                    {
+                        "in": "body",
+                        "name": "namespace",
+                        "description": "The namespace to validate.",
+                        "required": true,
+                        "schema": {
+                           "$ref": "#/definitions/Namespace"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The namespace is valid.",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "The namespace is invalid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }
@@ -763,52 +814,6 @@
                     },
                     "404": {
                         "description": "no such namespace or no such rule",
-                        "schema": {
-                            "$ref": "#/definitions/ApiResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Something went horribly wrong",
-                        "schema": {
-                            "$ref": "#/definitions/ApiResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/rulesets/validate": {
-            "post": {
-                "tags": [
-                    "rulesets"
-                ],
-                "summary": "Performs rules validation on the given list of RuleSets.",
-                "operationId": "validateRuleSets",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "in": "body",
-                        "name": "rule-sets",
-                        "description": "The rule-sets to validate.",
-                        "required": true,
-                        "schema": {
-                           "$ref": "#/definitions/RuleSets"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "RuleSets are valid",
-                        "schema": {
-                            "$ref": "#/definitions/ApiResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "RuleSets are not valid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }

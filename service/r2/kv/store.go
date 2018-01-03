@@ -75,6 +75,10 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	}, nil
 }
 
+func (s *store) ValidateNamespace(rs *rules.RuleSetSnapshot) error {
+	return s.validator.ValidateSnapshot(rs)
+}
+
 func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*rules.NamespaceView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {

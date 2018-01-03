@@ -202,7 +202,7 @@ func (s mockStore) FetchNamespaces() (*rules.NamespacesView, error) {
 	return &rules.NamespacesView{}, nil
 }
 
-func (s mockStore) ValidateNamespace(namespaceID string, rs rules.RuleSet) error {
+func (s mockStore) ValidateNamespace(rs *rules.RuleSetSnapshot) error {
 	return nil
 }
 

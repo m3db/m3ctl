@@ -65,13 +65,12 @@ func createNamespace(s *service, r *http.Request) (data interface{}, err error) 
 }
 
 func validateNamespace(s *service, r *http.Request) (data interface{}, err error) {
-	vars := mux.Vars(r)
 	var rsj ruleSetJSON
 	if err := parseRequest(&rsj, r.Body); err != nil {
 		return nil, err
 	}
-	rs := rsj.ruleSet()
-	if err := s.store.ValidateNamespace(vars[namespaceIDVar], rs); err != nil {
+	rss := rsj.ruleSetSnapshot()
+	if err := s.store.ValidateNamespace(rss); err != nil {
 		return nil, err
 	}
 	return fmt.Sprintf("Namespace and rule-set are valid"), nil

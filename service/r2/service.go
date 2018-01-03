@@ -565,13 +565,19 @@ type ruleSetJSON struct {
 	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
 }
 
-func (r ruleSetJSON) ruleSet() rules.RuleSet {
-	rs := rules.NewEmptyRuleSet(r.Namespace, rules.UpdateMetadata{})
+func (r ruleSetJSON) ruleSetSnapshot() *rules.RuleSetSnapshot {
+	rss := rules.RuleSetSnapshot{
+		Namespace:    r.Namespace,
+		Version:      r.Version,
+		MappingRules: map[string]*rules.MappingRuleView{},
+		RollupRules:  map[string]*rules.RollupRuleView{},
+	}
+
 	for _, mr := range r.MappingRules {
-		rs.AddMappingRule(*mr.mappingRuleView(), rules.UpdateMetadata{})
+		rss.MappingRules[mr.Name] = mr.mappingRuleView()
 	}
 	for _, rr := range r.RollupRules {
-		rs.AddRollupRule(*rr.rollupRuleView(), rules.UpdateMetadata{})
+		rss.RollupRules[rr.Name] = rr.rollupRuleView()
 	}
-	return rs
+	return &rss
 }

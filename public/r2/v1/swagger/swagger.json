@@ -185,7 +185,7 @@
             }
         },
         "/namespaces/{namespaceID}/validate": {
-            "put": {
+            "post": {
                 "tags": [
                     "namespaces"
                 ],

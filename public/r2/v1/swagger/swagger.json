@@ -184,8 +184,8 @@
                 }
             }
         },
-        "/namespaces/validate": {
-            "post": {
+        "/namespaces/{namespaceID}/validate": {
+            "put": {
                 "tags": [
                     "namespaces"
                 ],
@@ -198,6 +198,13 @@
                     "application/json"
                 ],
                 "parameters": [
+                    {
+                        "in": "path",
+                        "name": "namespaceID",
+                        "description": "The name of the namespace",
+                        "type": "string",
+                        "required": true
+                    },
                     {
                         "in": "body",
                         "name": "rule-set",

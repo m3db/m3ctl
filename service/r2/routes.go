@@ -64,6 +64,19 @@ func createNamespace(s *service, r *http.Request) (data interface{}, err error) 
 	return newNamespaceJSON(view), nil
 }
 
+func validateNamespace(s *service, r *http.Request) (data interface{}, err error) {
+	vars := mux.Vars(r)
+	var rsj ruleSetJSON
+	if err := parseRequest(&rsj, r.Body); err != nil {
+		return nil, err
+	}
+	rs := rsj.ruleSet()
+	if err := s.store.ValidateNamespace(vars[namespaceIDVar], rs); err != nil {
+		return nil, err
+	}
+	return fmt.Sprintf("Namespace and rule-set are valid"), nil
+}
+
 func deleteNamespace(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
 	namespaceID := vars[namespaceIDVar]

@@ -53,7 +53,8 @@ const (
 )
 
 var (
-	namespacePrefix = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
+	namespacePrefix       = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
+	namespaceValidatePath = fmt.Sprintf("%s/{%s}/validate", namespacePath, namespaceIDVar)
 
 	mappingRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
 	mappingRuleWithIDPath  = fmt.Sprintf("%s/{%s}", mappingRuleRoot, ruleIDVar)
@@ -192,6 +193,7 @@ func (s *service) RegisterHandlers(router *mux.Router) {
 
 	router.Handle(namespacePath, h.wrap(s.fetchNamespaces)).Methods(http.MethodGet)
 	router.Handle(namespacePath, h.wrap(s.createNamespace)).Methods(http.MethodPost)
+	router.Handle(namespaceValidatePath, h.wrap(s.validateNamespace)).Methods(http.MethodPost)
 
 	// Ruleset actions
 	router.Handle(namespacePrefix, h.wrap(s.fetchNamespace)).Methods(http.MethodGet)
@@ -268,6 +270,15 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 	return s.sendResponse(w, http.StatusCreated, data)
+}
+
+func (s *service) validateNamespace(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	data, err := s.handleRoute(validateNamespace, r, vars[namespaceIDVar])
+	if err != nil {
+		return err
+	}
+	return s.sendResponse(w, http.StatusOK, data)
 }
 
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -552,4 +563,15 @@ type ruleSetJSON struct {
 	CutoverMillis int64             `json:"cutoverMillis"`
 	MappingRules  []mappingRuleJSON `json:"mappingRules"`
 	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
+}
+
+func (r ruleSetJSON) ruleSet() rules.RuleSet {
+	rs := rules.NewEmptyRuleSet(r.Namespace, rules.UpdateMetadata{})
+	for _, mr := range r.MappingRules {
+		rs.AddMappingRule(*mr.mappingRuleView(), rules.UpdateMetadata{})
+	}
+	for _, rr := range r.RollupRules {
+		rs.AddRollupRule(*rr.rollupRuleView(), rules.UpdateMetadata{})
+	}
+	return rs
 }

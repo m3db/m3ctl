@@ -35,10 +35,11 @@ type store struct {
 	opts         StoreOptions
 	ruleStore    rules.Store
 	updateHelper rules.RuleSetUpdateHelper
+	validator    rules.Validator
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(rs rules.Store, opts StoreOptions) r2.Store {
+func NewStore(rs rules.Store, v rules.Validator, opts StoreOptions) r2.Store {
 	clockOpts := opts.ClockOptions()
 	updateHelper := rules.NewRuleSetUpdateHelper(opts.RuleUpdatePropagationDelay())
 	return &store{
@@ -46,6 +47,7 @@ func NewStore(rs rules.Store, opts StoreOptions) r2.Store {
 		opts:         opts,
 		ruleStore:    rs,
 		updateHelper: updateHelper,
+		validator:    v,
 	}
 }
 

@@ -189,7 +189,7 @@
                 "tags": [
                     "namespaces"
                 ],
-                "summary": "Performs rules validation on the given Namespace and list of RuleSets.",
+                "summary": "Performs rules validation on the given Namespace and RuleSet.",
                 "operationId": "validateNamespace",
                 "consumes": [
                     "application/json"
@@ -200,17 +200,17 @@
                 "parameters": [
                     {
                         "in": "body",
-                        "name": "rule-sets",
-                        "description": "The rule-sets to validate.",
+                        "name": "rule-set",
+                        "description": "The rule-set to validate.",
                         "required": true,
                         "schema": {
-                           "$ref": "#/definitions/RuleSets"
+                           "$ref": "#/definitions/RuleSet"
                         }
                     },
                     {
                         "in": "body",
                         "name": "namespace",
-                        "description": "The namespace to validate.",
+                        "description": "The namespace id to validate.",
                         "required": true,
                         "schema": {
                            "$ref": "#/definitions/Namespace"
@@ -219,13 +219,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "The namespace is valid.",
+                        "description": "The namespace and rule-set is valid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }
                     },
                     "400": {
-                        "description": "The namespace is invalid.",
+                        "description": "The namespace or rule-set is invalid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }
@@ -877,12 +877,6 @@
                         "$ref": "#/definitions/RollupRule"
                     }
                 }
-            }
-        },
-        "RuleSets": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/RuleSet"
             }
         },
         "Policies": {

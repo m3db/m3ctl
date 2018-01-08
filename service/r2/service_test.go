@@ -322,7 +322,7 @@ func TestRuleSetSnapshot(t *testing.T) {
 			},
 		},
 	}
-	require.EqualValues(t, expected, fixture.ruleSetSnapshot(ruleSetSnapshotOpts{}))
+	require.EqualValues(t, expected, fixture.ruleSetSnapshot())
 }
 
 func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
@@ -336,7 +336,7 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
-	actual := fixture.ruleSetSnapshot(ruleSetSnapshotOpts{generateMissingID: true})
+	actual := fixture.ruleSetSnapshot()
 	mrIDs := []string{}
 	rrIDs := []string{}
 

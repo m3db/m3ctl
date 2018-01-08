@@ -78,7 +78,7 @@ func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) 
 		)
 	}
 
-	rss := rsj.ruleSetSnapshot(ruleSetSnapshotOpts{generateMissingID: true})
+	rss := rsj.ruleSetSnapshot()
 	if err := s.store.ValidateRuleSet(rss); err != nil {
 		return nil, err
 	}

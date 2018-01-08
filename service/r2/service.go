@@ -569,9 +569,7 @@ type ruleSetJSON struct {
 // Creates a new RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs for any of its
 // mapping rules or rollup rules, it generates missing IDs and sets as a string UUID string so they
 // can be stored in a mapping (id -> rule).
-// This is used in the case where a new rollupRule or mappingRule has been created from the client
-// side and thusly does not have a ID set for it.
-func (r ruleSetJSON) ruleSetSnapshot(opts ruleSetSnapshotOpts) *rules.RuleSetSnapshot {
+func (r ruleSetJSON) ruleSetSnapshot() *rules.RuleSetSnapshot {
 	rss := rules.RuleSetSnapshot{
 		Namespace:    r.Namespace,
 		Version:      r.Version,
@@ -581,7 +579,7 @@ func (r ruleSetJSON) ruleSetSnapshot(opts ruleSetSnapshotOpts) *rules.RuleSetSna
 
 	for _, mr := range r.MappingRules {
 		id := mr.ID
-		if id == "" && opts.generateMissingID {
+		if id == "" {
 			id = uuid.New()
 			mr.ID = id
 		}
@@ -589,15 +587,11 @@ func (r ruleSetJSON) ruleSetSnapshot(opts ruleSetSnapshotOpts) *rules.RuleSetSna
 	}
 	for _, rr := range r.RollupRules {
 		id := rr.ID
-		if id == "" && opts.generateMissingID {
+		if id == "" {
 			id = uuid.New()
 			rr.ID = id
 		}
 		rss.RollupRules[id] = rr.rollupRuleView()
 	}
 	return &rss
-}
-
-type ruleSetSnapshotOpts struct {
-	generateMissingID bool
 }

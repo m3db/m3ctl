@@ -64,7 +64,7 @@ func createNamespace(s *service, r *http.Request) (data interface{}, err error) 
 	return newNamespaceJSON(view), nil
 }
 
-func validateNamespace(s *service, r *http.Request) (data interface{}, err error) {
+func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
 	var rsj ruleSetJSON
 	if err := parseRequest(&rsj, r.Body); err != nil {
@@ -72,17 +72,17 @@ func validateNamespace(s *service, r *http.Request) (data interface{}, err error
 	}
 	if vars[namespaceIDVar] != rsj.Namespace {
 		return nil, fmt.Errorf(
-			"NamespaceID param: %s and RuleSet namespaceID: %s do not match",
+			"namespaceID param %s and ruleset namespaceID %s do not match",
 			vars[namespaceIDVar],
 			rsj.Namespace,
 		)
 	}
 
 	rss := rsj.ruleSetSnapshot(ruleSetSnapshotOpts{generateMissingID: true})
-	if err := s.store.ValidateNamespace(rss); err != nil {
+	if err := s.store.ValidateRuleSet(rss); err != nil {
 		return nil, err
 	}
-	return fmt.Sprintf("Namespace and rule-set are valid"), nil
+	return fmt.Sprintf("Ruleset is valid"), nil
 }
 
 func deleteNamespace(s *service, r *http.Request) (data interface{}, err error) {

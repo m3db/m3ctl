@@ -35,11 +35,10 @@ type store struct {
 	opts         StoreOptions
 	ruleStore    rules.Store
 	updateHelper rules.RuleSetUpdateHelper
-	validator    rules.Validator
 }
 
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
-func NewStore(rs rules.Store, v rules.Validator, opts StoreOptions) r2.Store {
+func NewStore(rs rules.Store, opts StoreOptions) r2.Store {
 	clockOpts := opts.ClockOptions()
 	updateHelper := rules.NewRuleSetUpdateHelper(opts.RuleUpdatePropagationDelay())
 	return &store{
@@ -47,7 +46,6 @@ func NewStore(rs rules.Store, v rules.Validator, opts StoreOptions) r2.Store {
 		opts:         opts,
 		ruleStore:    rs,
 		updateHelper: updateHelper,
-		validator:    v,
 	}
 }
 
@@ -75,8 +73,13 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 	}, nil
 }
 
-func (s *store) ValidateNamespace(rs *rules.RuleSetSnapshot) error {
-	return s.validator.ValidateSnapshot(rs)
+func (s *store) ValidateRuleSet(rs *rules.RuleSetSnapshot) error {
+	validator := s.opts.Validator()
+	// No validator is set so by default the ruleSetSnapshot is valid
+	if validator == nil {
+		return nil
+	}
+	return validator.ValidateSnapshot(rs)
 }
 
 func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*rules.NamespaceView, error) {

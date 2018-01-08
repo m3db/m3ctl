@@ -327,12 +327,12 @@ func TestRuleSetSnapshot(t *testing.T) {
 
 func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 	mappingRules := []mappingRuleJSON{
-		*testMappingRuleJSON("", "mr1"),
-		*testMappingRuleJSON("", "mr2"),
+		*testMappingRuleJSON("", "mr"),
+		*testMappingRuleJSON("", "mr"),
 	}
 	rollupRules := []rollupRuleJSON{
-		*testRollupRuleJSON("", "rr1", []rollupTargetJSON{*testRollupTargetJSON("target1")}),
-		*testRollupRuleJSON("", "rr2", []rollupTargetJSON{*testRollupTargetJSON("target2")}),
+		*testRollupRuleJSON("", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
+		*testRollupRuleJSON("", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
@@ -357,13 +357,13 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 		MappingRules: map[string]*rules.MappingRuleView{
 			mrIDs[0]: {
 				ID:       mrIDs[0],
-				Name:     "mr1",
+				Name:     "mr",
 				Filter:   "filter",
 				Policies: []policy.Policy{},
 			},
 			mrIDs[1]: {
 				ID:       mrIDs[1],
-				Name:     "mr2",
+				Name:     "mr",
 				Filter:   "filter",
 				Policies: []policy.Policy{},
 			},
@@ -371,11 +371,11 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 		RollupRules: map[string]*rules.RollupRuleView{
 			rrIDs[0]: {
 				ID:     rrIDs[0],
-				Name:   "rr1",
+				Name:   "rr",
 				Filter: "filter",
 				Targets: []rules.RollupTargetView{
 					{
-						Name:     "target1",
+						Name:     "target",
 						Tags:     []string{"tag"},
 						Policies: []policy.Policy{},
 					},
@@ -383,11 +383,11 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 			},
 			rrIDs[1]: {
 				ID:     rrIDs[1],
-				Name:   "rr2",
+				Name:   "rr",
 				Filter: "filter",
 				Targets: []rules.RollupTargetView{
 					{
-						Name:     "target2",
+						Name:     "target",
 						Tags:     []string{"tag"},
 						Policies: []policy.Policy{},
 					},

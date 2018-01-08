@@ -275,7 +275,7 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error 
 
 func (s *service) validateNamespace(w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
-	data, err := s.handleRoute(validateNamespace, r, vars[namespaceIDVar])
+	data, err := s.handleRoute(validateRuleSet, r, vars[namespaceIDVar])
 	if err != nil {
 		return err
 	}

@@ -78,7 +78,7 @@ func validateNamespace(s *service, r *http.Request) (data interface{}, err error
 		)
 	}
 
-	rss := rsj.ruleSetSnapshot()
+	rss := rsj.ruleSetSnapshot(ruleSetSnapshotOpts{generateMissingID: true})
 	if err := s.store.ValidateNamespace(rss); err != nil {
 		return nil, err
 	}

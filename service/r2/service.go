@@ -36,6 +36,7 @@ import (
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
+	"github.com/pborman/uuid"
 
 	"github.com/gorilla/mux"
 	"gopkg.in/go-playground/validator.v9"
@@ -565,7 +566,10 @@ type ruleSetJSON struct {
 	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
 }
 
-func (r ruleSetJSON) ruleSetSnapshot() *rules.RuleSetSnapshot {
+// Creates a new RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs for any of its
+// mapping rules or rollup rules, it generates missing IDs and sets as a string UUID string so they
+// can be stored in a mapping (id -> rule).
+func (r ruleSetJSON) ruleSetSnapshot(opts ruleSetSnapshotOpts) *rules.RuleSetSnapshot {
 	rss := rules.RuleSetSnapshot{
 		Namespace:    r.Namespace,
 		Version:      r.Version,
@@ -574,10 +578,24 @@ func (r ruleSetJSON) ruleSetSnapshot() *rules.RuleSetSnapshot {
 	}
 
 	for _, mr := range r.MappingRules {
-		rss.MappingRules[mr.Name] = mr.mappingRuleView()
+		id := mr.ID
+		if id == "" && opts.generateMissingID {
+			id = uuid.New()
+			mr.ID = id
+		}
+		rss.MappingRules[id] = mr.mappingRuleView()
 	}
 	for _, rr := range r.RollupRules {
-		rss.RollupRules[rr.Name] = rr.rollupRuleView()
+		id := rr.ID
+		if id == "" && opts.generateMissingID {
+			id = uuid.New()
+			rr.ID = id
+		}
+		rss.RollupRules[id] = rr.rollupRuleView()
 	}
 	return &rss
+}
+
+type ruleSetSnapshotOpts struct {
+	generateMissingID bool
 }

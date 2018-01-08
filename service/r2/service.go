@@ -279,7 +279,7 @@ func (s *service) validateNamespace(w http.ResponseWriter, r *http.Request) erro
 	if err != nil {
 		return err
 	}
-	return s.sendResponse(w, http.StatusOK, data)
+	return writeAPIResponse(w, http.StatusOK, data.(string))
 }
 
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) error {
@@ -569,6 +569,8 @@ type ruleSetJSON struct {
 // Creates a new RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs for any of its
 // mapping rules or rollup rules, it generates missing IDs and sets as a string UUID string so they
 // can be stored in a mapping (id -> rule).
+// This is used in the case where a new rollupRule or mappingRule has been created from the client
+// side and thusly does not have a ID set for it.
 func (r ruleSetJSON) ruleSetSnapshot(opts ruleSetSnapshotOpts) *rules.RuleSetSnapshot {
 	rss := rules.RuleSetSnapshot{
 		Namespace:    r.Namespace,

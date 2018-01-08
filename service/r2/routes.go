@@ -82,7 +82,7 @@ func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) 
 	if err := s.store.ValidateRuleSet(rss); err != nil {
 		return nil, err
 	}
-	return fmt.Sprintf("Ruleset is valid"), nil
+	return "Ruleset is valid", nil
 }
 
 func deleteNamespace(s *service, r *http.Request) (data interface{}, err error) {

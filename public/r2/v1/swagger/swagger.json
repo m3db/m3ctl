@@ -189,8 +189,8 @@
                 "tags": [
                     "namespaces"
                 ],
-                "summary": "Performs validation for a Namespace's RuleSet.",
-                "operationId": "validateNamespaceRuleSet",
+                "summary": "Performs validation for a namespace's ruleSet.",
+                "operationId": "validateRuleSet",
                 "consumes": [
                     "application/json"
                 ],
@@ -207,8 +207,8 @@
                     },
                     {
                         "in": "body",
-                        "name": "rule-set",
-                        "description": "The rule-set to validate.",
+                        "name": "ruleset",
+                        "description": "The ruleset to validate.",
                         "required": true,
                         "schema": {
                            "$ref": "#/definitions/RuleSet"
@@ -217,13 +217,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "The rule-set is valid.",
+                        "description": "The ruleset is valid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }
                     },
                     "400": {
-                        "description": "The rule-set is invalid.",
+                        "description": "The ruleset is invalid.",
                         "schema": {
                             "$ref": "#/definitions/ApiResponse"
                         }

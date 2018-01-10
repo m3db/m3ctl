@@ -36,6 +36,7 @@ import (
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
+
 	"github.com/pborman/uuid"
 
 	"github.com/gorilla/mux"
@@ -54,8 +55,8 @@ const (
 )
 
 var (
-	namespacePrefix       = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
-	namespaceValidatePath = fmt.Sprintf("%s/{%s}/validate", namespacePath, namespaceIDVar)
+	namespacePrefix     = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
+	validateRuleSetPath = fmt.Sprintf("%s/{%s}/ruleset/validate", namespacePath, namespaceIDVar)
 
 	mappingRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
 	mappingRuleWithIDPath  = fmt.Sprintf("%s/{%s}", mappingRuleRoot, ruleIDVar)
@@ -67,6 +68,15 @@ var (
 
 	errNilRequest = errors.New("Nil request")
 )
+
+type endpoint struct {
+	path   string
+	method string
+}
+
+var authorizationRegistry = map[endpoint]auth.AuthorizationType{
+	{path: validateRuleSetPath, method: http.MethodPost}: auth.AuthorizationTypeReadOnly,
+}
 
 func sendResponse(w http.ResponseWriter, data []byte, status int) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -121,13 +131,13 @@ type r2Handler struct {
 	auth  auth.HTTPAuthService
 }
 
-func (h r2Handler) wrap(fn r2HandlerFunc) http.Handler {
+func (h r2Handler) wrap(authType auth.AuthorizationType, fn r2HandlerFunc) http.Handler {
 	f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {
 			h.handleError(w, err)
 		}
 	})
-	return h.auth.NewAuthHandler(f, writeAPIResponse)
+	return h.auth.NewAuthHandler(authType, f, writeAPIResponse)
 }
 
 func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
@@ -155,6 +165,32 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 		h.iOpts.Logger().Errorf(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 	}
+}
+
+func getDefaultAuthorizationTypeForHTTPMethod(method string) (auth.AuthorizationType, error) {
+	switch method {
+	case http.MethodGet:
+		return auth.AuthorizationTypeReadOnly, nil
+	case http.MethodPost, http.MethodPut, http.MethodDelete:
+		return auth.AuthorizationTypeWriteOnly, nil
+	default:
+		return auth.AuthorizationTypeNone, fmt.Errorf("unsupported http method %s for getting authorization type", method)
+	}
+}
+
+func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) {
+	authType, exists := authorizationRegistry[endpoint{path: path, method: method}]
+	if !exists {
+		var err error
+		authType, err = getDefaultAuthorizationTypeForHTTPMethod(method)
+		if err != nil {
+			// Panic if cannot find an authorization type for the route and/or method. This indicates an
+			// unrecognized route and service should panic on startup when registering routes.
+			panic(err)
+		}
+	}
+	fn := h.wrap(authType, hf)
+	router.Handle(path, fn).Methods(method)
 }
 
 // service handles all of the endpoints for r2.
@@ -189,36 +225,35 @@ func (s *service) URLPrefix() string { return s.rootPrefix }
 
 func (s *service) RegisterHandlers(router *mux.Router) {
 	log := s.iOpts.Logger()
-	// Namespaces action
 	h := r2Handler{s.iOpts, s.authService}
 
-	router.Handle(namespacePath, h.wrap(s.fetchNamespaces)).Methods(http.MethodGet)
-	router.Handle(namespacePath, h.wrap(s.createNamespace)).Methods(http.MethodPost)
-	router.Handle(namespaceValidatePath, h.wrap(s.validateNamespace)).Methods(http.MethodPost)
+	// Namespaces actions
+	registerRoute(router, namespacePath, http.MethodGet, h, s.fetchNamespaces)
+	registerRoute(router, namespacePath, http.MethodPost, h, s.createNamespace)
 
 	// Ruleset actions
-	router.Handle(namespacePrefix, h.wrap(s.fetchNamespace)).Methods(http.MethodGet)
-	router.Handle(namespacePrefix, h.wrap(s.deleteNamespace)).Methods(http.MethodDelete)
+	registerRoute(router, namespacePrefix, http.MethodGet, h, s.fetchNamespace)
+	registerRoute(router, namespacePrefix, http.MethodDelete, h, s.deleteNamespace)
+	registerRoute(router, validateRuleSetPath, http.MethodPost, h, s.validateNamespace)
 
 	// Mapping Rule actions
-	router.Handle(mappingRuleRoot, h.wrap(s.createMappingRule)).Methods(http.MethodPost)
+	registerRoute(router, mappingRuleRoot, http.MethodPost, h, s.createMappingRule)
 
-	router.Handle(mappingRuleWithIDPath, h.wrap(s.fetchMappingRule)).Methods(http.MethodGet)
-	router.Handle(mappingRuleWithIDPath, h.wrap(s.updateMappingRule)).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(mappingRuleWithIDPath, h.wrap(s.deleteMappingRule)).Methods(http.MethodDelete)
+	registerRoute(router, mappingRuleWithIDPath, http.MethodGet, h, s.fetchMappingRule)
+	registerRoute(router, mappingRuleWithIDPath, http.MethodPut, h, s.updateMappingRule)
+	registerRoute(router, mappingRuleWithIDPath, http.MethodDelete, h, s.deleteMappingRule)
 
 	// Mapping Rule history
-	router.Handle(mappingRuleHistoryPath, h.wrap(s.fetchMappingRuleHistory)).Methods(http.MethodGet)
+	registerRoute(router, mappingRuleHistoryPath, http.MethodGet, h, s.fetchMappingRuleHistory)
 
 	// Rollup Rule actions
-	router.Handle(rollupRuleRoot, h.wrap(s.createRollupRule)).Methods(http.MethodPost)
+	registerRoute(router, rollupRuleRoot, http.MethodPost, h, s.createRollupRule)
 
-	router.Handle(rollupRuleWithIDPath, h.wrap(s.fetchRollupRule)).Methods(http.MethodGet)
-	router.Handle(rollupRuleWithIDPath, h.wrap(s.updateRollupRule)).Methods(http.MethodPut, http.MethodPatch)
-	router.Handle(rollupRuleWithIDPath, h.wrap(s.deleteRollupRule)).Methods(http.MethodDelete)
+	registerRoute(router, rollupRuleWithIDPath, http.MethodGet, h, s.fetchRollupRule)
+	registerRoute(router, rollupRuleWithIDPath, http.MethodPut, h, s.updateRollupRule)
+	registerRoute(router, rollupRuleWithIDPath, http.MethodDelete, h, s.deleteRollupRule)
 
-	// Rollup Rule history
-	router.Handle(rollupRuleHistoryPath, h.wrap(s.fetchRollupRuleHistory)).Methods(http.MethodGet)
+	registerRoute(router, rollupRuleHistoryPath, http.MethodGet, h, s.fetchRollupRuleHistory)
 
 	log.Infof("Registered rules endpoints")
 }
@@ -566,32 +601,48 @@ type ruleSetJSON struct {
 	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
 }
 
-// Creates a new RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs for any of its
-// mapping rules or rollup rules, it generates missing IDs and sets as a string UUID string so they
-// can be stored in a mapping (id -> rule).
-func (r ruleSetJSON) ruleSetSnapshot() *rules.RuleSetSnapshot {
-	rss := rules.RuleSetSnapshot{
-		Namespace:    r.Namespace,
-		Version:      r.Version,
-		MappingRules: map[string]*rules.MappingRuleView{},
-		RollupRules:  map[string]*rules.RollupRuleView{},
-	}
+type genID int
 
+const (
+	genIDFalse genID = iota
+	genIDTrue
+)
+
+// ruleSetSnapshot create a RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs
+// for any of its mapping rules or rollup rules, it generates missing IDs and sets as a string UUID
+// string so they can be stored in a mapping (id -> rule).
+func (r ruleSetJSON) ruleSetSnapshot(genID genID) (*rules.RuleSetSnapshot, error) {
+
+	mappingRules := make(map[string]*rules.MappingRuleView, len(r.MappingRules))
 	for _, mr := range r.MappingRules {
 		id := mr.ID
 		if id == "" {
+			if genID == genIDFalse {
+				return nil, fmt.Errorf("can't convert rulesetJSON to ruleSetSnapshot, no mapping rule id for %v", mr)
+			}
 			id = uuid.New()
 			mr.ID = id
 		}
-		rss.MappingRules[id] = mr.mappingRuleView()
+		mappingRules[id] = mr.mappingRuleView()
 	}
+
+	rollupRules := make(map[string]*rules.RollupRuleView, len(r.RollupRules))
 	for _, rr := range r.RollupRules {
 		id := rr.ID
 		if id == "" {
+			if genID == genIDFalse {
+				return nil, fmt.Errorf("can't convert rulesetJSON to ruleSetSnapshot, no rollup rule id for %v", rr)
+			}
 			id = uuid.New()
 			rr.ID = id
 		}
-		rss.RollupRules[id] = rr.rollupRuleView()
+		rollupRules[id] = rr.rollupRuleView()
 	}
-	return &rss
+
+	return &rules.RuleSetSnapshot{
+		Namespace:    r.Namespace,
+		Version:      r.Version,
+		MappingRules: mappingRules,
+		RollupRules:  rollupRules,
+	}, nil
 }

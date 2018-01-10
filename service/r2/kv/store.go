@@ -21,10 +21,11 @@
 package kv
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/m3db/m3ctl/service/r2"
-	"github.com/m3db/m3metrics/errors"
+	merrors "github.com/m3db/m3metrics/errors"
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/clock"
 	xerrors "github.com/m3db/m3x/errors"
@@ -75,9 +76,9 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 
 func (s *store) ValidateRuleSet(rs *rules.RuleSetSnapshot) error {
 	validator := s.opts.Validator()
-	// No validator is set so by default the ruleSetSnapshot is valid
+	// If no validator is set, then the validation functionality is not applicable
 	if validator == nil {
-		return nil
+		return errors.New("no validator set on StoreOptions so validation is not applicable")
 	}
 	return validator.ValidateSnapshot(rs)
 }
@@ -411,9 +412,9 @@ func (s *store) handleUpstreamError(err error) error {
 	}
 
 	switch err.(type) {
-	case errors.RuleConflictError:
+	case merrors.RuleConflictError:
 		return r2.NewConflictError(err.Error())
-	case errors.ValidationError:
+	case merrors.ValidationError:
 		return r2.NewBadInputError(err.Error())
 	default:
 		return r2.NewInternalError(err.Error())

@@ -92,14 +92,22 @@ type simpleAuthorization struct {
 	writeWhitelistedUserIDs []string
 }
 
-func (a simpleAuthorization) authorize(httpMethod, userID string) error {
-	switch httpMethod {
-	case http.MethodGet:
+func (a simpleAuthorization) authorize(authType AuthorizationType, userID string) error {
+	switch authType {
+	case AuthorizationTypeNone:
+		return nil
+	case AuthorizationTypeReadOnly:
 		return a.authorizeUser(a.readWhitelistEnabled, a.readWhitelistedUserIDs, userID)
-	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+	case AuthorizationTypeWriteOnly:
+		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
+	case AuthorizationTypeReadWrite:
+		err := a.authorizeUser(a.readWhitelistEnabled, a.readWhitelistedUserIDs, userID)
+		if err != nil {
+			return err
+		}
 		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
 	default:
-		return fmt.Errorf("unsupported request method: %s", httpMethod)
+		return fmt.Errorf("unsupported authorizationType %v passed to handler", authType)
 	}
 }
 
@@ -118,7 +126,7 @@ func (a simpleAuthorization) authorizeUser(useWhitelist bool, whitelistedUsers [
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.
 // Otherwise, it returns an Unauthorized http response.
-func (a simpleAuth) NewAuthHandler(next http.Handler, errHandler errorResponseHandler) http.Handler {
+func (a simpleAuth) NewAuthHandler(authType AuthorizationType, next http.Handler, errHandler errorResponseHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			userID       = r.Header.Get(a.authentication.userIDHeader)
@@ -133,7 +141,7 @@ func (a simpleAuth) NewAuthHandler(next http.Handler, errHandler errorResponseHa
 			return
 		}
 
-		err = a.authorization.authorize(r.Method, userID)
+		err = a.authorization.authorize(authType, userID)
 		if err != nil {
 			errHandler(w, http.StatusForbidden, err.Error())
 			return

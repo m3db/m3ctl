@@ -20,13 +20,14 @@
 package r2
 
 import (
+	"net/http"
 	"testing"
 
-	"github.com/pborman/uuid"
-
+	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3metrics/policy"
-
 	"github.com/m3db/m3metrics/rules"
+
+	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,6 +46,36 @@ func TestHandleRouteNilRequest(t *testing.T) {
 	require.EqualError(t, err, errNilRequest.Error())
 }
 
+func TestGetDefaultAuthorizationTypeForHTTPMethodGet(t *testing.T) {
+	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodGet)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadOnly, actual)
+}
+func TestGetDefaultAuthorizationTypeForHTTPMethodPost(t *testing.T) {
+	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodPost)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeWriteOnly, actual)
+}
+
+func TestGetDefaultAuthorizationTypeForHTTPMethodPut(t *testing.T) {
+	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodPut)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeWriteOnly, actual)
+}
+
+func TestGetDefaultAuthorizationTypeForHTTPMethodDelete(t *testing.T) {
+	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodDelete)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeWriteOnly, actual)
+}
+
+func TestGetDefaultAuthorizationTypeForHTTPMethodFailUnrecognizedMethod(t *testing.T) {
+	_, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodOptions)
+	require.EqualError(t, err, "unsupported http method OPTIONS for getting authorization type")
+
+	_, err = getDefaultAuthorizationTypeForHTTPMethod(http.MethodPatch)
+	require.EqualError(t, err, "unsupported http method PATCH for getting authorization type")
+}
 func TestNewNamespaceJSON(t *testing.T) {
 	id := "name"
 	fixture := testNamespaceView(id)
@@ -322,7 +353,9 @@ func TestRuleSetSnapshot(t *testing.T) {
 			},
 		},
 	}
-	require.EqualValues(t, expected, fixture.ruleSetSnapshot())
+	actual, err := fixture.ruleSetSnapshot(genIDTrue)
+	require.NoError(t, err)
+	require.EqualValues(t, expected, actual)
 }
 
 func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
@@ -336,7 +369,8 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
-	actual := fixture.ruleSetSnapshot()
+	actual, err := fixture.ruleSetSnapshot(genIDTrue)
+	require.NoError(t, err)
 	mrIDs := []string{}
 	rrIDs := []string{}
 
@@ -396,6 +430,36 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 		},
 	}
 	require.EqualValues(t, expected, actual)
+}
+
+func TestRuleSetSnapshotFailMissingMappingRuleID(t *testing.T) {
+	mappingRules := []mappingRuleJSON{
+		*testMappingRuleJSON("", "mr"),
+		*testMappingRuleJSON("id1", "mr"),
+	}
+	rollupRules := []rollupRuleJSON{
+		*testRollupRuleJSON("id2", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
+		*testRollupRuleJSON("id3", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
+	}
+	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
+
+	_, err := fixture.ruleSetSnapshot(genIDFalse)
+	require.Error(t, err)
+}
+
+func TestRuleSetSnapshotFailMissingRollupRuleID(t *testing.T) {
+	mappingRules := []mappingRuleJSON{
+		*testMappingRuleJSON("id1", "mr"),
+		*testMappingRuleJSON("id2", "mr"),
+	}
+	rollupRules := []rollupRuleJSON{
+		*testRollupRuleJSON("id3", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
+		*testRollupRuleJSON("", "rr", []rollupTargetJSON{*testRollupTargetJSON("target")}),
+	}
+	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
+
+	_, err := fixture.ruleSetSnapshot(genIDFalse)
+	require.Error(t, err)
 }
 
 // Tests Setup

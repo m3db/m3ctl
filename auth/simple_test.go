@@ -130,13 +130,16 @@ func TestSimpleAuthorizationAuthorize(t *testing.T) {
 		readWhitelistEnabled:    true,
 		writeWhitelistEnabled:   false,
 		readWhitelistedUserIDs:  []string{"foo", "bar"},
-		writeWhitelistedUserIDs: []string{"foo", "bar"},
+		writeWhitelistedUserIDs: []string{"foo", "bar", "baz"},
 	}
 
-	require.Nil(t, authorization.authorize("GET", "foo"))
-	require.Nil(t, authorization.authorize("POST", "foo"))
-	require.EqualError(t, authorization.authorize("OPTIONS", "foo"), "unsupported request method: OPTIONS")
-	require.EqualError(t, authorization.authorize("GET", "baz"), "supplied userID: [baz] is not authorized")
+	require.Nil(t, authorization.authorize(AuthorizationTypeReadOnly, "foo"))
+	require.Nil(t, authorization.authorize(AuthorizationTypeWriteOnly, "foo"))
+	require.Nil(t, authorization.authorize(AuthorizationTypeNone, "foo"))
+	require.Nil(t, authorization.authorize(AuthorizationTypeWriteOnly, "baz"))
+	require.EqualError(t, authorization.authorize(AuthorizationTypeReadOnly, "baz"), "supplied userID: [baz] is not authorized")
+	require.EqualError(t, authorization.authorize(AuthorizationTypeReadWrite, "baz"), "supplied userID: [baz] is not authorized")
+	require.EqualError(t, authorization.authorize(AuthorizationType(100), "baz"), "unsupported authorizationType 100 passed to handler")
 }
 
 func TestHealthCheck(t *testing.T) {
@@ -147,7 +150,7 @@ func TestHealthCheck(t *testing.T) {
 		require.Equal(t, "testHeader", v)
 	})
 
-	wrappedCall := a.NewAuthHandler(f, writeAPIResponse)
+	wrappedCall := a.NewAuthHandler(AuthorizationTypeNone, f, writeAPIResponse)
 	wrappedCall.ServeHTTP(httptest.NewRecorder(), &http.Request{})
 }
 
@@ -160,7 +163,7 @@ func TestAuthenticateFailure(t *testing.T) {
 	})
 	recorder := httptest.NewRecorder()
 
-	wrappedCall := a.NewAuthHandler(f, writeAPIResponse)
+	wrappedCall := a.NewAuthHandler(AuthorizationTypeNone, f, writeAPIResponse)
 	wrappedCall.ServeHTTP(recorder, &http.Request{})
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
 	require.Equal(t, "application/json", recorder.HeaderMap["Content-Type"][0])
@@ -180,7 +183,7 @@ func TestAuthenticateWithOriginatorID(t *testing.T) {
 		writeAPIResponse(w, http.StatusOK, "success!")
 	})
 	recorder := httptest.NewRecorder()
-	wrappedCall := a.NewAuthHandler(f, writeAPIResponse)
+	wrappedCall := a.NewAuthHandler(AuthorizationTypeNone, f, writeAPIResponse)
 	wrappedCall.ServeHTTP(recorder, req)
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.Equal(t, "application/json", recorder.HeaderMap["Content-Type"][0])
@@ -198,7 +201,7 @@ func TestAuthorizeFailure(t *testing.T) {
 	require.NoError(t, err)
 	req.Header.Add("testHeader", "validUserID")
 
-	wrappedCall := a.NewAuthHandler(f, writeAPIResponse)
+	wrappedCall := a.NewAuthHandler(AuthorizationTypeReadOnly, f, writeAPIResponse)
 	wrappedCall.ServeHTTP(recorder, req)
 	require.Equal(t, http.StatusForbidden, recorder.Code)
 	require.Equal(t, "application/json", recorder.HeaderMap["Content-Type"][0])

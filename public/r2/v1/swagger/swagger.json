@@ -184,13 +184,13 @@
                 }
             }
         },
-        "/namespaces/{namespaceID}/validate": {
+        "/namespaces/{namespaceID}/ruleset/validate": {
             "post": {
                 "tags": [
                     "namespaces"
                 ],
-                "summary": "Performs validation for a Namespace and its RuleSet.",
-                "operationId": "validateNamespace",
+                "summary": "Performs validation for a Namespace's RuleSet.",
+                "operationId": "validateNamespaceRuleSet",
                 "consumes": [
                     "application/json"
                 ],

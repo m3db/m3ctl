@@ -123,9 +123,8 @@ func defaultAuthorizationTypeForHTTPMethod(method string) auth.AuthorizationType
 func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) error {
 	authType, exists := authorizationRegistry[route{path: path, method: method}]
 	if !exists {
-		var err error
 		if authType = defaultAuthorizationTypeForHTTPMethod(method); authType == auth.AuthorizationTypeUnknown {
-			return err
+			return fmt.Errorf("unknown authorization type for method %s at path %s", method, path)
 		}
 	}
 	fn := h.wrap(authType, hf)

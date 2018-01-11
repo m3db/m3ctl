@@ -38,6 +38,8 @@ type store struct {
 	updateHelper rules.RuleSetUpdateHelper
 }
 
+var errNilValidator = errors.New("no validator set on StoreOptions so validation is not applicable")
+
 // NewStore returns a new service that knows how to talk to a kv backed r2 store.
 func NewStore(rs rules.Store, opts StoreOptions) r2.Store {
 	clockOpts := opts.ClockOptions()
@@ -78,7 +80,7 @@ func (s *store) ValidateRuleSet(rs *rules.RuleSetSnapshot) error {
 	validator := s.opts.Validator()
 	// If no validator is set, then the validation functionality is not applicable
 	if validator == nil {
-		return errors.New("no validator set on StoreOptions so validation is not applicable")
+		return errNilValidator
 	}
 	return validator.ValidateSnapshot(rs)
 }

@@ -38,8 +38,10 @@ const (
 )
 
 const (
+	// AuthorizationTypeUnknown is the unknown authorizationType case.
+	AuthorizationTypeUnknown AuthorizationType = iota
 	// AuthorizationTypeNone is the no authorizationType case.
-	AuthorizationTypeNone AuthorizationType = iota
+	AuthorizationTypeNone
 	// AuthorizationTypeReadOnly is the read only authorizationType case.
 	AuthorizationTypeReadOnly
 	// AuthorizationTypeWriteOnly is the write only authorizationType case.

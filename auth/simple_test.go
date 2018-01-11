@@ -139,7 +139,7 @@ func TestSimpleAuthorizationAuthorize(t *testing.T) {
 	require.Nil(t, authorization.authorize(AuthorizationTypeWriteOnly, "baz"))
 	require.EqualError(t, authorization.authorize(AuthorizationTypeReadOnly, "baz"), "supplied userID: [baz] is not authorized")
 	require.EqualError(t, authorization.authorize(AuthorizationTypeReadWrite, "baz"), "supplied userID: [baz] is not authorized")
-	require.EqualError(t, authorization.authorize(AuthorizationType(100), "baz"), "unsupported authorizationType 100 passed to handler")
+	require.EqualError(t, authorization.authorize(AuthorizationType(100), "baz"), "unsupported authorization type 100 passed to handler")
 }
 
 func TestHealthCheck(t *testing.T) {

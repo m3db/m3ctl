@@ -78,7 +78,7 @@ func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) 
 		)
 	}
 
-	rss, err := rsj.ruleSetSnapshot(genIDTrue)
+	rss, err := rsj.ruleSetSnapshot(generateID)
 	if err != nil {
 		return nil, err
 	}

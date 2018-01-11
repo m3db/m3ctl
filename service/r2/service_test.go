@@ -46,35 +46,51 @@ func TestHandleRouteNilRequest(t *testing.T) {
 	require.EqualError(t, err, errNilRequest.Error())
 }
 
-func TestGetDefaultAuthorizationTypeForHTTPMethodGet(t *testing.T) {
-	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodGet)
-	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadOnly, actual)
+func TestDefaultAuthorizationTypeForHTTPMethodGet(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeReadOnly,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodGet),
+	)
 }
-func TestGetDefaultAuthorizationTypeForHTTPMethodPost(t *testing.T) {
-	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodPost)
-	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
-}
-
-func TestGetDefaultAuthorizationTypeForHTTPMethodPut(t *testing.T) {
-	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodPut)
-	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+func TestDefaultAuthorizationTypeForHTTPMethodPost(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeReadWrite,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodPost),
+	)
 }
 
-func TestGetDefaultAuthorizationTypeForHTTPMethodDelete(t *testing.T) {
-	actual, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodDelete)
-	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+func TestDefaultAuthorizationTypeForHTTPMethodPut(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeReadWrite,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodPut),
+	)
 }
 
-func TestGetDefaultAuthorizationTypeForHTTPMethodFailUnrecognizedMethod(t *testing.T) {
-	_, err := getDefaultAuthorizationTypeForHTTPMethod(http.MethodOptions)
-	require.EqualError(t, err, "unsupported http method OPTIONS for getting authorization type")
+func TestDefaultAuthorizationTypeForHTTPMethodPatch(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeReadWrite,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodPatch),
+	)
+}
 
-	_, err = getDefaultAuthorizationTypeForHTTPMethod(http.MethodPatch)
-	require.EqualError(t, err, "unsupported http method PATCH for getting authorization type")
+func TestDefaultAuthorizationTypeForHTTPMethodDelete(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeReadWrite,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodDelete),
+	)
+}
+
+func TestDefaultAuthorizationTypeForHTTPMethodUnrecognizedMethod(t *testing.T) {
+	require.EqualValues(
+		t,
+		auth.AuthorizationTypeUnknown,
+		defaultAuthorizationTypeForHTTPMethod(http.MethodOptions),
+	)
 }
 func TestNewNamespaceJSON(t *testing.T) {
 	id := "name"
@@ -353,7 +369,7 @@ func TestRuleSetSnapshot(t *testing.T) {
 			},
 		},
 	}
-	actual, err := fixture.ruleSetSnapshot(genIDTrue)
+	actual, err := fixture.ruleSetSnapshot(generateID)
 	require.NoError(t, err)
 	require.EqualValues(t, expected, actual)
 }
@@ -369,7 +385,7 @@ func TestRuleSetSnapshotGenerateMissingID(t *testing.T) {
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
-	actual, err := fixture.ruleSetSnapshot(genIDTrue)
+	actual, err := fixture.ruleSetSnapshot(generateID)
 	require.NoError(t, err)
 	mrIDs := []string{}
 	rrIDs := []string{}
@@ -443,7 +459,7 @@ func TestRuleSetSnapshotFailMissingMappingRuleID(t *testing.T) {
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
-	_, err := fixture.ruleSetSnapshot(genIDFalse)
+	_, err := fixture.ruleSetSnapshot(dontGenerateID)
 	require.Error(t, err)
 }
 
@@ -458,7 +474,7 @@ func TestRuleSetSnapshotFailMissingRollupRuleID(t *testing.T) {
 	}
 	fixture := testRuleSetJSON("namespace", mappingRules, rollupRules)
 
-	_, err := fixture.ruleSetSnapshot(genIDFalse)
+	_, err := fixture.ruleSetSnapshot(dontGenerateID)
 	require.Error(t, err)
 }
 

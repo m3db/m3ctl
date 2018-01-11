@@ -37,9 +37,8 @@ import (
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 
-	"github.com/pborman/uuid"
-
 	"github.com/gorilla/mux"
+	"github.com/pborman/uuid"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -69,12 +68,13 @@ var (
 	errNilRequest = errors.New("Nil request")
 )
 
-type endpoint struct {
+type route struct {
 	path   string
 	method string
 }
 
-var authorizationRegistry = map[endpoint]auth.AuthorizationType{
+var authorizationRegistry = map[route]auth.AuthorizationType{
+	// This validation route should only require read access.
 	{path: validateRuleSetPath, method: http.MethodPost}: auth.AuthorizationTypeReadOnly,
 }
 
@@ -167,23 +167,22 @@ func (h r2Handler) handleError(w http.ResponseWriter, opError error) {
 	}
 }
 
-func getDefaultAuthorizationTypeForHTTPMethod(method string) (auth.AuthorizationType, error) {
+func defaultAuthorizationTypeForHTTPMethod(method string) auth.AuthorizationType {
 	switch method {
 	case http.MethodGet:
-		return auth.AuthorizationTypeReadOnly, nil
-	case http.MethodPost, http.MethodPut, http.MethodDelete:
-		return auth.AuthorizationTypeReadWrite, nil
+		return auth.AuthorizationTypeReadOnly
+	case http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch:
+		return auth.AuthorizationTypeReadWrite
 	default:
-		return auth.AuthorizationTypeNone, fmt.Errorf("unsupported http method %s for getting authorization type", method)
+		return auth.AuthorizationTypeUnknown
 	}
 }
 
 func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) {
-	authType, exists := authorizationRegistry[endpoint{path: path, method: method}]
+	authType, exists := authorizationRegistry[route{path: path, method: method}]
 	if !exists {
 		var err error
-		authType, err = getDefaultAuthorizationTypeForHTTPMethod(method)
-		if err != nil {
+		if authType = defaultAuthorizationTypeForHTTPMethod(method); authType == auth.AuthorizationTypeUnknown {
 			// Panic if cannot find an authorization type for the route and/or method. This indicates an
 			// unrecognized route and service should panic on startup when registering routes.
 			panic(err)
@@ -601,23 +600,22 @@ type ruleSetJSON struct {
 	RollupRules   []rollupRuleJSON  `json:"rollupRules"`
 }
 
-type genID int
+type idGenType int
 
 const (
-	genIDFalse genID = iota
-	genIDTrue
+	generateID idGenType = iota
+	dontGenerateID
 )
 
 // ruleSetSnapshot create a RuleSetSnapshot from a rulesetJSON. If the ruleSetJSON has no IDs
 // for any of its mapping rules or rollup rules, it generates missing IDs and sets as a string UUID
 // string so they can be stored in a mapping (id -> rule).
-func (r ruleSetJSON) ruleSetSnapshot(genID genID) (*rules.RuleSetSnapshot, error) {
-
+func (r ruleSetJSON) ruleSetSnapshot(idGenType idGenType) (*rules.RuleSetSnapshot, error) {
 	mappingRules := make(map[string]*rules.MappingRuleView, len(r.MappingRules))
 	for _, mr := range r.MappingRules {
 		id := mr.ID
 		if id == "" {
-			if genID == genIDFalse {
+			if idGenType == dontGenerateID {
 				return nil, fmt.Errorf("can't convert rulesetJSON to ruleSetSnapshot, no mapping rule id for %v", mr)
 			}
 			id = uuid.New()
@@ -630,7 +628,7 @@ func (r ruleSetJSON) ruleSetSnapshot(genID genID) (*rules.RuleSetSnapshot, error
 	for _, rr := range r.RollupRules {
 		id := rr.ID
 		if id == "" {
-			if genID == genIDFalse {
+			if idGenType == dontGenerateID {
 				return nil, fmt.Errorf("can't convert rulesetJSON to ruleSetSnapshot, no rollup rule id for %v", rr)
 			}
 			id = uuid.New()

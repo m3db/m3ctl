@@ -97,26 +97,38 @@ func (a simpleAuthorization) authorize(authType AuthorizationType, userID string
 	case AuthorizationTypeNone:
 		return nil
 	case AuthorizationTypeReadOnly:
-		return a.authorizeUser(a.readWhitelistEnabled, a.readWhitelistedUserIDs, userID)
+		return a.authorizeUserForRead(userID)
 	case AuthorizationTypeWriteOnly:
-		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
+		return a.authorizeUserForWrite(userID)
 	case AuthorizationTypeReadWrite:
-		err := a.authorizeUser(a.readWhitelistEnabled, a.readWhitelistedUserIDs, userID)
-		if err != nil {
+		if err := a.authorizeUserForRead(userID); err != nil {
 			return err
 		}
-		return a.authorizeUser(a.writeWhitelistEnabled, a.writeWhitelistedUserIDs, userID)
+		return a.authorizeUserForWrite(userID)
 	default:
-		return fmt.Errorf("unsupported authorizationType %v passed to handler", authType)
+		return fmt.Errorf("unsupported authorization type %v passed to handler", authType)
 	}
 }
 
-func (a simpleAuthorization) authorizeUser(useWhitelist bool, whitelistedUsers []string, userID string) error {
-	if !useWhitelist {
+func (a simpleAuthorization) authorizeUserForRead(userID string) error {
+	if !a.readWhitelistEnabled {
 		return nil
 	}
 
-	for _, u := range whitelistedUsers {
+	for _, u := range a.readWhitelistedUserIDs {
+		if u == userID {
+			return nil
+		}
+	}
+	return fmt.Errorf("supplied userID: [%s] is not authorized", userID)
+}
+
+func (a simpleAuthorization) authorizeUserForWrite(userID string) error {
+	if !a.writeWhitelistEnabled {
+		return nil
+	}
+
+	for _, u := range a.writeWhitelistedUserIDs {
 		if u == userID {
 			return nil
 		}

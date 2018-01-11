@@ -113,7 +113,10 @@ func main() {
 		clock.NewOptions(),
 	)
 	healthService := health.NewService(instrumentOpts)
-	server := http.NewServer(listenAddr, serverOpts, r2Service, healthService)
+	server, err := http.NewServer(listenAddr, serverOpts, r2Service, healthService)
+	if err != nil {
+		logger.Fatalf("could not initialize new server: %v", err)
+	}
 
 	logger.Infof("starting HTTP server on: %s", listenAddr)
 	if err := server.ListenAndServe(); err != nil {

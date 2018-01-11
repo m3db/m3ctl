@@ -178,18 +178,17 @@ func defaultAuthorizationTypeForHTTPMethod(method string) auth.AuthorizationType
 	}
 }
 
-func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) {
+func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) error {
 	authType, exists := authorizationRegistry[route{path: path, method: method}]
 	if !exists {
 		var err error
 		if authType = defaultAuthorizationTypeForHTTPMethod(method); authType == auth.AuthorizationTypeUnknown {
-			// Panic if cannot find an authorization type for the route and/or method. This indicates an
-			// unrecognized route and service should panic on startup when registering routes.
-			panic(err)
+			return err
 		}
 	}
 	fn := h.wrap(authType, hf)
 	router.Handle(path, fn).Methods(method)
+	return nil
 }
 
 // service handles all of the endpoints for r2.
@@ -222,39 +221,70 @@ func NewService(
 
 func (s *service) URLPrefix() string { return s.rootPrefix }
 
-func (s *service) RegisterHandlers(router *mux.Router) {
+func (s *service) RegisterHandlers(router *mux.Router) error {
 	log := s.iOpts.Logger()
 	h := r2Handler{s.iOpts, s.authService}
 
 	// Namespaces actions
-	registerRoute(router, namespacePath, http.MethodGet, h, s.fetchNamespaces)
-	registerRoute(router, namespacePath, http.MethodPost, h, s.createNamespace)
+	if err := registerRoute(router, namespacePath, http.MethodGet, h, s.fetchNamespaces); err != nil {
+		return err
+	}
+	if err := registerRoute(router, namespacePath, http.MethodPost, h, s.createNamespace); err != nil {
+		return err
+	}
 
 	// Ruleset actions
-	registerRoute(router, namespacePrefix, http.MethodGet, h, s.fetchNamespace)
-	registerRoute(router, namespacePrefix, http.MethodDelete, h, s.deleteNamespace)
-	registerRoute(router, validateRuleSetPath, http.MethodPost, h, s.validateNamespace)
+	if err := registerRoute(router, namespacePrefix, http.MethodGet, h, s.fetchNamespace); err != nil {
+		return err
+	}
+	if err := registerRoute(router, namespacePrefix, http.MethodDelete, h, s.deleteNamespace); err != nil {
+		return err
+	}
+	if err := registerRoute(router, validateRuleSetPath, http.MethodPost, h, s.validateNamespace); err != nil {
+		return err
+	}
 
 	// Mapping Rule actions
-	registerRoute(router, mappingRuleRoot, http.MethodPost, h, s.createMappingRule)
+	if err := registerRoute(router, mappingRuleRoot, http.MethodPost, h, s.createMappingRule); err != nil {
+		return err
+	}
 
-	registerRoute(router, mappingRuleWithIDPath, http.MethodGet, h, s.fetchMappingRule)
-	registerRoute(router, mappingRuleWithIDPath, http.MethodPut, h, s.updateMappingRule)
-	registerRoute(router, mappingRuleWithIDPath, http.MethodDelete, h, s.deleteMappingRule)
+	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodGet, h, s.fetchMappingRule); err != nil {
+		return err
+	}
+	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodPut, h, s.updateMappingRule); err != nil {
+		return err
+	}
+	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodDelete, h, s.deleteMappingRule); err != nil {
+		return err
+	}
 
 	// Mapping Rule history
-	registerRoute(router, mappingRuleHistoryPath, http.MethodGet, h, s.fetchMappingRuleHistory)
+	if err := registerRoute(router, mappingRuleHistoryPath, http.MethodGet, h, s.fetchMappingRuleHistory); err != nil {
+		return err
+	}
 
 	// Rollup Rule actions
-	registerRoute(router, rollupRuleRoot, http.MethodPost, h, s.createRollupRule)
+	if err := registerRoute(router, rollupRuleRoot, http.MethodPost, h, s.createRollupRule); err != nil {
+		return err
+	}
 
-	registerRoute(router, rollupRuleWithIDPath, http.MethodGet, h, s.fetchRollupRule)
-	registerRoute(router, rollupRuleWithIDPath, http.MethodPut, h, s.updateRollupRule)
-	registerRoute(router, rollupRuleWithIDPath, http.MethodDelete, h, s.deleteRollupRule)
+	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodGet, h, s.fetchRollupRule); err != nil {
+		return err
+	}
+	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodPut, h, s.updateRollupRule); err != nil {
+		return err
+	}
+	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodDelete, h, s.deleteRollupRule); err != nil {
+		return err
+	}
 
-	registerRoute(router, rollupRuleHistoryPath, http.MethodGet, h, s.fetchRollupRuleHistory)
+	if err := registerRoute(router, rollupRuleHistoryPath, http.MethodGet, h, s.fetchRollupRuleHistory); err != nil {
+		return err
+	}
 
 	log.Infof("Registered rules endpoints")
+	return nil
 }
 
 func (s *service) Close() { s.store.Close() }

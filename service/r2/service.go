@@ -172,7 +172,7 @@ func getDefaultAuthorizationTypeForHTTPMethod(method string) (auth.Authorization
 	case http.MethodGet:
 		return auth.AuthorizationTypeReadOnly, nil
 	case http.MethodPost, http.MethodPut, http.MethodDelete:
-		return auth.AuthorizationTypeWriteOnly, nil
+		return auth.AuthorizationTypeReadWrite, nil
 	default:
 		return auth.AuthorizationTypeNone, fmt.Errorf("unsupported http method %s for getting authorization type", method)
 	}

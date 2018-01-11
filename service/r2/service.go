@@ -185,7 +185,7 @@ func (s *service) logRequest(r *http.Request, err error) {
 		log.NewField("route-path", r.RequestURI),
 	)
 	if err != nil {
-		logger.WithFields(log.NewErrField(err)).Warn("request error")
+		logger.WithFields(log.NewErrField(err)).Error("request error")
 		return
 	}
 	logger.Info("request success")

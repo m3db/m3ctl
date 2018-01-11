@@ -235,7 +235,7 @@ func (s *service) handleRoute(rf routeFunc, r *http.Request, namespace string) (
 	}
 	start := s.nowFn()
 	data, err := rf(s, r)
-	t := time.Since(start)
+	t := s.nowFn().Sub(start)
 	s.metrics.recordMetric(r.RequestURI, r.Method, namespace, t, err)
 	s.logRequest(r.RequestURI, r.Method, namespace, t, err)
 	if err != nil {

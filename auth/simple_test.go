@@ -23,6 +23,7 @@ package auth
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -140,6 +141,22 @@ func TestSimpleAuthorizationAuthorize(t *testing.T) {
 	require.EqualError(t, authorization.authorize(AuthorizationTypeReadOnly, "baz"), "supplied userID: [baz] is not authorized")
 	require.EqualError(t, authorization.authorize(AuthorizationTypeReadWrite, "baz"), "supplied userID: [baz] is not authorized")
 	require.EqualError(t, authorization.authorize(AuthorizationType(100), "baz"), "unsupported authorization type 100 passed to handler")
+}
+
+func TestAuthorizeUserForAccess(t *testing.T) {
+	userID := "user2"
+	whitelistedUserIDs := []string{"user1", "user2", "user3"}
+	require.NoError(t, authorizeUserForAccess(userID, whitelistedUserIDs))
+}
+
+func TestAuthorizeUserForAccessFailure(t *testing.T) {
+	userID := "user4"
+	whitelistedUserIDs := []string{"user1", "user2", "user3"}
+	require.EqualError(
+		t,
+		authorizeUserForAccess(userID, whitelistedUserIDs),
+		fmt.Sprintf("supplied userID: [%s] is not authorized", userID),
+	)
 }
 
 func TestHealthCheck(t *testing.T) {

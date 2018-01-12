@@ -132,7 +132,7 @@ func main() {
 	httpServerOpts := cfg.HTTP.NewServerOptions(httpServerInstrumentOpts)
 	server, err := http.NewServer(listenAddr, httpServerOpts, r2Service, healthService)
 	if err != nil {
-		logger.Fatalf("could not initialize new server: %v", err)
+		logger.Fatalf("could not create new server: %v", err)
 	}
 
 	logger.Infof("starting HTTP server on: %s", listenAddr)

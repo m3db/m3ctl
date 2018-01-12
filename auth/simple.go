@@ -110,12 +110,8 @@ func (a simpleAuthorization) authorize(authType AuthorizationType, userID string
 	}
 }
 
-func (a simpleAuthorization) authorizeUserForRead(userID string) error {
-	if !a.readWhitelistEnabled {
-		return nil
-	}
-
-	for _, u := range a.readWhitelistedUserIDs {
+func authorizeUserForAccess(userID string, whitelistedUserIDs []string) error {
+	for _, u := range whitelistedUserIDs {
 		if u == userID {
 			return nil
 		}
@@ -123,17 +119,18 @@ func (a simpleAuthorization) authorizeUserForRead(userID string) error {
 	return fmt.Errorf("supplied userID: [%s] is not authorized", userID)
 }
 
+func (a simpleAuthorization) authorizeUserForRead(userID string) error {
+	if !a.readWhitelistEnabled {
+		return nil
+	}
+	return authorizeUserForAccess(userID, a.readWhitelistedUserIDs)
+}
+
 func (a simpleAuthorization) authorizeUserForWrite(userID string) error {
 	if !a.writeWhitelistEnabled {
 		return nil
 	}
-
-	for _, u := range a.writeWhitelistedUserIDs {
-		if u == userID {
-			return nil
-		}
-	}
-	return fmt.Errorf("supplied userID: [%s] is not authorized", userID)
+	return authorizeUserForAccess(userID, a.writeWhitelistedUserIDs)
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.

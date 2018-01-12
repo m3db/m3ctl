@@ -99,32 +99,28 @@ func newServiceMetrics(scope tally.Scope, samplingRate float64) serviceMetrics {
 	}
 }
 
-type route struct {
-	path   string
-	method string
-}
-
 var authorizationRegistry = map[route]auth.AuthorizationType{
 	// This validation route should only require read access.
 	{path: validateRuleSetPath, method: http.MethodPost}: auth.AuthorizationTypeReadOnly,
 }
 
-func defaultAuthorizationTypeForHTTPMethod(method string) auth.AuthorizationType {
+func defaultAuthorizationTypeForHTTPMethod(method string) (auth.AuthorizationType, error) {
 	switch method {
 	case http.MethodGet:
-		return auth.AuthorizationTypeReadOnly
+		return auth.AuthorizationTypeReadOnly, nil
 	case http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch:
-		return auth.AuthorizationTypeReadWrite
+		return auth.AuthorizationTypeReadWrite, nil
 	default:
-		return auth.AuthorizationTypeUnknown
+		return auth.AuthorizationTypeUnknown, fmt.Errorf("unknown authorization type for method %s", method)
 	}
 }
 
 func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2HandlerFunc) error {
 	authType, exists := authorizationRegistry[route{path: path, method: method}]
 	if !exists {
-		if authType = defaultAuthorizationTypeForHTTPMethod(method); authType == auth.AuthorizationTypeUnknown {
-			return fmt.Errorf("unknown authorization type for method %s at path %s", method, path)
+		var err error
+		if authType, err = defaultAuthorizationTypeForHTTPMethod(method); err != nil {
+			return fmt.Errorf("could not register route for path %s and method %s, error: %v", method, path, err)
 		}
 	}
 	fn := h.wrap(authType, hf)
@@ -163,67 +159,46 @@ func NewService(
 func (s *service) URLPrefix() string { return s.rootPrefix }
 
 func (s *service) RegisterHandlers(router *mux.Router) error {
-	// Namespaces action
+	routeWithHandlers := []struct {
+		route   route
+		handler r2HandlerFunc
+	}{
+		// Namespaces actions.
+		{route: route{path: namespacePath, method: http.MethodGet}, handler: s.fetchNamespaces},
+		{route: route{path: namespacePath, method: http.MethodPost}, handler: s.createNamespace},
+
+		// Ruleset actions.
+		{route: route{path: namespacePrefix, method: http.MethodGet}, handler: s.fetchNamespace},
+		{route: route{path: namespacePrefix, method: http.MethodDelete}, handler: s.deleteNamespace},
+		{route: route{path: validateRuleSetPath, method: http.MethodPost}, handler: s.validateNamespace},
+
+		// Mapping Rule actions.
+		{route: route{path: mappingRuleRoot, method: http.MethodPost}, handler: s.createMappingRule},
+
+		{route: route{path: mappingRuleWithIDPath, method: http.MethodGet}, handler: s.fetchMappingRule},
+		{route: route{path: mappingRuleWithIDPath, method: http.MethodPut}, handler: s.updateMappingRule},
+		{route: route{path: mappingRuleWithIDPath, method: http.MethodDelete}, handler: s.deleteMappingRule},
+
+		// Mapping Rule history.
+		{route: route{path: mappingRuleHistoryPath, method: http.MethodGet}, handler: s.fetchMappingRuleHistory},
+
+		// Rollup Rule actions.
+		{route: route{path: rollupRuleRoot, method: http.MethodPost}, handler: s.createRollupRule},
+
+		{route: route{path: rollupRuleWithIDPath, method: http.MethodGet}, handler: s.fetchRollupRule},
+		{route: route{path: rollupRuleWithIDPath, method: http.MethodPut}, handler: s.updateRollupRule},
+		{route: route{path: rollupRuleWithIDPath, method: http.MethodDelete}, handler: s.deleteRollupRule},
+
+		// Rollup Rule history.
+		{route: route{path: rollupRuleHistoryPath, method: http.MethodGet}, handler: s.fetchRollupRuleHistory},
+	}
+
 	h := r2Handler{s.logger, s.authService}
-
-	// Namespaces actions
-	if err := registerRoute(router, namespacePath, http.MethodGet, h, s.fetchNamespaces); err != nil {
-		return err
+	for _, rh := range routeWithHandlers {
+		if err := registerRoute(router, rh.route.path, rh.route.method, h, rh.handler); err != nil {
+			return err
+		}
 	}
-	if err := registerRoute(router, namespacePath, http.MethodPost, h, s.createNamespace); err != nil {
-		return err
-	}
-
-	// Ruleset actions
-	if err := registerRoute(router, namespacePrefix, http.MethodGet, h, s.fetchNamespace); err != nil {
-		return err
-	}
-	if err := registerRoute(router, namespacePrefix, http.MethodDelete, h, s.deleteNamespace); err != nil {
-		return err
-	}
-	if err := registerRoute(router, validateRuleSetPath, http.MethodPost, h, s.validateNamespace); err != nil {
-		return err
-	}
-
-	// Mapping Rule actions
-	if err := registerRoute(router, mappingRuleRoot, http.MethodPost, h, s.createMappingRule); err != nil {
-		return err
-	}
-
-	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodGet, h, s.fetchMappingRule); err != nil {
-		return err
-	}
-	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodPut, h, s.updateMappingRule); err != nil {
-		return err
-	}
-	if err := registerRoute(router, mappingRuleWithIDPath, http.MethodDelete, h, s.deleteMappingRule); err != nil {
-		return err
-	}
-
-	// Mapping Rule history
-	if err := registerRoute(router, mappingRuleHistoryPath, http.MethodGet, h, s.fetchMappingRuleHistory); err != nil {
-		return err
-	}
-
-	// Rollup Rule actions
-	if err := registerRoute(router, rollupRuleRoot, http.MethodPost, h, s.createRollupRule); err != nil {
-		return err
-	}
-
-	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodGet, h, s.fetchRollupRule); err != nil {
-		return err
-	}
-	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodPut, h, s.updateRollupRule); err != nil {
-		return err
-	}
-	if err := registerRoute(router, rollupRuleWithIDPath, http.MethodDelete, h, s.deleteRollupRule); err != nil {
-		return err
-	}
-
-	if err := registerRoute(router, rollupRuleHistoryPath, http.MethodGet, h, s.fetchRollupRuleHistory); err != nil {
-		return err
-	}
-
 	s.logger.Info("Registered rules endpoints")
 	return nil
 }
@@ -384,6 +359,11 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 		return err
 	}
 	return s.sendResponse(w, http.StatusOK, data)
+}
+
+type route struct {
+	path   string
+	method string
 }
 
 func (s *service) newUpdateOptions(r *http.Request) (UpdateOptions, error) {

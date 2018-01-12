@@ -78,7 +78,7 @@ func (s *store) FetchNamespaces() (*rules.NamespacesView, error) {
 
 func (s *store) ValidateRuleSet(rs *rules.RuleSetSnapshot) error {
 	validator := s.opts.Validator()
-	// If no validator is set, then the validation functionality is not applicable
+	// If no validator is set, then the validation functionality is not applicable.
 	if validator == nil {
 		return errNilValidator
 	}

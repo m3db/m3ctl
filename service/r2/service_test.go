@@ -29,48 +29,37 @@ import (
 )
 
 func TestDefaultAuthorizationTypeForHTTPMethodGet(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeReadOnly,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodGet),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodGet)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadOnly, actual)
 }
 func TestDefaultAuthorizationTypeForHTTPMethodPost(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeReadWrite,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodPost),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPost)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodPut(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeReadWrite,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodPut),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPut)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodPatch(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeReadWrite,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodPatch),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPatch)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodDelete(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeReadWrite,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodDelete),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodDelete)
+	require.NoError(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodUnrecognizedMethod(t *testing.T) {
-	require.EqualValues(
-		t,
-		auth.AuthorizationTypeUnknown,
-		defaultAuthorizationTypeForHTTPMethod(http.MethodOptions),
-	)
+	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodOptions)
+	require.Error(t, err)
+	require.EqualValues(t, auth.AuthorizationTypeUnknown, actual)
 }

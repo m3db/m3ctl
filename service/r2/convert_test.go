@@ -5,6 +5,7 @@ import (
 
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
+
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/require"
 )

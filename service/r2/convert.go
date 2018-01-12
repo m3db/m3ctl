@@ -25,6 +25,7 @@ import (
 
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
+
 	"github.com/pborman/uuid"
 )
 
@@ -199,7 +200,6 @@ func newRuleSetJSON(latest *rules.RuleSetSnapshot) ruleSetJSON {
 	}
 }
 
-// TODO(@SANDUSKY) MOVE THIS
 type idGenType int
 
 const (

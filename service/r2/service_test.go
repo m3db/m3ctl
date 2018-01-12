@@ -31,35 +31,35 @@ import (
 func TestDefaultAuthorizationTypeForHTTPMethodGet(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodGet)
 	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadOnly, actual)
+	require.EqualValues(t, auth.ReadOnlyAuthorization, actual)
 }
 func TestDefaultAuthorizationTypeForHTTPMethodPost(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPost)
 	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+	require.EqualValues(t, auth.ReadWriteAuthorization, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodPut(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPut)
 	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+	require.EqualValues(t, auth.ReadWriteAuthorization, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodPatch(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodPatch)
 	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+	require.EqualValues(t, auth.ReadWriteAuthorization, actual)
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodDelete(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodDelete)
 	require.NoError(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeReadWrite, actual)
+	require.EqualValues(t, auth.ReadWriteAuthorization, actual)
 
 }
 
 func TestDefaultAuthorizationTypeForHTTPMethodUnrecognizedMethod(t *testing.T) {
 	actual, err := defaultAuthorizationTypeForHTTPMethod(http.MethodOptions)
 	require.Error(t, err)
-	require.EqualValues(t, auth.AuthorizationTypeUnknown, actual)
+	require.EqualValues(t, auth.UnknownAuthorization, actual)
 }

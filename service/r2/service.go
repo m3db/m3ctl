@@ -101,17 +101,17 @@ func newServiceMetrics(scope tally.Scope, samplingRate float64) serviceMetrics {
 
 var authorizationRegistry = map[route]auth.AuthorizationType{
 	// This validation route should only require read access.
-	{path: validateRuleSetPath, method: http.MethodPost}: auth.AuthorizationTypeReadOnly,
+	{path: validateRuleSetPath, method: http.MethodPost}: auth.ReadOnlyAuthorization,
 }
 
 func defaultAuthorizationTypeForHTTPMethod(method string) (auth.AuthorizationType, error) {
 	switch method {
 	case http.MethodGet:
-		return auth.AuthorizationTypeReadOnly, nil
+		return auth.ReadOnlyAuthorization, nil
 	case http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch:
-		return auth.AuthorizationTypeReadWrite, nil
+		return auth.ReadWriteAuthorization, nil
 	default:
-		return auth.AuthorizationTypeUnknown, fmt.Errorf("unknown authorization type for method %s", method)
+		return auth.UnknownAuthorization, fmt.Errorf("unknown authorization type for method %s", method)
 	}
 }
 
@@ -120,7 +120,7 @@ func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2Ha
 	if !exists {
 		var err error
 		if authType, err = defaultAuthorizationTypeForHTTPMethod(method); err != nil {
-			return fmt.Errorf("could not register route for path %s and method %s, error: %v", method, path, err)
+			return fmt.Errorf("could not register route for method %s and path %s, error: %v", method, path, err)
 		}
 	}
 	fn := h.wrap(authType, hf)

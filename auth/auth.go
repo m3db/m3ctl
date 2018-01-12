@@ -38,16 +38,16 @@ const (
 )
 
 const (
-	// AuthorizationTypeUnknown is the unknown authorizationType case.
-	AuthorizationTypeUnknown AuthorizationType = iota
-	// AuthorizationTypeNone is the no authorizationType case.
-	AuthorizationTypeNone
-	// AuthorizationTypeReadOnly is the read only authorizationType case.
-	AuthorizationTypeReadOnly
-	// AuthorizationTypeWriteOnly is the write only authorizationType case.
-	AuthorizationTypeWriteOnly
-	// AuthorizationTypeReadWrite is the read and write authorizationType case.
-	AuthorizationTypeReadWrite
+	// UnknownAuthorization is the unknown authorizationType case.
+	UnknownAuthorization AuthorizationType = iota
+	// NoAuthorization is the no authorizationType case.
+	NoAuthorization
+	// ReadOnlyAuthorization is the read only authorizationType case.
+	ReadOnlyAuthorization
+	// WriteOnlyAuthorization is the write only authorizationType case.
+	WriteOnlyAuthorization
+	// ReadWriteAuthorization is the read and write authorizationType case.
+	ReadWriteAuthorization
 )
 
 // HTTPAuthService defines how to handle requests for various http authentication and authorization methods.

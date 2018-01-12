@@ -94,13 +94,13 @@ type simpleAuthorization struct {
 
 func (a simpleAuthorization) authorize(authType AuthorizationType, userID string) error {
 	switch authType {
-	case AuthorizationTypeNone:
+	case NoAuthorization:
 		return nil
-	case AuthorizationTypeReadOnly:
+	case ReadOnlyAuthorization:
 		return a.authorizeUserForRead(userID)
-	case AuthorizationTypeWriteOnly:
+	case WriteOnlyAuthorization:
 		return a.authorizeUserForWrite(userID)
-	case AuthorizationTypeReadWrite:
+	case ReadWriteAuthorization:
 		if err := a.authorizeUserForRead(userID); err != nil {
 			return err
 		}
@@ -110,7 +110,11 @@ func (a simpleAuthorization) authorize(authType AuthorizationType, userID string
 	}
 }
 
-func authorizeUserForAccess(userID string, whitelistedUserIDs []string) error {
+func authorizeUserForAccess(userID string, whitelistedUserIDs []string, enabled bool) error {
+	if !enabled {
+		return nil
+	}
+
 	for _, u := range whitelistedUserIDs {
 		if u == userID {
 			return nil
@@ -120,17 +124,11 @@ func authorizeUserForAccess(userID string, whitelistedUserIDs []string) error {
 }
 
 func (a simpleAuthorization) authorizeUserForRead(userID string) error {
-	if !a.readWhitelistEnabled {
-		return nil
-	}
-	return authorizeUserForAccess(userID, a.readWhitelistedUserIDs)
+	return authorizeUserForAccess(userID, a.readWhitelistedUserIDs, a.readWhitelistEnabled)
 }
 
 func (a simpleAuthorization) authorizeUserForWrite(userID string) error {
-	if !a.writeWhitelistEnabled {
-		return nil
-	}
-	return authorizeUserForAccess(userID, a.writeWhitelistedUserIDs)
+	return authorizeUserForAccess(userID, a.writeWhitelistedUserIDs, a.writeWhitelistEnabled)
 }
 
 // Authenticate looks for a header defining a user name. If it finds it, runs the actual http handler passed as a parameter.

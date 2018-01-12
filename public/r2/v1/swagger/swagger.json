@@ -189,7 +189,7 @@
                 "tags": [
                     "namespaces"
                 ],
-                "summary": "Performs validation for a namespace's ruleSet.",
+                "summary": "Performs validation for a namespace's ruleset.",
                 "operationId": "validateRuleSet",
                 "consumes": [
                     "application/json"

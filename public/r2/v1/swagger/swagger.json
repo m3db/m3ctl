@@ -184,6 +184,18 @@
                 }
             }
         },
+        "/namespaces/{namespaceID}/ruleset/bulk": {
+            "put": {
+                "tags":[
+                    "namespaces"
+                ],
+            "summary": "Bulk update endpoint for namespace changes",
+            "operationId": "bulkUpdateRuleSet",
+            "consumes": [
+                "application/json"
+            ]
+            }
+        },
         "/namespaces/{namespaceID}/ruleset/validate": {
             "post": {
                 "tags": [

@@ -1,5 +1,5 @@
-hash: 682aa11d9812a800ca51007a74c3561b281923ce6134514ea1b7044ccc33f2da
-updated: 2018-03-29T14:21:49.065762644-04:00
+hash: 978e569694cea5220fb8d142025dbbd133a2ac49c58dd342c881f762cd81693f
+updated: 2018-04-03T13:37:07.507596524-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -46,7 +46,7 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
-  version: 18fca31550181693b3a834a15b74b564b3605876
+  version: 53c1911da2b537f792e7cafcb446b05ffe33b996
 - name: github.com/grpc-ecosystem/go-grpc-prometheus
   version: 6b7015e65d366bf3f19b2b2a000a831940f0f7e0
 - name: github.com/grpc-ecosystem/grpc-gateway
@@ -76,7 +76,7 @@ imports:
   - services/leader/election
   - shard
 - name: github.com/m3db/m3metrics
-  version: c72d9953c08bdb0d2da5a641ed8e5b242b9d2ea3
+  version: 752c63cf6a0aa2b4448eed73aac0da0fa97c3623
   subpackages:
   - aggregation
   - errors
@@ -87,6 +87,7 @@ imports:
   - policy
   - rules
   - rules/models
+  - rules/models/changes
   - rules/store/kv
   - rules/validator
   - rules/validator/namespace
@@ -148,7 +149,7 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: f85c78b1dd998214c5f2138155b320a4a43fbe36
+  version: 35aad584952c3e7020db7b839f6b102de6271f89
   subpackages:
   - buffer
   - internal/bufferpool

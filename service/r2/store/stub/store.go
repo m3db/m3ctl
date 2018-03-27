@@ -21,11 +21,14 @@
 package stub
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/m3db/m3ctl/service/r2"
+	r2store "github.com/m3db/m3ctl/service/r2/store"
 	"github.com/m3db/m3metrics/policy"
+	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3x/instrument"
 	"github.com/pborman/uuid"
@@ -266,7 +269,7 @@ type store struct {
 }
 
 // NewStore creates a new stub
-func NewStore(iOpts instrument.Options) r2.Store {
+func NewStore(iOpts instrument.Options) r2store.Store {
 	return &store{data: &dummyData, iOpts: iOpts}
 }
 
@@ -274,7 +277,7 @@ func (s *store) FetchNamespaces() (*models.NamespacesView, error) {
 	return s.data.Namespaces, nil
 }
 
-func (s *store) CreateNamespace(namespaceID string, uOpts r2.UpdateOptions) (*models.NamespaceView, error) {
+func (s *store) CreateNamespace(namespaceID string, uOpts r2store.UpdateOptions) (*models.NamespaceView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("could not create namespace: %s", namespaceID))
@@ -309,7 +312,7 @@ func (s *store) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
 	return nil
 }
 
-func (s *store) DeleteNamespace(namespaceID string, uOpts r2.UpdateOptions) error {
+func (s *store) DeleteNamespace(namespaceID string, uOpts r2store.UpdateOptions) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return r2.NewInternalError("could not delete namespace")
@@ -326,7 +329,12 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2.UpdateOptions) erro
 	}
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (*models.RuleSetSnapshotView, error) {
+// This function is not supported. Use mocks package.
+func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
+	return nil, errors.New("Do not use this function")
+}
+
+func (s *store) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
 		return nil, r2.NewInternalError(fmt.Sprintf("could not fetch namespace: %s", namespaceID))
@@ -362,7 +370,7 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*mod
 func (s *store) CreateMappingRule(
 	namespaceID string,
 	mrv *models.MappingRuleView,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) (*models.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -397,7 +405,7 @@ func (s *store) UpdateMappingRule(
 	namespaceID,
 	mappingRuleID string,
 	mrv *models.MappingRuleView,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) (*models.MappingRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -430,7 +438,7 @@ func (s *store) UpdateMappingRule(
 func (s *store) DeleteMappingRule(
 	namespaceID,
 	mappingRuleID string,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -489,7 +497,7 @@ func (s *store) FetchRollupRule(namespaceID, rollupRuleID string) (*models.Rollu
 func (s *store) CreateRollupRule(
 	namespaceID string,
 	rrv *models.RollupRuleView,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) (*models.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -523,7 +531,7 @@ func (s *store) UpdateRollupRule(
 	namespaceID,
 	rollupRuleID string,
 	rrv *models.RollupRuleView,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) (*models.RollupRuleView, error) {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -556,7 +564,7 @@ func (s *store) UpdateRollupRule(
 func (s *store) DeleteRollupRule(
 	namespaceID,
 	rollupRuleID string,
-	uOpts r2.UpdateOptions,
+	uOpts r2store.UpdateOptions,
 ) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -593,6 +601,11 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*mod
 		}
 		return hist, nil
 	}
+}
+
+// This function is not supported. Use mocks package.
+func (s *store) UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error) {
+	return nil, errors.New("Do not use this function")
 }
 
 func (s *store) Close() {}

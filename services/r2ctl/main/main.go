@@ -43,6 +43,7 @@ const (
 	portEnvVar              = "R2CTL_PORT"
 	r2apiPrefix             = "/r2/v1/"
 	gracefulShutdownTimeout = 15 * time.Second
+	defaultPropagationDelay = time.Minute
 )
 
 func main() {
@@ -108,12 +109,20 @@ func main() {
 		"service-name": "r2",
 	})
 	r2ServiceInstrumentOpts := instrumentOpts.SetMetricsScope(r2ServiceScope)
+	var propagationDelay time.Duration
+	if cfg.Store.KV != nil {
+		propagationDelay = cfg.Store.KV.PropagationDelay
+	} else {
+		propagationDelay = defaultPropagationDelay
+	}
+
 	r2Service := r2.NewService(
 		r2apiPrefix,
 		authService,
 		store,
 		r2ServiceInstrumentOpts,
 		clock.NewOptions(),
+		propagationDelay,
 	)
 
 	// Create health service.

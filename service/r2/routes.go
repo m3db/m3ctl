@@ -23,10 +23,14 @@ package r2
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/m3db/m3metrics/rules/models"
+	"time"
 
 	"github.com/gorilla/mux"
+
+	"github.com/m3db/m3ctl/service/r2/store"
+	"github.com/m3db/m3metrics/rules"
+	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 )
 
 func fetchNamespaces(s *service, _ *http.Request) (data interface{}, err error) {
@@ -40,7 +44,7 @@ func fetchNamespaces(s *service, _ *http.Request) (data interface{}, err error) 
 
 func fetchNamespace(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
-	rs, err := s.store.FetchRuleSet(vars[namespaceIDVar])
+	rs, err := s.store.FetchRuleSetSnapshot(vars[namespaceIDVar])
 	if err != nil {
 		return nil, err
 	}
@@ -270,4 +274,119 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 		return nil, err
 	}
 	return models.NewRollupRuleSnapshots(hist), nil
+}
+
+func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
+	vars := mux.Vars(r)
+	var req bulkRequest
+	if err := parseRequest(&req, r.Body); err != nil {
+		return nil, err
+	}
+	uOpts, err := s.newUpdateOptions(r)
+	if err != nil {
+		return nil, err
+	}
+
+	originalRS, err := s.store.FetchRuleSet(vars[namespaceIDVar])
+	if err != nil {
+		return nil, err
+	}
+	if req.RuleSetVersion != originalRS.Version() {
+		return nil, NewConflictError(
+			fmt.Sprintf("can not update namespace %s, version mismatch", vars[namespaceIDVar]),
+		)
+	}
+
+	newRS, err := applyChangesToRuleSet(
+		req.RuleSetChanges,
+		originalRS.ToMutableRuleSet().Clone(),
+		uOpts,
+		s.updateHelper,
+	)
+	if err != nil {
+		return nil, NewBadInputError(err.Error())
+	}
+
+	rs, err := s.store.UpdateRuleSet(newRS)
+	if err != nil {
+		return nil, err
+	}
+	latest, err := rs.Latest()
+	if err != nil {
+		return nil, err
+	}
+	serializableRuleSet := models.NewRuleSet(latest)
+
+	return serializableRuleSet, nil
+}
+
+func applyChangesToRuleSet(
+	rsc changes.RuleSetChanges,
+	ruleSet rules.MutableRuleSet,
+	uOpts store.UpdateOptions,
+	helper rules.RuleSetUpdateHelper,
+) (rules.MutableRuleSet, error) {
+
+	if len(rsc.MappingRuleChanges) == 0 &&
+		len(rsc.RollupRuleChanges) == 0 {
+		return nil, fmt.Errorf("invalid request: no ruleset changes detected")
+	}
+
+	meta := helper.NewUpdateMetadata(
+		time.Now().Unix(),
+		uOpts.Author(),
+	)
+
+	for _, mrChange := range rsc.MappingRuleChanges {
+		if mrChange.Op == "" {
+			return nil, fmt.Errorf("invalid request: changes must contain an op")
+		}
+		switch mrChange.Op {
+		case changes.AddOp:
+			view := mrChange.RuleData.ToMappingRuleView()
+			_, err := ruleSet.AddMappingRule(*view, meta)
+			if err != nil {
+				return nil, err
+			}
+		case changes.ChangeOp:
+			view := mrChange.RuleData.ToMappingRuleView()
+			err := ruleSet.UpdateMappingRule(*view, meta)
+			if err != nil {
+				return nil, err
+			}
+		case changes.DeleteOp:
+			err := ruleSet.DeleteMappingRule(*mrChange.RuleID, meta)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	for _, rrChange := range rsc.RollupRuleChanges {
+		if rrChange.Op == "" {
+			println("yo")
+			return nil, fmt.Errorf("invalid request: changes must contain an op")
+		}
+		switch rrChange.Op {
+		case changes.AddOp:
+			view := rrChange.RuleData.ToRollupRuleView()
+			_, err := ruleSet.AddRollupRule(*view, meta)
+			if err != nil {
+				return nil, err
+			}
+		case changes.ChangeOp:
+			view := rrChange.RuleData.ToRollupRuleView()
+			err := ruleSet.UpdateRollupRule(*view, meta)
+			if err != nil {
+				return nil, err
+			}
+		case changes.DeleteOp:
+			err := ruleSet.DeleteRollupRule(*rrChange.RuleID, meta)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return ruleSet, nil
 }

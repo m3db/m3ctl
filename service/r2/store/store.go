@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Uber Technologies, Inc.
+// Copyright (c) 2018 Uber Technologies, Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE
 
-package r2
+package store
 
 import (
+	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 )
 
@@ -38,8 +39,11 @@ type Store interface {
 	// DeleteNamespace deletes the namespace for the given namespace ID.
 	DeleteNamespace(namespaceID string, uOpts UpdateOptions) error
 
-	// FetchRuleSet fetches the ruleset for the given namespace ID.
-	FetchRuleSet(namespaceID string) (*models.RuleSetSnapshotView, error)
+	// FetchRuleSet fetch ruleset from KV.
+	FetchRuleSet(namespaceID string) (rules.RuleSet, error)
+
+	// FetchRuleSetSnapshot fetches the latest ruleset snapshot for the given namespace ID.
+	FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error)
 
 	// FetchMappingRule fetches the mapping rule for the given namespace ID and rule ID.
 	FetchMappingRule(namespaceID, mappingRuleID string) (*models.MappingRuleView, error)
@@ -72,6 +76,9 @@ type Store interface {
 	// FetchRollupRuleHistory fetches the history of the rollup rule for the given namespace ID
 	// and rule ID.
 	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*models.RollupRuleView, error)
+
+	// UpdateRuleSet updates a ruleset with a given namespace
+	UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error)
 
 	// Close closes the store.
 	Close()

@@ -1,5 +1,5 @@
-hash: e85e11c984048c91a81680a5844180ee6d7f2ed0987015dbf1bb4a672fb54c8f
-updated: 2018-02-02T15:46:09.384506-05:00
+hash: 13d192713fcc2cffd88b78a791acc58874e15e5a2167466add17f5aa54655265
+updated: 2018-03-27T13:46:20.183870369-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -80,8 +80,9 @@ imports:
   - services/leader/election
   - shard
 - name: github.com/m3db/m3metrics
-  version: f5f341f95cfc8e329467d25ae82ce8b22d8546e7
+  version: e1e762432dff17898f0b888751b613ac7db85f61
   subpackages:
+  - aggregation
   - errors
   - filters
   - generated/proto/schema
@@ -89,6 +90,7 @@ imports:
   - metric/id
   - policy
   - rules
+  - rules/models
   - rules/store/kv
   - rules/validator
   - rules/validator/namespace
@@ -147,7 +149,7 @@ imports:
 - name: github.com/uber-go/atomic
   version: e682c1008ac17bf26d2e4b5ad6cdd08520ed0b22
 - name: github.com/uber-go/tally
-  version: 6c4631652c6aab57c64f65c2e0aaec2e9aae3a64
+  version: 522328b48efad0c6034dba92bf39228694e9d31f
   subpackages:
   - m3
   - m3/customtransports

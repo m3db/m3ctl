@@ -97,25 +97,6 @@ func TestNewRollupRuleHistoryJSON(t *testing.T) {
 	require.EqualValues(t, expected, newRollupRuleHistoryJSON(hist))
 }
 
-// Tests Setup
-func testNamespaceView(name string) *models.NamespaceView {
-	return &models.NamespaceView{
-		Name:              name,
-		ForRuleSetVersion: 1,
-	}
-}
-
-func testNamespacesView(namespaceNames ...string) *models.NamespacesView {
-	namespaces := make([]*models.NamespaceView, len(namespaceNames))
-	for i, name := range namespaceNames {
-		namespaces[i] = testNamespaceView(name)
-	}
-	return &models.NamespacesView{
-		Version:    1,
-		Namespaces: namespaces,
-	}
-}
-
 func testMappingRuleView(id, name string) *models.MappingRuleView {
 	return &models.MappingRuleView{
 		ID:       id,

@@ -118,7 +118,7 @@ func TestDeleteMappingRuleSuccess(t *testing.T) {
 }
 
 func TestFetchMappingRuleHistorySuccess(t *testing.T) {
-	expected := newMappingRuleHistoryJSON(make([]*models.MappingRuleView, 0))
+	expected := models.NewMappingRuleSnapshots(make([]*models.MappingRuleView, 0))
 	actual, err := fetchMappingRuleHistory(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)
@@ -157,7 +157,7 @@ func TestDeleteRollupRuleSuccess(t *testing.T) {
 }
 
 func TestFetchRollupRuleHistorySuccess(t *testing.T) {
-	expected := newRollupRuleHistoryJSON([]*models.RollupRuleView{})
+	expected := models.NewRollupRuleSnapshots([]*models.RollupRuleView{})
 	actual, err := fetchRollupRuleHistory(newTestService(), newTestGetRequest())
 	require.NoError(t, err)
 	require.Equal(t, expected, actual)

@@ -188,7 +188,7 @@ func fetchMappingRuleHistory(s *service, r *http.Request) (data interface{}, err
 	if err != nil {
 		return nil, err
 	}
-	return newMappingRuleHistoryJSON(hist), nil
+	return models.NewMappingRuleSnapshots(hist), nil
 }
 
 func fetchRollupRule(s *service, r *http.Request) (data interface{}, err error) {
@@ -269,5 +269,5 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 	if err != nil {
 		return nil, err
 	}
-	return newRollupRuleHistoryJSON(hist), nil
+	return models.NewRollupRuleSnapshots(hist), nil
 }

@@ -214,11 +214,11 @@ func createRollupRule(s *service, r *http.Request) (data interface{}, err error)
 		return nil, err
 	}
 
-	_, err = s.store.CreateRollupRule(namespaceID, rrj.ToRollupRuleView(), uOpts)
+	rr, err := s.store.CreateRollupRule(namespaceID, rrj.ToRollupRuleView(), uOpts)
 	if err != nil {
 		return nil, err
 	}
-	return rrj, nil
+	return models.NewRollupRule(rr), nil
 }
 
 func updateRollupRule(s *service, r *http.Request) (data interface{}, err error) {

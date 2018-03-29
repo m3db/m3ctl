@@ -132,10 +132,7 @@ func TestFetchRollupRuleSuccess(t *testing.T) {
 }
 
 func TestCreateRollupRuleSuccess(t *testing.T) {
-	expected := models.NewRollupRule(&models.RollupRuleView{
-		Filter: "key:val",
-		Name:   "name",
-	})
+	expected := models.NewRollupRule(&models.RollupRuleView{})
 	actual, err := createRollupRule(newTestService(), newTestPostRequest(
 		[]byte(`{"filter": "key:val", "name": "name", "targets": []}`),
 	))

@@ -1010,6 +1010,9 @@
                 "name": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "filter": {
                     "type": "string"
                 },
@@ -1025,6 +1028,9 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "filter": {
@@ -1056,6 +1062,9 @@
                 "name": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "filter": {
                     "type": "string"
                 },
@@ -1074,6 +1083,9 @@
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "filter": {

@@ -364,7 +364,6 @@ func applyChangesToRuleSet(
 
 	for _, rrChange := range rsc.RollupRuleChanges {
 		if rrChange.Op == "" {
-			println("yo")
 			return nil, fmt.Errorf("invalid request: changes must contain an op")
 		}
 		switch rrChange.Op {

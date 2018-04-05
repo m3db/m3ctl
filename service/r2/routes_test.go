@@ -171,7 +171,7 @@ func TestFetchRollupRuleHistorySuccess(t *testing.T) {
 	require.Equal(t, expected, actual)
 }
 
-func TestBulkUpdateRuleSet(t *testing.T) {
+func TestRulesetUpdateRuleSet(t *testing.T) {
 	namespaceID := "testNamespace"
 	originalRuleSet := newRuleSet(namespaceID, 1)
 	rrvs, _ := originalRuleSet.RollupRules()
@@ -186,8 +186,8 @@ func TestBulkUpdateRuleSet(t *testing.T) {
 	}
 
 	bulkReqBody := newBulkReqBody()
-	bulkRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
-	bulkRequestWithDeletes(&bulkReqBody, rrIDs[1], mrIDs[1])
+	updateRulesetRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
+	updateRulesetRequestWithDeletes(&bulkReqBody, rrIDs[1], mrIDs[1])
 	bodyBytes, err := json.Marshal(bulkReqBody)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
@@ -243,7 +243,7 @@ func TestBulkUpdateRuleSet(t *testing.T) {
 	require.Equal(t, typedResp.Version, 2)
 }
 
-func TestBulkUpdateRuleSetVersionMismatch(t *testing.T) {
+func TestRulesetUpdateRuleSetVersionMismatch(t *testing.T) {
 	namespaceID := "testNamespace"
 	bulkReqBody := newBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
@@ -272,7 +272,7 @@ func TestBulkUpdateRuleSetVersionMismatch(t *testing.T) {
 	require.IsType(t, NewConflictError(""), err)
 }
 
-func TestBulkUpdateRuleSetKVFetchFailure(t *testing.T) {
+func TestRulesetUpdateRuleSetKVFetchFailure(t *testing.T) {
 	namespaceID := "testNamespace"
 	bulkReqBody := newBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
@@ -300,7 +300,7 @@ func TestBulkUpdateRuleSetKVFetchFailure(t *testing.T) {
 	require.IsType(t, NewInternalError(""), err)
 }
 
-func TestBulkUpdateRuleSetKVUpdateFailure(t *testing.T) {
+func TestRulesetUpdateRuleSetKVUpdateFailure(t *testing.T) {
 	namespaceID := "testNamespace"
 	bulkReqBody := newBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
@@ -330,7 +330,7 @@ func TestBulkUpdateRuleSetKVUpdateFailure(t *testing.T) {
 	require.IsType(t, NewInternalError(""), err)
 }
 
-func TestBulkUpdateRuleSetBadInput(t *testing.T) {
+func TestRulesetUpdateRuleSetBadInput(t *testing.T) {
 	namespaceID := "testNamespace"
 	originalRuleSet := newRuleSet(namespaceID, 1)
 	rrvs, _ := originalRuleSet.RollupRules()
@@ -345,7 +345,7 @@ func TestBulkUpdateRuleSetBadInput(t *testing.T) {
 	}
 
 	bulkReqBody := newBulkReqBody()
-	bulkRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
+	updateRulesetRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
 	bodyBytes, err := json.Marshal(bulkReqBody)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
@@ -372,10 +372,10 @@ func TestBulkUpdateRuleSetBadInput(t *testing.T) {
 	require.IsType(t, NewBadInputError(""), err)
 }
 
-func TestApplyChangesToRuleSetUpdateRuleFailure(t *testing.T) {
+func TestRulesetUpdateApplyChangesRuleFailure(t *testing.T) {
 	originalRuleSet := newRuleSet("validNamepspace", 1)
 	bulkReqBody := newBulkReqBody()
-	bulkRequestWithUpdates(&bulkReqBody, "invalidRRID", "")
+	updateRulesetRequestWithUpdates(&bulkReqBody, "invalidRRID", "")
 	changes := bulkReqBody.RuleSetChanges
 
 	_, err := applyChangesToRuleSet(
@@ -389,7 +389,7 @@ func TestApplyChangesToRuleSetUpdateRuleFailure(t *testing.T) {
 
 	originalRuleSet = newRuleSet("validNamepspace", 1)
 	bulkReqBody = newBulkReqBody()
-	bulkRequestWithUpdates(&bulkReqBody, "", "invalidMRID")
+	updateRulesetRequestWithUpdates(&bulkReqBody, "", "invalidMRID")
 	changes = bulkReqBody.RuleSetChanges
 	_, err = applyChangesToRuleSet(
 		changes,
@@ -401,10 +401,10 @@ func TestApplyChangesToRuleSetUpdateRuleFailure(t *testing.T) {
 	require.Equal(t, "cannot update rule invalidMRID: rule not found", err.Error())
 }
 
-func TestApplyChangesToRuleSetDeleteRuleFailure(t *testing.T) {
+func TestRulesetUpdateApplyDeleteRuleFailure(t *testing.T) {
 	originalRuleSet := newRuleSet("validNamepspace", 1)
 	bulkReqBody := newBulkReqBody()
-	bulkRequestWithDeletes(&bulkReqBody, "invalidRRID", "")
+	updateRulesetRequestWithDeletes(&bulkReqBody, "invalidRRID", "")
 	changes := bulkReqBody.RuleSetChanges
 
 	_, err := applyChangesToRuleSet(
@@ -418,7 +418,7 @@ func TestApplyChangesToRuleSetDeleteRuleFailure(t *testing.T) {
 
 	originalRuleSet = newRuleSet("validNamepspace", 1)
 	bulkReqBody = newBulkReqBody()
-	bulkRequestWithDeletes(&bulkReqBody, "", "invalidMRID")
+	updateRulesetRequestWithDeletes(&bulkReqBody, "", "invalidMRID")
 	changes = bulkReqBody.RuleSetChanges
 	_, err = applyChangesToRuleSet(
 		changes,
@@ -433,7 +433,7 @@ func TestApplyChangesToRuleSetDeleteRuleFailure(t *testing.T) {
 func TestApplyChangesToRuleSetNoChanges(t *testing.T) {
 	namespaceID := "testNamespace"
 
-	bulkReqBody := bulkRequest{
+	bulkReqBody := updateRuleSetRequest{
 		RuleSetVersion: 1,
 	}
 	bodyBytes, err := json.Marshal(bulkReqBody)
@@ -457,9 +457,9 @@ func TestApplyChangesToRuleSetNoChanges(t *testing.T) {
 	require.IsType(t, NewBadInputError(""), err)
 }
 
-func TestBulkUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
+func TestRulesetUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
 	namespaceID := "testNamespace"
-	bulkReqBody := bulkRequest{
+	bulkReqBody := updateRuleSetRequest{
 		RuleSetVersion: 1,
 		RuleSetChanges: changes.RuleSetChanges{
 			MappingRuleChanges: []changes.MappingRuleChange{
@@ -493,9 +493,9 @@ func TestBulkUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
 	require.IsType(t, NewBadInputError(""), err)
 }
 
-func TestBulkUpdateRuleSetRollupRuleMissingOp(t *testing.T) {
+func TestRulesetUpdateRuleSetRollupRuleMissingOp(t *testing.T) {
 	namespaceID := "testNamespace"
-	bulkReqBody := bulkRequest{
+	bulkReqBody := updateRuleSetRequest{
 		RuleSetVersion: 1,
 		RuleSetChanges: changes.RuleSetChanges{
 			RollupRuleChanges: []changes.RollupRuleChange{
@@ -571,8 +571,8 @@ func ptr(s string) *string {
 	return &s
 }
 
-func newBulkReqBody() bulkRequest {
-	return bulkRequest{
+func newBulkReqBody() updateRuleSetRequest {
+	return updateRuleSetRequest{
 		RuleSetVersion: 1,
 		RuleSetChanges: changes.RuleSetChanges{
 			Namespace: "testNamespace",
@@ -596,7 +596,7 @@ func newBulkReqBody() bulkRequest {
 	}
 }
 
-func bulkRequestWithUpdates(req *bulkRequest, rrIDToUpdate, mrIDToUpdate string) {
+func updateRulesetRequestWithUpdates(req *updateRuleSetRequest, rrIDToUpdate, mrIDToUpdate string) {
 	if rrIDToUpdate != "" {
 		req.RuleSetChanges.RollupRuleChanges = append(
 			req.RuleSetChanges.RollupRuleChanges,
@@ -626,7 +626,7 @@ func bulkRequestWithUpdates(req *bulkRequest, rrIDToUpdate, mrIDToUpdate string)
 	}
 }
 
-func bulkRequestWithDeletes(req *bulkRequest, rrIDToDelete, mrIDToDelete string) {
+func updateRulesetRequestWithDeletes(req *updateRuleSetRequest, rrIDToDelete, mrIDToDelete string) {
 	if rrIDToDelete != "" {
 		req.RuleSetChanges.RollupRuleChanges = append(
 			req.RuleSetChanges.RollupRuleChanges,

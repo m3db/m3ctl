@@ -22,7 +22,7 @@ package r2
 
 import "github.com/m3db/m3metrics/rules/models/changes"
 
-type bulkRequest struct {
-	RuleSetChanges changes.RuleSetChanges `json:"ruleset-changes"`
-	RuleSetVersion int                    `json:"ruleset-version"`
+type bulkRuleSetRequest struct {
+	RuleSetChanges changes.RuleSetChanges `json:"rulesetChanges"`
+	RuleSetVersion int                    `json:"rulesetVersion"`
 }

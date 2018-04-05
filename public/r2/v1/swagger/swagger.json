@@ -184,7 +184,7 @@
                 }
             }
         },
-        "/namespaces/{namespaceID}/ruleset/bulk": {
+        "/namespaces/{namespaceID}/ruleset/update": {
             "post": {
                 "tags":[
                     "namespaces"
@@ -200,16 +200,15 @@
                 "parameters": [
                     {
                         "in": "body",
-                        "name": "ruleset-changes",
                         "description": "The updates to the ruleset",
                         "required": true,
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "ruleset-changes": {
+                                "rulesetChanges": {
                                     "$ref": "#/definitions/RuleSetChanges"
                                 },
-                                "ruleset-version": {
+                                "rulesetVersion": {
                                     "type": "integer"
                                 }
                             }

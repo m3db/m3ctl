@@ -21,6 +21,7 @@
 package r2
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -31,6 +32,10 @@ import (
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
+)
+
+var (
+	errNoOpChange = errors.New("invalid request: changes must contain an op")
 )
 
 func fetchNamespaces(s *service, _ *http.Request) (data interface{}, err error) {
@@ -278,7 +283,7 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 
 func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
-	var req bulkRequest
+	var req bulkRuleSetRequest
 	if err := parseRequest(&req, r.Body); err != nil {
 		return nil, err
 	}
@@ -299,7 +304,7 @@ func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error
 
 	newRS, err := applyChangesToRuleSet(
 		req.RuleSetChanges,
-		originalRS.ToMutableRuleSet().Clone(),
+		originalRS.ToMutableRuleSet(),
 		uOpts,
 		s.updateHelper,
 	)
@@ -326,7 +331,7 @@ func applyChangesToRuleSet(
 	uOpts store.UpdateOptions,
 	helper rules.RuleSetUpdateHelper,
 ) (rules.MutableRuleSet, error) {
-
+	ruleSet = ruleSet.Clone()
 	if len(rsc.MappingRuleChanges) == 0 &&
 		len(rsc.RollupRuleChanges) == 0 {
 		return nil, fmt.Errorf("invalid request: no ruleset changes detected")
@@ -339,7 +344,7 @@ func applyChangesToRuleSet(
 
 	for _, mrChange := range rsc.MappingRuleChanges {
 		if mrChange.Op == "" {
-			return nil, fmt.Errorf("invalid request: changes must contain an op")
+			return nil, errNoOpChange
 		}
 		switch mrChange.Op {
 		case changes.AddOp:
@@ -364,7 +369,7 @@ func applyChangesToRuleSet(
 
 	for _, rrChange := range rsc.RollupRuleChanges {
 		if rrChange.Op == "" {
-			return nil, fmt.Errorf("invalid request: changes must contain an op")
+			return nil, errNoOpChange
 		}
 		switch rrChange.Op {
 		case changes.AddOp:

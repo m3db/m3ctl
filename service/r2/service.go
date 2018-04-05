@@ -48,9 +48,9 @@ const (
 )
 
 var (
-	namespacePrefix       = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
-	validateRuleSetPath   = fmt.Sprintf("%s/{%s}/ruleset/validate", namespacePath, namespaceIDVar)
-	bulkUpdateRuleSetPath = fmt.Sprintf("%s/{%s}/ruleset/bulk", namespacePath, namespaceIDVar)
+	namespacePrefix     = fmt.Sprintf("%s/{%s}", namespacePath, namespaceIDVar)
+	validateRuleSetPath = fmt.Sprintf("%s/{%s}/ruleset/validate", namespacePath, namespaceIDVar)
+	updateRuleSetPath   = fmt.Sprintf("%s/{%s}/ruleset/update", namespacePath, namespaceIDVar)
 
 	mappingRuleRoot        = fmt.Sprintf("%s/%s", namespacePrefix, mappingRulePrefix)
 	mappingRuleWithIDPath  = fmt.Sprintf("%s/{%s}", mappingRuleRoot, ruleIDVar)
@@ -178,7 +178,7 @@ func (s *service) RegisterHandlers(router *mux.Router) error {
 		{route: route{path: namespacePrefix, method: http.MethodGet}, handler: s.fetchNamespace},
 		{route: route{path: namespacePrefix, method: http.MethodDelete}, handler: s.deleteNamespace},
 		{route: route{path: validateRuleSetPath, method: http.MethodPost}, handler: s.validateNamespace},
-		{route: route{path: bulkUpdateRuleSetPath, method: http.MethodPost}, handler: s.bulkUpdateRuleSet},
+		{route: route{path: updateRuleSetPath, method: http.MethodPost}, handler: s.bulkUpdateRuleSet},
 
 		// Mapping Rule actions.
 		{route: route{path: mappingRuleRoot, method: http.MethodPost}, handler: s.createMappingRule},

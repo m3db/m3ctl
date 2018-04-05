@@ -18,6 +18,12 @@ metalint_exclude    := .excludemetalint
 m3ctl_package       := github.com/m3db/m3ctl
 gopath_prefix       := $(GOPATH)/src
 vendor_prefix       := vendor
+mocks_output_dir 		:= generated/mocks/mocks
+package_root        := github.com/m3db/m3ctl
+mocks_rules_dir     := generated/mocks
+auto_gen             := .ci/auto-gen.sh
+license_node_modules := $(license_dir)/node_modules
+license_dir          := .ci/uber-licence
 
 BUILD           := $(abspath ./bin)
 LINUX_AMD64_ENV := GOOS=linux GOARCH=amd64 CGO_ENABLED=0
@@ -101,5 +107,26 @@ clean:
 .PHONY: all
 all: lint metalint test-ci-unit services build-ui
 	@echo Made all successfully
+
+.PHONY: install-licence-bin
+install-license-bin: install-vendor
+	@echo Installing node modules
+	[ -d $(license_node_modules) ] || (cd $(license_dir) && npm install)
+
+
+.PHONY: install-mockgen
+install-mockgen: install-vendor
+	@echo Installing mockgen
+	glide install
+
+.PHONY: mock-gen
+mock-gen: install-mockgen install-license-bin install-util-mockclean
+	@echo Generating mocks
+	PACKAGE=$(package_root) $(auto_gen) $(mocks_output_dir) $(mocks_rules_dir)
+
+.PHONY: mock-gen-no-deps
+mock-gen-no-deps:
+	@echo Generating mocks
+	PACKAGE=$(package_root) $(auto_gen) $(mocks_output_dir) $(mocks_rules_dir)
 
 .DEFAULT_GOAL := all

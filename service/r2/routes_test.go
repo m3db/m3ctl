@@ -35,7 +35,6 @@ import (
 	"github.com/m3db/m3metrics/rules/models/changes"
 
 	"github.com/m3db/m3ctl/auth"
-	"github.com/m3db/m3ctl/service/r2/mocks"
 	"github.com/m3db/m3ctl/service/r2/store"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3x/clock"
@@ -206,7 +205,7 @@ func TestBulkUpdateRuleSet(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(originalRuleSet, nil)
 	storeMock.EXPECT().UpdateRuleSet(gomock.Any()).Do(func(mrs rules.MutableRuleSet) {
 		latest, err := mrs.Latest()
@@ -264,7 +263,7 @@ func TestBulkUpdateRuleSetVersionMismatch(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 4), nil)
 
 	service := newTestService(storeMock)
@@ -293,7 +292,7 @@ func TestBulkUpdateRuleSetKVFetchFailure(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(nil, NewInternalError("KV error"))
 	service := newTestService(storeMock)
 	_, err = bulkUpdateRuleSet(service, req)
@@ -321,7 +320,7 @@ func TestBulkUpdateRuleSetKVUpdateFailure(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 	storeMock.EXPECT().UpdateRuleSet(gomock.Any()).Return(nil, NewInternalError("KV error"))
 
@@ -364,7 +363,7 @@ func TestBulkUpdateRuleSetBadInput(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)
@@ -485,7 +484,7 @@ func TestBulkUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)
@@ -521,7 +520,7 @@ func TestBulkUpdateRuleSetRollupRuleMissingOp(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	storeMock := mocks.NewMockStore(ctrl)
+	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)

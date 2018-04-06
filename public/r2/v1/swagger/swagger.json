@@ -189,8 +189,8 @@
                 "tags":[
                     "namespaces"
                 ],
-                "summary": "Update endpoint for a ruleset, allowing for multiple multiple atomic changes to a ruleset at once.",
-                "operationId": "udateRuleSet",
+                "summary": "Update endpoint for a ruleset, allowing for atomic changes to an entire ruleset.",
+                "operationId": "updateRuleSet",
                 "consumes": [
                     "application/json"
                 ],

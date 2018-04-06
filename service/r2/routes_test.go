@@ -380,7 +380,7 @@ func TestRulesetUpdateApplyChangesRuleFailure(t *testing.T) {
 
 	_, err := applyChangesToRuleSet(
 		changes,
-		originalRuleSet.ToMutableRuleSet(),
+		originalRuleSet,
 		store.NewUpdateOptions(),
 		rules.NewRuleSetUpdateHelper(time.Minute),
 	)
@@ -393,7 +393,7 @@ func TestRulesetUpdateApplyChangesRuleFailure(t *testing.T) {
 	changes = bulkReqBody.RuleSetChanges
 	_, err = applyChangesToRuleSet(
 		changes,
-		originalRuleSet.ToMutableRuleSet(),
+		originalRuleSet,
 		store.NewUpdateOptions(),
 		rules.NewRuleSetUpdateHelper(time.Minute),
 	)
@@ -409,7 +409,7 @@ func TestRulesetUpdateApplyDeleteRuleFailure(t *testing.T) {
 
 	_, err := applyChangesToRuleSet(
 		changes,
-		originalRuleSet.ToMutableRuleSet(),
+		originalRuleSet,
 		store.NewUpdateOptions(),
 		rules.NewRuleSetUpdateHelper(time.Minute),
 	)
@@ -422,7 +422,7 @@ func TestRulesetUpdateApplyDeleteRuleFailure(t *testing.T) {
 	changes = bulkReqBody.RuleSetChanges
 	_, err = applyChangesToRuleSet(
 		changes,
-		originalRuleSet.ToMutableRuleSet(),
+		originalRuleSet,
 		store.NewUpdateOptions(),
 		rules.NewRuleSetUpdateHelper(time.Minute),
 	)

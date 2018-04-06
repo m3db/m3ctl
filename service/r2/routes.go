@@ -304,7 +304,7 @@ func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error
 
 	newRS, err := applyChangesToRuleSet(
 		req.RuleSetChanges,
-		originalRS.ToMutableRuleSet(),
+		originalRS,
 		uOpts,
 		s.updateHelper,
 	)
@@ -320,18 +320,17 @@ func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error
 	if err != nil {
 		return nil, err
 	}
-	serializableRuleSet := models.NewRuleSet(latest)
 
-	return serializableRuleSet, nil
+	return models.NewRuleSet(latest), nil
 }
 
 func applyChangesToRuleSet(
 	rsc changes.RuleSetChanges,
-	ruleSet rules.MutableRuleSet,
+	ruleSet rules.RuleSet,
 	uOpts store.UpdateOptions,
 	helper rules.RuleSetUpdateHelper,
 ) (rules.MutableRuleSet, error) {
-	ruleSet = ruleSet.Clone()
+	mutableRuleSet := ruleSet.ToMutableRuleSet().Clone()
 	if len(rsc.MappingRuleChanges) == 0 &&
 		len(rsc.RollupRuleChanges) == 0 {
 		return nil, fmt.Errorf("invalid request: no ruleset changes detected")
@@ -349,18 +348,18 @@ func applyChangesToRuleSet(
 		switch mrChange.Op {
 		case changes.AddOp:
 			view := mrChange.RuleData.ToMappingRuleView()
-			_, err := ruleSet.AddMappingRule(*view, meta)
+			_, err := mutableRuleSet.AddMappingRule(*view, meta)
 			if err != nil {
 				return nil, err
 			}
 		case changes.ChangeOp:
 			view := mrChange.RuleData.ToMappingRuleView()
-			err := ruleSet.UpdateMappingRule(*view, meta)
+			err := mutableRuleSet.UpdateMappingRule(*view, meta)
 			if err != nil {
 				return nil, err
 			}
 		case changes.DeleteOp:
-			err := ruleSet.DeleteMappingRule(*mrChange.RuleID, meta)
+			err := mutableRuleSet.DeleteMappingRule(*mrChange.RuleID, meta)
 			if err != nil {
 				return nil, err
 			}
@@ -374,23 +373,23 @@ func applyChangesToRuleSet(
 		switch rrChange.Op {
 		case changes.AddOp:
 			view := rrChange.RuleData.ToRollupRuleView()
-			_, err := ruleSet.AddRollupRule(*view, meta)
+			_, err := mutableRuleSet.AddRollupRule(*view, meta)
 			if err != nil {
 				return nil, err
 			}
 		case changes.ChangeOp:
 			view := rrChange.RuleData.ToRollupRuleView()
-			err := ruleSet.UpdateRollupRule(*view, meta)
+			err := mutableRuleSet.UpdateRollupRule(*view, meta)
 			if err != nil {
 				return nil, err
 			}
 		case changes.DeleteOp:
-			err := ruleSet.DeleteRollupRule(*rrChange.RuleID, meta)
+			err := mutableRuleSet.DeleteRollupRule(*rrChange.RuleID, meta)
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	return ruleSet, nil
+	return mutableRuleSet, nil
 }

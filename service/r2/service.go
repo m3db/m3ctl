@@ -150,7 +150,7 @@ func NewService(
 	store store.Store,
 	iOpts instrument.Options,
 	clockOpts clock.Options,
-	rulePropigationDelay time.Duration,
+	rulePropagationDelay time.Duration,
 ) mservice.Service {
 	return &service{
 		rootPrefix:   rootPrefix,
@@ -159,7 +159,7 @@ func NewService(
 		logger:       iOpts.Logger(),
 		nowFn:        clockOpts.NowFn(),
 		metrics:      newServiceMetrics(iOpts.MetricsScope(), iOpts.MetricsSamplingRate()),
-		updateHelper: rules.NewRuleSetUpdateHelper(rulePropigationDelay),
+		updateHelper: rules.NewRuleSetUpdateHelper(rulePropagationDelay),
 	}
 }
 
@@ -178,7 +178,7 @@ func (s *service) RegisterHandlers(router *mux.Router) error {
 		{route: route{path: namespacePrefix, method: http.MethodGet}, handler: s.fetchNamespace},
 		{route: route{path: namespacePrefix, method: http.MethodDelete}, handler: s.deleteNamespace},
 		{route: route{path: validateRuleSetPath, method: http.MethodPost}, handler: s.validateNamespace},
-		{route: route{path: updateRuleSetPath, method: http.MethodPost}, handler: s.bulkUpdateRuleSet},
+		{route: route{path: updateRuleSetPath, method: http.MethodPost}, handler: s.updateRuleSet},
 
 		// Mapping Rule actions.
 		{route: route{path: mappingRuleRoot, method: http.MethodPost}, handler: s.createMappingRule},
@@ -369,8 +369,8 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 	return s.sendResponse(w, http.StatusOK, data)
 }
 
-func (s *service) bulkUpdateRuleSet(w http.ResponseWriter, r *http.Request) error {
-	data, err := s.handleRoute(bulkUpdateRuleSet, r, s.metrics.bulkUpdateRuleSet)
+func (s *service) updateRuleSet(w http.ResponseWriter, r *http.Request) error {
+	data, err := s.handleRoute(updateRuleSet, r, s.metrics.bulkUpdateRuleSet)
 	if err != nil {
 		return err
 	}

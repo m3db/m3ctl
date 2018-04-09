@@ -281,7 +281,7 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 	return models.NewRollupRuleSnapshots(hist), nil
 }
 
-func bulkUpdateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
+func updateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
 	var req updateRuleSetRequest
 	if err := parseRequest(&req, r.Body); err != nil {

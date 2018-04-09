@@ -237,7 +237,7 @@ func TestRulesetUpdateRuleSet(t *testing.T) {
 	}).Return(newRuleSet(namespaceID, 2), nil)
 
 	service := newTestService(storeMock)
-	resp, err := bulkUpdateRuleSet(service, req)
+	resp, err := updateRuleSet(service, req)
 	require.NoError(t, err)
 	typedResp := resp.(models.RuleSet)
 	require.Equal(t, typedResp.Version, 2)
@@ -267,7 +267,7 @@ func TestRulesetUpdateRuleSetVersionMismatch(t *testing.T) {
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 4), nil)
 
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewConflictError(""), err)
 }
@@ -295,7 +295,7 @@ func TestRulesetUpdateRuleSetKVFetchFailure(t *testing.T) {
 	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(nil, NewInternalError("KV error"))
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewInternalError(""), err)
 }
@@ -325,7 +325,7 @@ func TestRulesetUpdateRuleSetKVUpdateFailure(t *testing.T) {
 	storeMock.EXPECT().UpdateRuleSet(gomock.Any()).Return(nil, NewInternalError("KV error"))
 
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewInternalError(""), err)
 }
@@ -367,7 +367,7 @@ func TestRulesetUpdateRuleSetBadInput(t *testing.T) {
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
 }
@@ -452,7 +452,7 @@ func TestApplyChangesToRuleSetNoChanges(t *testing.T) {
 	)
 
 	service := newTestService(nil)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
 }
@@ -488,7 +488,7 @@ func TestRulesetUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
 }
@@ -524,7 +524,7 @@ func TestRulesetUpdateRuleSetRollupRuleMissingOp(t *testing.T) {
 	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
 
 	service := newTestService(storeMock)
-	_, err = bulkUpdateRuleSet(service, req)
+	_, err = updateRuleSet(service, req)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
 }

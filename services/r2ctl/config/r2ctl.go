@@ -53,14 +53,14 @@ type Configuration struct {
 	Metrics instrument.MetricsConfiguration `yaml:"metrics"`
 
 	// Store configuration.
-	Store R2StoreConfiguration `yaml:"store"`
+	Store r2StoreConfiguration `yaml:"store"`
 
 	// Simple Auth Config.
 	Auth *auth.SimpleAuthConfig `yaml:"auth"`
 }
 
-// R2StoreConfiguration has all the fields necessary for an R2 store.
-type R2StoreConfiguration struct {
+// r2StoreConfiguration has all the fields necessary for an R2 store.
+type r2StoreConfiguration struct {
 	// Stub means use the stub store.
 	Stub bool `yaml:"stub"`
 
@@ -69,7 +69,7 @@ type R2StoreConfiguration struct {
 }
 
 // NewR2Store creates a new R2 store.
-func (c R2StoreConfiguration) NewR2Store(instrumentOpts instrument.Options) (r2store.Store, error) {
+func (c r2StoreConfiguration) NewR2Store(instrumentOpts instrument.Options) (r2store.Store, error) {
 	if c.Stub {
 		return stub.NewStore(instrumentOpts), nil
 	}

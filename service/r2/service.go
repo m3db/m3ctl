@@ -25,12 +25,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/m3db/m3ctl/auth"
 	mservice "github.com/m3db/m3ctl/service"
 	"github.com/m3db/m3ctl/service/r2/store"
-	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 	"github.com/m3db/m3x/log"
@@ -134,13 +132,12 @@ func registerRoute(router *mux.Router, path, method string, h r2Handler, hf r2Ha
 
 // service handles all of the endpoints for r2.
 type service struct {
-	rootPrefix   string
-	store        store.Store
-	authService  auth.HTTPAuthService
-	logger       log.Logger
-	nowFn        clock.NowFn
-	metrics      serviceMetrics
-	updateHelper rules.RuleSetUpdateHelper
+	rootPrefix  string
+	store       store.Store
+	authService auth.HTTPAuthService
+	logger      log.Logger
+	nowFn       clock.NowFn
+	metrics     serviceMetrics
 }
 
 // NewService creates a new r2 service using a given store.
@@ -150,16 +147,14 @@ func NewService(
 	store store.Store,
 	iOpts instrument.Options,
 	clockOpts clock.Options,
-	rulePropagationDelay time.Duration,
 ) mservice.Service {
 	return &service{
-		rootPrefix:   rootPrefix,
-		store:        store,
-		authService:  authService,
-		logger:       iOpts.Logger(),
-		nowFn:        clockOpts.NowFn(),
-		metrics:      newServiceMetrics(iOpts.MetricsScope(), iOpts.MetricsSamplingRate()),
-		updateHelper: rules.NewRuleSetUpdateHelper(rulePropagationDelay),
+		rootPrefix:  rootPrefix,
+		store:       store,
+		authService: authService,
+		logger:      iOpts.Logger(),
+		nowFn:       clockOpts.NowFn(),
+		metrics:     newServiceMetrics(iOpts.MetricsScope(), iOpts.MetricsSamplingRate()),
 	}
 }
 

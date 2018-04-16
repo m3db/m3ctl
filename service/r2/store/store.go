@@ -23,6 +23,7 @@ package store
 import (
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 )
 
 // Store is a construct that can perform operations against a backing rule store.
@@ -78,7 +79,7 @@ type Store interface {
 	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*models.RollupRuleView, error)
 
 	// UpdateRuleSet updates a ruleset with a given namespace
-	UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error)
+	UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSet, error)
 
 	// Close closes the store.
 	Close()

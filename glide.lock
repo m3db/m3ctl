@@ -1,5 +1,5 @@
-hash: 9c3098f011ee061f9a67d80ecc9e6c4b6d73cc643d213235456440e8e88bed3c
-updated: 2018-04-04T14:15:36.445151648-04:00
+hash: e5ec323b289b7f089cbf07de1b64ad7b05df97113ec70f53a51b3a55eb717ab0
+updated: 2018-04-13T09:58:57.478011411-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -31,7 +31,7 @@ imports:
 - name: github.com/go-playground/universal-translator
   version: 71201497bace774495daed26a3874fd339e0b538
 - name: github.com/golang/mock
-  version: 0d6884b72b943387bb12268d5178dde0e759e49a
+  version: c34cdb4725f4c3844d095133c6e40e448b86589b
   subpackages:
   - gomock
 - name: github.com/golang/protobuf
@@ -76,7 +76,7 @@ imports:
   - services/leader/election
   - shard
 - name: github.com/m3db/m3metrics
-  version: 8a68111008284f7ca469cbaaf937919cf79017f3
+  version: b9180a85d76e188a542c24745f1c46dc2921281a
   subpackages:
   - aggregation
   - errors

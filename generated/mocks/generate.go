@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-// mockgen rules for generating mocks using file mode
+// mockgen rules for generating mocks using file mode.
 //go:generate sh -c "mockgen -package=store -destination=$GOPATH/src/$PACKAGE/service/r2/store/storage_mock.go -source=$GOPATH/src/$PACKAGE/service/r2/store/store.go"
 
 package mocks

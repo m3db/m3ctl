@@ -18,7 +18,7 @@ metalint_exclude    := .excludemetalint
 m3ctl_package       := github.com/m3db/m3ctl
 gopath_prefix       := $(GOPATH)/src
 vendor_prefix       := vendor
-mocks_output_dir 		:= generated/mocks/mocks
+mocks_output_dir 	  := generated/mocks/mocks
 package_root        := github.com/m3db/m3ctl
 mocks_rules_dir     := generated/mocks
 auto_gen             := .ci/auto-gen.sh
@@ -111,8 +111,8 @@ all: lint metalint test-ci-unit services build-ui
 .PHONY: install-licence-bin
 install-license-bin: install-vendor
 	@echo Installing node modules
+	git submodule update --init --recursive
 	[ -d $(license_node_modules) ] || (cd $(license_dir) && npm install)
-
 
 .PHONY: install-mockgen
 install-mockgen: install-vendor

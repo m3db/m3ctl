@@ -31,17 +31,17 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
-	"github.com/m3db/m3metrics/rules"
-	"github.com/m3db/m3metrics/rules/models/changes"
+	"github.com/stretchr/testify/require"
 
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/service/r2/store"
+	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
-	"github.com/uber-go/tally"
 
-	"github.com/stretchr/testify/require"
+	"github.com/uber-go/tally"
 )
 
 func TestHandleRoute(t *testing.T) {
@@ -173,26 +173,12 @@ func TestFetchRollupRuleHistorySuccess(t *testing.T) {
 
 func TestRulesetUpdateRuleSet(t *testing.T) {
 	namespaceID := "testNamespace"
-	originalRuleSet := newRuleSet(namespaceID, 1)
-	rrvs, _ := originalRuleSet.RollupRules()
-	var rrIDs []string
-	for id := range rrvs {
-		rrIDs = append(rrIDs, id)
-	}
-	mrvs, _ := originalRuleSet.MappingRules()
-	var mrIDs []string
-	for id := range mrvs {
-		mrIDs = append(mrIDs, id)
-	}
-
 	bulkReqBody := newBulkReqBody()
-	updateRulesetRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
-	updateRulesetRequestWithDeletes(&bulkReqBody, rrIDs[1], mrIDs[1])
 	bodyBytes, err := json.Marshal(bulkReqBody)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
 		http.MethodPost,
-		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
+		fmt.Sprintf("/namespaces/%s/ruleset/update", namespaceID),
 		bytes.NewBuffer(bodyBytes),
 	)
 	require.NoError(t, err)
@@ -206,44 +192,21 @@ func TestRulesetUpdateRuleSet(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(originalRuleSet, nil)
-	storeMock.EXPECT().UpdateRuleSet(gomock.Any()).Do(func(mrs rules.MutableRuleSet) {
-		latest, err := mrs.Latest()
-		if err != nil {
-			t.Fail()
-		}
-		rs := models.NewRuleSet(latest)
-		rs.Sort()
-
-		actualRRNames := make([]string, 0, len(rs.RollupRules))
-		for _, rr := range rs.RollupRules {
-			actualRRNames = append(actualRRNames, rr.Name)
-		}
-		actualMRNames := make([]string, 0, len(rs.MappingRules))
-		for _, rr := range rs.MappingRules {
-			actualMRNames = append(actualMRNames, rr.Name)
-		}
-
-		expectedRRNames := []string{
-			"rollupRule3",
-			"updatedRollupRule",
-		}
-		expectedMRNames := []string{
-			"mappingRule3",
-			"updatedMappingRule",
-		}
-		require.Equal(t, expectedMRNames, actualMRNames)
-		require.Equal(t, expectedRRNames, actualRRNames)
-	}).Return(newRuleSet(namespaceID, 2), nil)
+	storeMock.EXPECT().UpdateRuleSet(gomock.Any(), 1, gomock.Any()).Return(
+		&models.RuleSet{
+			Version: 2,
+		},
+		nil,
+	)
 
 	service := newTestService(storeMock)
 	resp, err := updateRuleSet(service, req)
 	require.NoError(t, err)
-	typedResp := resp.(models.RuleSet)
+	typedResp := resp.(*models.RuleSet)
 	require.Equal(t, typedResp.Version, 2)
 }
 
-func TestRulesetUpdateRuleSetVersionMismatch(t *testing.T) {
+func TestUpdateRuleSetStoreUpdateFailure(t *testing.T) {
 	namespaceID := "testNamespace"
 	bulkReqBody := newBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
@@ -264,23 +227,24 @@ func TestRulesetUpdateRuleSetVersionMismatch(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 4), nil)
+	storeMock.EXPECT().UpdateRuleSet(gomock.Any(), 1, gomock.Any()).Return(
+		nil,
+		NewConflictError("something horrible has happened"),
+	)
 
 	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
+	resp, err := updateRuleSet(service, req)
+	require.Nil(t, resp)
 	require.Error(t, err)
 	require.IsType(t, NewConflictError(""), err)
 }
 
-func TestRulesetUpdateRuleSetKVFetchFailure(t *testing.T) {
+func TestUpdateRuleSetInvalidJSON(t *testing.T) {
 	namespaceID := "testNamespace"
-	bulkReqBody := newBulkReqBody()
-	bodyBytes, err := json.Marshal(bulkReqBody)
-	require.NoError(t, err)
 	req, err := http.NewRequest(
 		http.MethodPost,
 		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
-		bytes.NewBuffer(bodyBytes),
+		bytes.NewBuffer([]byte("invalid josn")),
 	)
 	require.NoError(t, err)
 	req = mux.SetURLVars(
@@ -293,181 +257,19 @@ func TestRulesetUpdateRuleSetKVFetchFailure(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(nil, NewInternalError("KV error"))
 	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
-	require.Error(t, err)
-	require.IsType(t, NewInternalError(""), err)
-}
-
-func TestRulesetUpdateRuleSetKVUpdateFailure(t *testing.T) {
-	namespaceID := "testNamespace"
-	bulkReqBody := newBulkReqBody()
-	bodyBytes, err := json.Marshal(bulkReqBody)
-	require.NoError(t, err)
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
-		bytes.NewBuffer(bodyBytes),
-	)
-	require.NoError(t, err)
-	req = mux.SetURLVars(
-		req,
-		map[string]string{
-			"namespaceID": namespaceID,
-		},
-	)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
-	storeMock.EXPECT().UpdateRuleSet(gomock.Any()).Return(nil, NewInternalError("KV error"))
-
-	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
-	require.Error(t, err)
-	require.IsType(t, NewInternalError(""), err)
-}
-
-func TestRulesetUpdateRuleSetBadInput(t *testing.T) {
-	namespaceID := "testNamespace"
-	originalRuleSet := newRuleSet(namespaceID, 1)
-	rrvs, _ := originalRuleSet.RollupRules()
-	var rrIDs []string
-	for id := range rrvs {
-		rrIDs = append(rrIDs, id)
-	}
-	mrvs, _ := originalRuleSet.MappingRules()
-	var mrIDs []string
-	for id := range mrvs {
-		mrIDs = append(mrIDs, id)
-	}
-
-	bulkReqBody := newBulkReqBody()
-	updateRulesetRequestWithUpdates(&bulkReqBody, rrIDs[0], mrIDs[0])
-	bodyBytes, err := json.Marshal(bulkReqBody)
-	require.NoError(t, err)
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
-		bytes.NewBuffer(bodyBytes),
-	)
-	require.NoError(t, err)
-	req = mux.SetURLVars(
-		req,
-		map[string]string{
-			"namespaceID": namespaceID,
-		},
-	)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
-
-	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
+	resp, err := updateRuleSet(service, req)
+	require.Nil(t, resp)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
 }
 
-func TestRulesetUpdateApplyChangesRuleFailure(t *testing.T) {
-	originalRuleSet := newRuleSet("validNamepspace", 1)
-	bulkReqBody := newBulkReqBody()
-	updateRulesetRequestWithUpdates(&bulkReqBody, "invalidRRID", "")
-	changes := bulkReqBody.RuleSetChanges
-
-	_, err := applyChangesToRuleSet(
-		changes,
-		originalRuleSet,
-		store.NewUpdateOptions(),
-		rules.NewRuleSetUpdateHelper(time.Minute),
-	)
-	require.Error(t, err)
-	require.Equal(t, "cannot update rule invalidRRID: rule not found", err.Error())
-
-	originalRuleSet = newRuleSet("validNamepspace", 1)
-	bulkReqBody = newBulkReqBody()
-	updateRulesetRequestWithUpdates(&bulkReqBody, "", "invalidMRID")
-	changes = bulkReqBody.RuleSetChanges
-	_, err = applyChangesToRuleSet(
-		changes,
-		originalRuleSet,
-		store.NewUpdateOptions(),
-		rules.NewRuleSetUpdateHelper(time.Minute),
-	)
-	require.Error(t, err)
-	require.Equal(t, "cannot update rule invalidMRID: rule not found", err.Error())
-}
-
-func TestRulesetUpdateApplyDeleteRuleFailure(t *testing.T) {
-	originalRuleSet := newRuleSet("validNamepspace", 1)
-	bulkReqBody := newBulkReqBody()
-	updateRulesetRequestWithDeletes(&bulkReqBody, "invalidRRID", "")
-	changes := bulkReqBody.RuleSetChanges
-
-	_, err := applyChangesToRuleSet(
-		changes,
-		originalRuleSet,
-		store.NewUpdateOptions(),
-		rules.NewRuleSetUpdateHelper(time.Minute),
-	)
-	require.Error(t, err)
-	require.Equal(t, "cannot delete rule invalidRRID: rule not found", err.Error())
-
-	originalRuleSet = newRuleSet("validNamepspace", 1)
-	bulkReqBody = newBulkReqBody()
-	updateRulesetRequestWithDeletes(&bulkReqBody, "", "invalidMRID")
-	changes = bulkReqBody.RuleSetChanges
-	_, err = applyChangesToRuleSet(
-		changes,
-		originalRuleSet,
-		store.NewUpdateOptions(),
-		rules.NewRuleSetUpdateHelper(time.Minute),
-	)
-	require.Error(t, err)
-	require.Equal(t, "cannot delete rule invalidMRID: rule not found", err.Error())
-}
-
-func TestApplyChangesToRuleSetNoChanges(t *testing.T) {
+func TestUpdateRuleSetEmptyRequest(t *testing.T) {
 	namespaceID := "testNamespace"
-
-	bulkReqBody := updateRuleSetRequest{
-		RuleSetVersion: 1,
+	body := &updateRuleSetRequest{
+		RuleSetChanges: changes.RuleSetChanges{},
 	}
-	bodyBytes, err := json.Marshal(bulkReqBody)
-	require.NoError(t, err)
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
-		bytes.NewBuffer(bodyBytes),
-	)
-	require.NoError(t, err)
-	req = mux.SetURLVars(
-		req,
-		map[string]string{
-			"namespaceID": namespaceID,
-		},
-	)
-
-	service := newTestService(nil)
-	_, err = updateRuleSet(service, req)
-	require.Error(t, err)
-	require.IsType(t, NewBadInputError(""), err)
-}
-
-func TestRulesetUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
-	namespaceID := "testNamespace"
-	bulkReqBody := updateRuleSetRequest{
-		RuleSetVersion: 1,
-		RuleSetChanges: changes.RuleSetChanges{
-			MappingRuleChanges: []changes.MappingRuleChange{
-				changes.MappingRuleChange{},
-			},
-		},
-	}
-	bodyBytes, err := json.Marshal(bulkReqBody)
+	bodyBytes, err := json.Marshal(body)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
 		http.MethodPost,
@@ -485,48 +287,12 @@ func TestRulesetUpdateRuleSetMappingRuleMissingOp(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
-
 	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
+	resp, err := updateRuleSet(service, req)
+	require.Nil(t, resp)
 	require.Error(t, err)
 	require.IsType(t, NewBadInputError(""), err)
-}
-
-func TestRulesetUpdateRuleSetRollupRuleMissingOp(t *testing.T) {
-	namespaceID := "testNamespace"
-	bulkReqBody := updateRuleSetRequest{
-		RuleSetVersion: 1,
-		RuleSetChanges: changes.RuleSetChanges{
-			RollupRuleChanges: []changes.RollupRuleChange{
-				changes.RollupRuleChange{},
-			},
-		},
-	}
-	bodyBytes, err := json.Marshal(bulkReqBody)
-	require.NoError(t, err)
-	req, err := http.NewRequest(
-		http.MethodPost,
-		fmt.Sprintf("/namespaces/%s/ruleset/bulk", namespaceID),
-		bytes.NewBuffer(bodyBytes),
-	)
-	require.NoError(t, err)
-	req = mux.SetURLVars(
-		req,
-		map[string]string{
-			"namespaceID": namespaceID,
-		},
-	)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	storeMock := store.NewMockStore(ctrl)
-	storeMock.EXPECT().FetchRuleSet(namespaceID).Return(newRuleSet(namespaceID, 1), nil).Times(1)
-
-	service := newTestService(storeMock)
-	_, err = updateRuleSet(service, req)
-	require.Error(t, err)
-	require.IsType(t, NewBadInputError(""), err)
+	println(err.Error())
 }
 
 func newTestService(store store.Store) *service {
@@ -567,10 +333,6 @@ func newTestInstrumentMethodMetrics() instrument.MethodMetrics {
 	return instrument.NewMethodMetrics(tally.NoopScope, "testRoute", 1.0)
 }
 
-func ptr(s string) *string {
-	return &s
-}
-
 func newBulkReqBody() updateRuleSetRequest {
 	return updateRuleSetRequest{
 		RuleSetVersion: 1,
@@ -596,64 +358,13 @@ func newBulkReqBody() updateRuleSetRequest {
 	}
 }
 
-func updateRulesetRequestWithUpdates(req *updateRuleSetRequest, rrIDToUpdate, mrIDToUpdate string) {
-	if rrIDToUpdate != "" {
-		req.RuleSetChanges.RollupRuleChanges = append(
-			req.RuleSetChanges.RollupRuleChanges,
-			changes.RollupRuleChange{
-				Op:     changes.ChangeOp,
-				RuleID: ptr(rrIDToUpdate),
-				RuleData: &models.RollupRule{
-					ID:   rrIDToUpdate,
-					Name: "updatedRollupRule",
-				},
-			},
-		)
-	}
-
-	if mrIDToUpdate != "" {
-		req.RuleSetChanges.MappingRuleChanges = append(
-			req.RuleSetChanges.MappingRuleChanges,
-			changes.MappingRuleChange{
-				Op:     changes.ChangeOp,
-				RuleID: ptr(mrIDToUpdate),
-				RuleData: &models.MappingRule{
-					ID:   mrIDToUpdate,
-					Name: "updatedMappingRule",
-				},
-			},
-		)
-	}
-}
-
-func updateRulesetRequestWithDeletes(req *updateRuleSetRequest, rrIDToDelete, mrIDToDelete string) {
-	if rrIDToDelete != "" {
-		req.RuleSetChanges.RollupRuleChanges = append(
-			req.RuleSetChanges.RollupRuleChanges,
-			changes.RollupRuleChange{
-				Op:     changes.DeleteOp,
-				RuleID: ptr(rrIDToDelete),
-			},
-		)
-	}
-
-	if mrIDToDelete != "" {
-		req.RuleSetChanges.MappingRuleChanges = append(
-			req.RuleSetChanges.MappingRuleChanges,
-			changes.MappingRuleChange{
-				Op:     changes.DeleteOp,
-				RuleID: ptr(mrIDToDelete),
-			},
-		)
-	}
-}
-
-func newRuleSet(nsID string, version int) rules.RuleSet {
+// nolint: unparam
+func newRuleSet(version int) rules.RuleSet {
 	helper := rules.NewRuleSetUpdateHelper(time.Minute)
 	// For testing all updates happen at the 0 epoch
 	meta := helper.NewUpdateMetadata(0, "originalAuthor")
 
-	mrs := rules.NewEmptyRuleSet(nsID, rules.UpdateMetadata{})
+	mrs := rules.NewEmptyRuleSet("testNamespace", rules.UpdateMetadata{})
 	mrs.AddRollupRule(
 		models.RollupRuleView{
 			Name: "rollupRule1",
@@ -705,8 +416,9 @@ func (s mockStore) DeleteNamespace(namespaceID string, uOpts store.UpdateOptions
 	return nil
 }
 
+//nolint: unparam
 func (s mockStore) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return newRuleSet("testNamespace", 1), nil
+	return newRuleSet(1), nil
 }
 
 func (s mockStore) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
@@ -753,8 +465,8 @@ func (s mockStore) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*
 	return make([]*models.RollupRuleView, 0), nil
 }
 
-func (s mockStore) UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error) {
-	return s.FetchRuleSet(string(rs.Namespace()))
+func (s mockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts store.UpdateOptions) (*models.RuleSet, error) {
+	return nil, nil
 }
 
 func (s mockStore) Close() {}

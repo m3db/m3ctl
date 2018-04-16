@@ -30,6 +30,7 @@ import (
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 	"github.com/m3db/m3x/instrument"
 	"github.com/pborman/uuid"
 )
@@ -52,8 +53,9 @@ func makePolicy(s string) policy.Policy {
 }
 
 var (
-	cutoverTimestamp = time.Now().UnixNano()
-	dummyData        = stubData{
+	errNotImplemented = errors.New("not implemented")
+	cutoverTimestamp  = time.Now().UnixNano()
+	dummyData         = stubData{
 		ErrorNamespace:    "errNs",
 		ConflictNamespace: "conflictNs",
 		Namespaces: &models.NamespacesView{
@@ -331,7 +333,7 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2store.UpdateOptions)
 
 // This function is not supported. Use mocks package.
 func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return nil, errors.New("Do not use this function")
+	return nil, errNotImplemented
 }
 
 func (s *store) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
@@ -604,8 +606,8 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*mod
 }
 
 // This function is not supported. Use mocks package.
-func (s *store) UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error) {
-	return nil, errors.New("Do not use this function")
+func (s *store) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts r2store.UpdateOptions) (*models.RuleSet, error) {
+	return nil, errNotImplemented
 }
 
 func (s *store) Close() {}

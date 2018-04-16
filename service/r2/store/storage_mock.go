@@ -26,6 +26,7 @@ package store
 import (
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 
 	"github.com/golang/mock/gomock"
 )
@@ -223,15 +224,15 @@ func (_mr *_MockStoreRecorder) FetchRollupRuleHistory(arg0, arg1 interface{}) *g
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRollupRuleHistory", arg0, arg1)
 }
 
-func (_m *MockStore) UpdateRuleSet(rs rules.MutableRuleSet) (rules.RuleSet, error) {
-	ret := _m.ctrl.Call(_m, "UpdateRuleSet", rs)
-	ret0, _ := ret[0].(rules.RuleSet)
+func (_m *MockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSet, error) {
+	ret := _m.ctrl.Call(_m, "UpdateRuleSet", rsChanges, version, uOpts)
+	ret0, _ := ret[0].(*models.RuleSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockStoreRecorder) UpdateRuleSet(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRuleSet", arg0)
+func (_mr *_MockStoreRecorder) UpdateRuleSet(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRuleSet", arg0, arg1, arg2)
 }
 
 func (_m *MockStore) Close() {

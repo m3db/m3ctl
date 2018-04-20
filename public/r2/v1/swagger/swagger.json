@@ -226,7 +226,7 @@
                     "200": {
                         "description": "The ruleset updates have been applied",
                         "schema": {
-                            "$ref": "#/definitions/ApiResponse"
+                            "$ref": "#/definitions/RuleSet"
                         }
                     },
                     "404": {

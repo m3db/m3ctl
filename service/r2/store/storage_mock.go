@@ -24,7 +24,6 @@
 package store
 
 import (
-	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
 
@@ -63,16 +62,6 @@ func (_mr *_MockStoreRecorder) FetchNamespaces() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchNamespaces")
 }
 
-func (_m *MockStore) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
-	ret := _m.ctrl.Call(_m, "ValidateRuleSet", rs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-func (_mr *_MockStoreRecorder) ValidateRuleSet(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ValidateRuleSet", arg0)
-}
-
 func (_m *MockStore) CreateNamespace(namespaceID string, uOpts UpdateOptions) (*models.NamespaceView, error) {
 	ret := _m.ctrl.Call(_m, "CreateNamespace", namespaceID, uOpts)
 	ret0, _ := ret[0].(*models.NamespaceView)
@@ -94,17 +83,6 @@ func (_mr *_MockStoreRecorder) DeleteNamespace(arg0, arg1 interface{}) *gomock.C
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "DeleteNamespace", arg0, arg1)
 }
 
-func (_m *MockStore) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	ret := _m.ctrl.Call(_m, "FetchRuleSet", namespaceID)
-	ret0, _ := ret[0].(rules.RuleSet)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockStoreRecorder) FetchRuleSet(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRuleSet", arg0)
-}
-
 func (_m *MockStore) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
 	ret := _m.ctrl.Call(_m, "FetchRuleSetSnapshot", namespaceID)
 	ret0, _ := ret[0].(*models.RuleSetSnapshotView)
@@ -114,6 +92,27 @@ func (_m *MockStore) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSn
 
 func (_mr *_MockStoreRecorder) FetchRuleSetSnapshot(arg0 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRuleSetSnapshot", arg0)
+}
+
+func (_m *MockStore) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
+	ret := _m.ctrl.Call(_m, "ValidateRuleSet", rs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+func (_mr *_MockStoreRecorder) ValidateRuleSet(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ValidateRuleSet", arg0)
+}
+
+func (_m *MockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSetSnapshotView, error) {
+	ret := _m.ctrl.Call(_m, "UpdateRuleSet", rsChanges, version, uOpts)
+	ret0, _ := ret[0].(*models.RuleSetSnapshotView)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+func (_mr *_MockStoreRecorder) UpdateRuleSet(arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRuleSet", arg0, arg1, arg2)
 }
 
 func (_m *MockStore) FetchMappingRule(namespaceID string, mappingRuleID string) (*models.MappingRuleView, error) {
@@ -222,17 +221,6 @@ func (_m *MockStore) FetchRollupRuleHistory(namespaceID string, rollupRuleID str
 
 func (_mr *_MockStoreRecorder) FetchRollupRuleHistory(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRollupRuleHistory", arg0, arg1)
-}
-
-func (_m *MockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSet, error) {
-	ret := _m.ctrl.Call(_m, "UpdateRuleSet", rsChanges, version, uOpts)
-	ret0, _ := ret[0].(*models.RuleSet)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-func (_mr *_MockStoreRecorder) UpdateRuleSet(arg0, arg1, arg2 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRuleSet", arg0, arg1, arg2)
 }
 
 func (_m *MockStore) Close() {

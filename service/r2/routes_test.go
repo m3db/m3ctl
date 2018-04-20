@@ -29,10 +29,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/require"
-
 	"github.com/m3db/m3ctl/auth"
 	"github.com/m3db/m3ctl/service/r2/store"
 	"github.com/m3db/m3metrics/rules"
@@ -41,6 +37,9 @@ import (
 	"github.com/m3db/m3x/clock"
 	"github.com/m3db/m3x/instrument"
 
+	"github.com/golang/mock/gomock"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 	"github.com/uber-go/tally"
 )
 
@@ -394,6 +393,7 @@ func newRuleSet(version int) rules.RuleSet {
 	return rs
 }
 
+// TODO(jskelcy): Migrate to use mockgen mock for testing.
 type mockStore struct{}
 
 func newMockStore() store.Store {

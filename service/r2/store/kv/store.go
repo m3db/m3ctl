@@ -167,10 +167,6 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2store.UpdateOptions)
 	return nil
 }
 
-func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return s.ruleStore.ReadRuleSet(namespaceID)
-}
-
 func (s *store) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
 	rs, err := s.ruleStore.ReadRuleSet(namespaceID)
 	if err != nil {
@@ -190,6 +186,32 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*mod
 		return nil, mappingRuleNotFoundError(namespaceID, mappingRuleID)
 	}
 	return mr, nil
+}
+
+func (s *store) UpdateRuleSet(
+	rsChanges changes.RuleSetChanges,
+	version int,
+	uOpts r2store.UpdateOptions,
+) (*models.RuleSetSnapshotView, error) {
+	rs, err := s.fetchRuleSet(rsChanges.Namespace)
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+	if version != rs.Version() {
+		return nil, r2.NewConflictError("mismatched ruleset version number")
+	}
+
+	mutable := rs.ToMutableRuleSet().Clone()
+	err = mutable.ApplyRuleSetChanges(rsChanges, s.newUpdateMeta(uOpts))
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+	err = s.ruleStore.WriteRuleSet(mutable)
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+
+	return s.FetchRuleSetSnapshot(rsChanges.Namespace)
 }
 
 func (s *store) CreateMappingRule(
@@ -390,35 +412,8 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*mod
 
 func (s *store) Close() { s.ruleStore.Close() }
 
-func (s *store) UpdateRuleSet(
-	rsChanges changes.RuleSetChanges,
-	version int,
-	uOpts r2store.UpdateOptions,
-) (*models.RuleSet, error) {
-	rs, err := s.FetchRuleSet(rsChanges.Namespace)
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-	if version != rs.Version() {
-		return nil, r2.NewConflictError("mismatched ruleset version number")
-	}
-
-	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.ApplyRuleSetChanges(rsChanges, s.newUpdateMeta(uOpts))
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-	err = s.ruleStore.WriteRuleSet(mutable)
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-
-	snapshot, err := s.FetchRuleSetSnapshot(string(rs.Namespace()))
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-	newRS := models.NewRuleSet(snapshot)
-	return &newRS, nil
+func (s *store) fetchRuleSet(namespaceID string) (rules.RuleSet, error) {
+	return s.ruleStore.ReadRuleSet(namespaceID)
 }
 
 func (s *store) newUpdateMeta(uOpts r2store.UpdateOptions) rules.UpdateMetadata {

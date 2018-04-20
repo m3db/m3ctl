@@ -30,7 +30,6 @@ import (
 	"github.com/m3db/m3ctl/service/r2"
 	r2store "github.com/m3db/m3ctl/service/r2/store"
 	"github.com/m3db/m3metrics/policy"
-	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
 	"github.com/m3db/m3x/instrument"
@@ -315,6 +314,11 @@ func (s *store) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
 	return nil
 }
 
+// This function is not supported. Use mocks package.
+func (s *store) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts r2store.UpdateOptions) (*models.RuleSetSnapshotView, error) {
+	return nil, errNotImplemented
+}
+
 func (s *store) DeleteNamespace(namespaceID string, uOpts r2store.UpdateOptions) error {
 	switch namespaceID {
 	case s.data.ErrorNamespace:
@@ -330,11 +334,6 @@ func (s *store) DeleteNamespace(namespaceID string, uOpts r2store.UpdateOptions)
 		}
 		return r2.NewConflictError(fmt.Sprintf("namespace %s doesn't exist", namespaceID))
 	}
-}
-
-// This function is not supported. Use mocks package.
-func (s *store) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return nil, errNotImplemented
 }
 
 func (s *store) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {
@@ -604,11 +603,6 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*mod
 		}
 		return hist, nil
 	}
-}
-
-// This function is not supported. Use mocks package.
-func (s *store) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts r2store.UpdateOptions) (*models.RuleSet, error) {
-	return nil, errNotImplemented
 }
 
 func (s *store) Close() {}

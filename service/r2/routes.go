@@ -90,6 +90,35 @@ func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) 
 	return "Ruleset is valid", nil
 }
 
+func updateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
+	var req updateRuleSetRequest
+	if err := parseRequest(&req, r.Body); err != nil {
+		return nil, NewBadInputError(err.Error())
+	}
+	if len(req.RuleSetChanges.MappingRuleChanges) == 0 &&
+		len(req.RuleSetChanges.RollupRuleChanges) == 0 {
+		return nil, NewBadInputError(
+			"invalid request: no ruleset changes detected",
+		)
+	}
+
+	uOpts, err := s.newUpdateOptions(r)
+	if err != nil {
+		return nil, err
+	}
+
+	snapshot, err := s.store.UpdateRuleSet(
+		req.RuleSetChanges,
+		req.RuleSetVersion,
+		uOpts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.NewRuleSet(snapshot), nil
+}
+
 func deleteNamespace(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
 	namespaceID := vars[namespaceIDVar]
@@ -270,28 +299,4 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 		return nil, err
 	}
 	return models.NewRollupRuleSnapshots(hist), nil
-}
-
-func updateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
-	var req updateRuleSetRequest
-	if err := parseRequest(&req, r.Body); err != nil {
-		return nil, NewBadInputError(err.Error())
-	}
-	uOpts, err := s.newUpdateOptions(r)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(req.RuleSetChanges.MappingRuleChanges) == 0 &&
-		len(req.RuleSetChanges.RollupRuleChanges) == 0 {
-		return nil, NewBadInputError(
-			"invalid request: no ruleset changes detected",
-		)
-	}
-
-	return s.store.UpdateRuleSet(
-		req.RuleSetChanges,
-		req.RuleSetVersion,
-		uOpts,
-	)
 }

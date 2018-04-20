@@ -21,7 +21,6 @@
 package store
 
 import (
-	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
 )
@@ -30,21 +29,20 @@ import (
 type Store interface {
 	// FetchNamespaces fetches namespaces.
 	FetchNamespaces() (*models.NamespacesView, error)
-
-	// ValidateRuleSet validates a namespace's ruleset.
-	ValidateRuleSet(rs *models.RuleSetSnapshotView) error
-
 	// CreateNamespace creates a namespace for the given namespace ID.
 	CreateNamespace(namespaceID string, uOpts UpdateOptions) (*models.NamespaceView, error)
 
 	// DeleteNamespace deletes the namespace for the given namespace ID.
 	DeleteNamespace(namespaceID string, uOpts UpdateOptions) error
 
-	// FetchRuleSet fetch ruleset from KV.
-	FetchRuleSet(namespaceID string) (rules.RuleSet, error)
-
 	// FetchRuleSetSnapshot fetches the latest ruleset snapshot for the given namespace ID.
 	FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error)
+
+	// ValidateRuleSet validates a namespace's ruleset.
+	ValidateRuleSet(rs *models.RuleSetSnapshotView) error
+
+	// UpdateRuleSet updates a ruleset with a given namespace
+	UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSetSnapshotView, error)
 
 	// FetchMappingRule fetches the mapping rule for the given namespace ID and rule ID.
 	FetchMappingRule(namespaceID, mappingRuleID string) (*models.MappingRuleView, error)
@@ -77,9 +75,6 @@ type Store interface {
 	// FetchRollupRuleHistory fetches the history of the rollup rule for the given namespace ID
 	// and rule ID.
 	FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*models.RollupRuleView, error)
-
-	// UpdateRuleSet updates a ruleset with a given namespace
-	UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts UpdateOptions) (*models.RuleSet, error)
 
 	// Close closes the store.
 	Close()

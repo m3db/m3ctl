@@ -192,7 +192,7 @@ func TestRulesetUpdateRuleSet(t *testing.T) {
 	defer ctrl.Finish()
 	storeMock := store.NewMockStore(ctrl)
 	storeMock.EXPECT().UpdateRuleSet(gomock.Any(), 1, gomock.Any()).Return(
-		&models.RuleSet{
+		&models.RuleSetSnapshotView{
 			Version: 2,
 		},
 		nil,
@@ -408,6 +408,10 @@ func (s mockStore) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
 	return nil
 }
 
+func (s mockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts store.UpdateOptions) (*models.RuleSetSnapshotView, error) {
+	return nil, nil
+}
+
 func (s mockStore) CreateNamespace(namespaceID string, uOpts store.UpdateOptions) (*models.NamespaceView, error) {
 	return &models.NamespaceView{}, nil
 }
@@ -463,10 +467,6 @@ func (s mockStore) DeleteRollupRule(namespaceID, rollupRuleID string, uOpts stor
 
 func (s mockStore) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*models.RollupRuleView, error) {
 	return make([]*models.RollupRuleView, 0), nil
-}
-
-func (s mockStore) UpdateRuleSet(rsChanges changes.RuleSetChanges, version int, uOpts store.UpdateOptions) (*models.RuleSet, error) {
-	return nil, nil
 }
 
 func (s mockStore) Close() {}

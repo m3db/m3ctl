@@ -116,7 +116,8 @@ func updateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
 		return nil, err
 	}
 
-	return models.NewRuleSet(snapshot), nil
+	rs := models.NewRuleSet(snapshot)
+	return &rs, nil
 }
 
 func deleteNamespace(s *service, r *http.Request) (data interface{}, err error) {

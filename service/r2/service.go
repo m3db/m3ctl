@@ -276,6 +276,14 @@ func (s *service) validateRuleSet(w http.ResponseWriter, r *http.Request) error 
 	return writeAPIResponse(w, http.StatusOK, data.(string))
 }
 
+func (s *service) updateRuleSet(w http.ResponseWriter, r *http.Request) error {
+	data, err := s.handleRoute(updateRuleSet, r, s.metrics.updateRuleSet)
+	if err != nil {
+		return err
+	}
+	return s.sendResponse(w, http.StatusOK, data)
+}
+
 func (s *service) deleteNamespace(w http.ResponseWriter, r *http.Request) error {
 	data, err := s.handleRoute(deleteNamespace, r, s.metrics.deleteNamespace)
 	if err != nil {
@@ -358,14 +366,6 @@ func (s *service) deleteRollupRule(w http.ResponseWriter, r *http.Request) error
 
 func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request) error {
 	data, err := s.handleRoute(fetchRollupRuleHistory, r, s.metrics.fetchRollupRuleHistory)
-	if err != nil {
-		return err
-	}
-	return s.sendResponse(w, http.StatusOK, data)
-}
-
-func (s *service) updateRuleSet(w http.ResponseWriter, r *http.Request) error {
-	data, err := s.handleRoute(updateRuleSet, r, s.metrics.updateRuleSet)
 	if err != nil {
 		return err
 	}

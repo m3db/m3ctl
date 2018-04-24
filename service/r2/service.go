@@ -77,7 +77,7 @@ type serviceMetrics struct {
 	updateRollupRule        instrument.MethodMetrics
 	deleteRollupRule        instrument.MethodMetrics
 	fetchRollupRuleHistory  instrument.MethodMetrics
-	bulkUpdateRuleSet       instrument.MethodMetrics
+	updateRuleSet           instrument.MethodMetrics
 }
 
 func newServiceMetrics(scope tally.Scope, samplingRate float64) serviceMetrics {
@@ -97,7 +97,7 @@ func newServiceMetrics(scope tally.Scope, samplingRate float64) serviceMetrics {
 		updateRollupRule:        instrument.NewMethodMetrics(scope, "updateRollupRule", samplingRate),
 		deleteRollupRule:        instrument.NewMethodMetrics(scope, "deleteRollupRule", samplingRate),
 		fetchRollupRuleHistory:  instrument.NewMethodMetrics(scope, "fetchRollupRuleHistory", samplingRate),
-		bulkUpdateRuleSet:       instrument.NewMethodMetrics(scope, "bulkUpdateRuleSet", samplingRate),
+		updateRuleSet:           instrument.NewMethodMetrics(scope, "udateRuleSet", samplingRate),
 	}
 }
 
@@ -172,7 +172,7 @@ func (s *service) RegisterHandlers(router *mux.Router) error {
 		// Ruleset actions.
 		{route: route{path: namespacePrefix, method: http.MethodGet}, handler: s.fetchNamespace},
 		{route: route{path: namespacePrefix, method: http.MethodDelete}, handler: s.deleteNamespace},
-		{route: route{path: validateRuleSetPath, method: http.MethodPost}, handler: s.validateNamespace},
+		{route: route{path: validateRuleSetPath, method: http.MethodPost}, handler: s.validateRuleSet},
 		{route: route{path: updateRuleSetPath, method: http.MethodPost}, handler: s.updateRuleSet},
 
 		// Mapping Rule actions.
@@ -268,7 +268,7 @@ func (s *service) createNamespace(w http.ResponseWriter, r *http.Request) error 
 	return s.sendResponse(w, http.StatusCreated, data)
 }
 
-func (s *service) validateNamespace(w http.ResponseWriter, r *http.Request) error {
+func (s *service) validateRuleSet(w http.ResponseWriter, r *http.Request) error {
 	data, err := s.handleRoute(validateRuleSet, r, s.metrics.validateRuleSet)
 	if err != nil {
 		return err
@@ -365,7 +365,7 @@ func (s *service) fetchRollupRuleHistory(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *service) updateRuleSet(w http.ResponseWriter, r *http.Request) error {
-	data, err := s.handleRoute(updateRuleSet, r, s.metrics.bulkUpdateRuleSet)
+	data, err := s.handleRoute(updateRuleSet, r, s.metrics.updateRuleSet)
 	if err != nil {
 		return err
 	}

@@ -172,7 +172,7 @@ func TestFetchRollupRuleHistorySuccess(t *testing.T) {
 
 func TestRulesetUpdateRuleSet(t *testing.T) {
 	namespaceID := "testNamespace"
-	bulkReqBody := newBulkReqBody()
+	bulkReqBody := newTestBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
@@ -207,7 +207,7 @@ func TestRulesetUpdateRuleSet(t *testing.T) {
 
 func TestUpdateRuleSetStoreUpdateFailure(t *testing.T) {
 	namespaceID := "testNamespace"
-	bulkReqBody := newBulkReqBody()
+	bulkReqBody := newTestBulkReqBody()
 	bodyBytes, err := json.Marshal(bulkReqBody)
 	require.NoError(t, err)
 	req, err := http.NewRequest(
@@ -332,7 +332,7 @@ func newTestInstrumentMethodMetrics() instrument.MethodMetrics {
 	return instrument.NewMethodMetrics(tally.NoopScope, "testRoute", 1.0)
 }
 
-func newBulkReqBody() updateRuleSetRequest {
+func newTestBulkReqBody() updateRuleSetRequest {
 	return updateRuleSetRequest{
 		RuleSetVersion: 1,
 		RuleSetChanges: changes.RuleSetChanges{
@@ -358,7 +358,7 @@ func newBulkReqBody() updateRuleSetRequest {
 }
 
 // nolint: unparam
-func newRuleSet(version int) rules.RuleSet {
+func newTestRuleSet(version int) rules.RuleSet {
 	helper := rules.NewRuleSetUpdateHelper(time.Minute)
 	// For testing all updates happen at the 0 epoch
 	meta := helper.NewUpdateMetadata(0, "originalAuthor")
@@ -422,7 +422,7 @@ func (s mockStore) DeleteNamespace(namespaceID string, uOpts store.UpdateOptions
 
 //nolint: unparam
 func (s mockStore) FetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return newRuleSet(1), nil
+	return newTestRuleSet(1), nil
 }
 
 func (s mockStore) FetchRuleSetSnapshot(namespaceID string) (*models.RuleSetSnapshotView, error) {

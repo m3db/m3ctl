@@ -24,16 +24,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/m3db/m3metrics/rules"
-	"github.com/m3db/m3x/clock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/m3db/m3ctl/service/r2"
 	r2store "github.com/m3db/m3ctl/service/r2/store"
 	merrors "github.com/m3db/m3metrics/errors"
+	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
+	"github.com/m3db/m3x/clock"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRuleSet(t *testing.T) {
@@ -45,7 +45,7 @@ func TestUpdateRuleSet(t *testing.T) {
 	require.NoError(t, err)
 	rrs, err := initialRuleSet.RollupRules()
 	require.NoError(t, err)
-	rsChanges := newRuleSetChanges(mrs, rrs)
+	rsChanges := newTestRuleSetChanges(mrs, rrs)
 	require.NoError(t, err)
 
 	schema, err := initialRuleSet.ToMutableRuleSet().Schema()
@@ -86,10 +86,10 @@ func TestUpdateRuleSet(t *testing.T) {
 
 func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 	helper := rules.NewRuleSetUpdateHelper(time.Minute)
-	initialRuleSet, err := emptyRuleSet(2, helper.NewUpdateMetadata(100, "validUser"))
+	initialRuleSet, err := newEmptyTestRuleSet(2, helper.NewUpdateMetadata(100, "validUser"))
 	require.NoError(t, err)
 
-	rsChanges := newRuleSetChanges(
+	rsChanges := newTestRuleSetChanges(
 		models.MappingRuleViews{},
 		models.RollupRuleViews{},
 	)
@@ -115,7 +115,7 @@ func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 }
 
 func TestUpdateRuleSetFetchFailure(t *testing.T) {
-	rsChanges := newRuleSetChanges(
+	rsChanges := newTestRuleSetChanges(
 		models.MappingRuleViews{},
 		models.RollupRuleViews{},
 	)
@@ -142,9 +142,9 @@ func TestUpdateRuleSetFetchFailure(t *testing.T) {
 
 func TestUpdateRuleSetMutationFail(t *testing.T) {
 	helper := rules.NewRuleSetUpdateHelper(time.Minute)
-	initialRuleSet, err := emptyRuleSet(1, helper.NewUpdateMetadata(100, "validUser"))
+	initialRuleSet, err := newEmptyTestRuleSet(1, helper.NewUpdateMetadata(100, "validUser"))
 
-	rsChanges := newRuleSetChanges(
+	rsChanges := newTestRuleSetChanges(
 		models.MappingRuleViews{
 			"invalidMappingRule": []*models.MappingRuleView{},
 		},
@@ -181,7 +181,7 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 	require.NoError(t, err)
 	rrs, err := initialRuleSet.RollupRules()
 	require.NoError(t, err)
-	rsChanges := newRuleSetChanges(mrs, rrs)
+	rsChanges := newTestRuleSetChanges(mrs, rrs)
 	require.NoError(t, err)
 
 	schema, err := initialRuleSet.ToMutableRuleSet().Schema()
@@ -221,7 +221,7 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 	require.IsType(t, r2.NewConflictError(""), err)
 }
 
-func newRuleSetChanges(mrs models.MappingRuleViews, rrs models.RollupRuleViews) changes.RuleSetChanges {
+func newTestRuleSetChanges(mrs models.MappingRuleViews, rrs models.RollupRuleViews) changes.RuleSetChanges {
 	mrChanges := make([]changes.MappingRuleChange, 0, len(mrs))
 	for uuid := range mrs {
 		mrChanges = append(
@@ -299,7 +299,7 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 	return ruleSet, nil
 }
 
-func emptyRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) {
+func newEmptyTestRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) {
 	schema, err := rules.NewEmptyRuleSet("testNamespace", meta).Schema()
 	if err != nil {
 		return nil, err

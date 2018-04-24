@@ -24,13 +24,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/m3db/m3metrics/rules/models/changes"
-
 	"github.com/m3db/m3ctl/service/r2"
 	r2store "github.com/m3db/m3ctl/service/r2/store"
 	merrors "github.com/m3db/m3metrics/errors"
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/models/changes"
 	"github.com/m3db/m3x/clock"
 	xerrors "github.com/m3db/m3x/errors"
 )

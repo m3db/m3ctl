@@ -19,6 +19,6 @@
 // THE SOFTWARE.
 
 // mockgen rules for generating mocks using file mode.
-//go:generate sh -c "mockgen -package=store -destination=$GOPATH/src/$PACKAGE/service/r2/store/storage_mock.go -source=$GOPATH/src/$PACKAGE/service/r2/store/store.go"
+//go:generate sh -c "mockgen -package=store $PACKAGE/service/r2/store Store |  mockclean -pkg $PACKAGE/store -out $GOPATH/src/$PACKAGE/service/r2/store/mock.go"
 
 package mocks

@@ -99,7 +99,7 @@ func (s *store) UpdateRuleSet(
 		return nil, handleUpstreamError(err)
 	}
 	// If ruleset version fetched from KV matches the change set version,
-	//the check and set operation will succeed if the underlying
+	// the check and set operation will succeed if the underlying
 	// KV version remains the same before the change is committed and fail otherwise.
 	// If the fetched version doesn't match, we will fail fast.
 	if version != rs.Version() {

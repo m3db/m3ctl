@@ -24,7 +24,6 @@
 package store
 
 import (
-	"github.com/m3db/m3ctl/service/r2/store"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
 

@@ -97,7 +97,7 @@ func newServiceMetrics(scope tally.Scope, samplingRate float64) serviceMetrics {
 		updateRollupRule:        instrument.NewMethodMetrics(scope, "updateRollupRule", samplingRate),
 		deleteRollupRule:        instrument.NewMethodMetrics(scope, "deleteRollupRule", samplingRate),
 		fetchRollupRuleHistory:  instrument.NewMethodMetrics(scope, "fetchRollupRuleHistory", samplingRate),
-		updateRuleSet:           instrument.NewMethodMetrics(scope, "udateRuleSet", samplingRate),
+		updateRuleSet:           instrument.NewMethodMetrics(scope, "updateRuleSet", samplingRate),
 	}
 }
 

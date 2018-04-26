@@ -89,6 +89,39 @@ func (s *store) ValidateRuleSet(rs *models.RuleSetSnapshotView) error {
 	return handleUpstreamError(validator.ValidateSnapshot(rs))
 }
 
+func (s *store) UpdateRuleSet(
+	rsChanges changes.RuleSetChanges,
+	version int,
+	uOpts r2store.UpdateOptions,
+) (*models.RuleSetSnapshotView, error) {
+	rs, err := s.ruleStore.ReadRuleSet(rsChanges.Namespace)
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+	// If ruleset version fetched from KV matches the change set version,
+	//the check and set operation will succeed if the underlying
+	// KV version remains the same before the change is committed and fail otherwise.
+	// If the fetched version doesn't match, we will fail fast.
+	if version != rs.Version() {
+		return nil, r2.NewConflictError(fmt.Sprintf(
+			"ruleset version mismatch: current version=%d, expected version=%d",
+			rs.Version(),
+			version,
+		))
+	}
+
+	mutable := rs.ToMutableRuleSet().Clone()
+	err = mutable.ApplyRuleSetChanges(rsChanges, s.newUpdateMeta(uOpts))
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+	err = s.ruleStore.WriteRuleSet(mutable)
+	if err != nil {
+		return nil, handleUpstreamError(err)
+	}
+
+	return s.FetchRuleSetSnapshot(rsChanges.Namespace)
+}
 func (s *store) CreateNamespace(namespaceID string, uOpts r2store.UpdateOptions) (*models.NamespaceView, error) {
 	nss, err := s.ruleStore.ReadNamespaces()
 	if err != nil {
@@ -185,39 +218,6 @@ func (s *store) FetchMappingRule(namespaceID string, mappingRuleID string) (*mod
 		return nil, mappingRuleNotFoundError(namespaceID, mappingRuleID)
 	}
 	return mr, nil
-}
-
-func (s *store) UpdateRuleSet(
-	rsChanges changes.RuleSetChanges,
-	version int,
-	uOpts r2store.UpdateOptions,
-) (*models.RuleSetSnapshotView, error) {
-	rs, err := s.fetchRuleSet(rsChanges.Namespace)
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-	// If ruleset version fetched from KV matches the change set version, the check and set operation will succeed if the underlying
-	// KV version remains the same before the change is committed and fail otherwise. If the fetched version doesn't
-	// match, we will fail fast.
-	if version != rs.Version() {
-		return nil, r2.NewConflictError(fmt.Sprintf(
-			"ruleset version mismatch: current version=%d, expected version=%d",
-			rs.Version(),
-			version,
-		))
-	}
-
-	mutable := rs.ToMutableRuleSet().Clone()
-	err = mutable.ApplyRuleSetChanges(rsChanges, s.newUpdateMeta(uOpts))
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-	err = s.ruleStore.WriteRuleSet(mutable)
-	if err != nil {
-		return nil, handleUpstreamError(err)
-	}
-
-	return s.FetchRuleSetSnapshot(rsChanges.Namespace)
 }
 
 func (s *store) CreateMappingRule(
@@ -417,10 +417,6 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]*mod
 }
 
 func (s *store) Close() { s.ruleStore.Close() }
-
-func (s *store) fetchRuleSet(namespaceID string) (rules.RuleSet, error) {
-	return s.ruleStore.ReadRuleSet(namespaceID)
-}
 
 func (s *store) newUpdateMeta(uOpts r2store.UpdateOptions) rules.UpdateMetadata {
 	return s.updateHelper.NewUpdateMetadata(s.nowFn().UnixNano(), uOpts.Author())

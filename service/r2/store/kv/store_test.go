@@ -26,7 +26,10 @@ import (
 
 	"github.com/m3db/m3ctl/service/r2"
 	r2store "github.com/m3db/m3ctl/service/r2/store"
+	"github.com/m3db/m3metrics/aggregation"
 	merrors "github.com/m3db/m3metrics/errors"
+	"github.com/m3db/m3metrics/pipeline"
+	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
 	"github.com/m3db/m3metrics/rules/models"
 	"github.com/m3db/m3metrics/rules/models/changes"
@@ -48,9 +51,9 @@ func TestUpdateRuleSet(t *testing.T) {
 	rsChanges := newTestRuleSetChanges(mrs, rrs)
 	require.NoError(t, err)
 
-	schema, err := initialRuleSet.ToMutableRuleSet().Schema()
+	proto, err := initialRuleSet.ToMutableRuleSet().Proto()
 	require.NoError(t, err)
-	expected, err := rules.NewRuleSetFromSchema(1, schema, rules.NewOptions())
+	expected, err := rules.NewRuleSetFromProto(1, proto, rules.NewOptions())
 	require.NoError(t, err)
 	expectedMutable := expected.ToMutableRuleSet()
 	err = expectedMutable.ApplyRuleSetChanges(rsChanges, helper.NewUpdateMetadata(200, "validUser"))
@@ -66,11 +69,11 @@ func TestUpdateRuleSet(t *testing.T) {
 
 	mockedStore.EXPECT().WriteRuleSet(gomock.Any()).Do(func(rs rules.MutableRuleSet) {
 		// mock library can not match rules.MutableRuleSet interface so use this function
-		expectedSchema, err := expectedMutable.Schema()
+		expectedProto, err := expectedMutable.Proto()
 		require.NoError(t, err)
-		rsSchema, err := rs.Schema()
+		rsProto, err := rs.Proto()
 		require.NoError(t, err)
-		require.Equal(t, expectedSchema, rsSchema)
+		require.Equal(t, expectedProto, rsProto)
 	}).Return(nil)
 
 	storeOpts := NewStoreOptions().SetClockOptions(
@@ -90,8 +93,8 @@ func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 	require.NoError(t, err)
 
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRuleViews{},
-		models.RollupRuleViews{},
+		models.MappingRules{},
+		models.RollupRules{},
 	)
 
 	ctrl := gomock.NewController(t)
@@ -116,8 +119,8 @@ func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 
 func TestUpdateRuleSetFetchFailure(t *testing.T) {
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRuleViews{},
-		models.RollupRuleViews{},
+		models.MappingRules{},
+		models.RollupRules{},
 	)
 
 	ctrl := gomock.NewController(t)
@@ -145,10 +148,10 @@ func TestUpdateRuleSetMutationFail(t *testing.T) {
 	initialRuleSet, err := newEmptyTestRuleSet(1, helper.NewUpdateMetadata(100, "validUser"))
 
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRuleViews{
-			"invalidMappingRule": []*models.MappingRuleView{},
+		models.MappingRules{
+			"invalidMappingRule": []models.MappingRule{},
 		},
-		models.RollupRuleViews{},
+		models.RollupRules{},
 	)
 	require.NoError(t, err)
 
@@ -184,9 +187,9 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 	rsChanges := newTestRuleSetChanges(mrs, rrs)
 	require.NoError(t, err)
 
-	schema, err := initialRuleSet.ToMutableRuleSet().Schema()
+	proto, err := initialRuleSet.ToMutableRuleSet().Proto()
 	require.NoError(t, err)
-	expected, err := rules.NewRuleSetFromSchema(1, schema, rules.NewOptions())
+	expected, err := rules.NewRuleSetFromProto(1, proto, rules.NewOptions())
 	require.NoError(t, err)
 	expectedMutable := expected.ToMutableRuleSet()
 	err = expectedMutable.ApplyRuleSetChanges(rsChanges, helper.NewUpdateMetadata(200, "validUser"))
@@ -202,11 +205,11 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 
 	mockedStore.EXPECT().WriteRuleSet(gomock.Any()).Do(func(rs rules.MutableRuleSet) {
 		// mock library can not match rules.MutableRuleSet interface so use this function
-		expectedSchema, err := expectedMutable.Schema()
+		expectedProto, err := expectedMutable.Proto()
 		require.NoError(t, err)
-		rsSchema, err := rs.Schema()
+		rsProto, err := rs.Proto()
 		require.NoError(t, err)
-		require.Equal(t, expectedSchema, rsSchema)
+		require.Equal(t, expectedProto, rsProto)
 	}).Return(merrors.NewStaleDataError("something has gone wrong"))
 
 	storeOpts := NewStoreOptions().SetClockOptions(
@@ -221,7 +224,7 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 	require.IsType(t, r2.NewConflictError(""), err)
 }
 
-func newTestRuleSetChanges(mrs models.MappingRuleViews, rrs models.RollupRuleViews) changes.RuleSetChanges {
+func newTestRuleSetChanges(mrs models.MappingRules, rrs models.RollupRules) changes.RuleSetChanges {
 	mrChanges := make([]changes.MappingRuleChange, 0, len(mrs))
 	for uuid := range mrs {
 		mrChanges = append(
@@ -270,6 +273,23 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 					Op: changes.AddOp,
 					RuleData: &models.RollupRule{
 						Name: "rollupRule3",
+						Targets: []models.RollupTarget{
+							{
+								Pipeline: pipeline.NewPipeline([]pipeline.OpUnion{
+									{
+										Type: pipeline.RollupOpType,
+										Rollup: pipeline.RollupOp{
+											NewName:       []byte("testTarget"),
+											Tags:          [][]byte{[]byte("tag1"), []byte("tag2")},
+											AggregationID: aggregation.MustCompressTypes(aggregation.Min),
+										},
+									},
+								}),
+								StoragePolicies: policy.StoragePolicies{
+									policy.MustParseStoragePolicy("1m:10d"),
+								},
+							},
+						},
 					},
 				},
 			},
@@ -278,6 +298,9 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 					Op: changes.AddOp,
 					RuleData: &models.MappingRule{
 						Name: "mappingRule3",
+						StoragePolicies: policy.StoragePolicies{
+							policy.MustParseStoragePolicy("1s:6h"),
+						},
 					},
 				},
 			},
@@ -287,11 +310,11 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 	if err != nil {
 		return nil, err
 	}
-	schema, err := mutable.Schema()
+	proto, err := mutable.Proto()
 	if err != nil {
 		return nil, err
 	}
-	ruleSet, err := rules.NewRuleSetFromSchema(version, schema, rules.NewOptions())
+	ruleSet, err := rules.NewRuleSetFromProto(version, proto, rules.NewOptions())
 	if err != nil {
 		return nil, err
 	}
@@ -300,11 +323,11 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 }
 
 func newEmptyTestRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) {
-	schema, err := rules.NewEmptyRuleSet("testNamespace", meta).Schema()
+	proto, err := rules.NewEmptyRuleSet("testNamespace", meta).Proto()
 	if err != nil {
 		return nil, err
 	}
-	ruleSet, err := rules.NewRuleSetFromSchema(version, schema, rules.NewOptions())
+	ruleSet, err := rules.NewRuleSetFromProto(version, proto, rules.NewOptions())
 	if err != nil {
 		return nil, err
 	}

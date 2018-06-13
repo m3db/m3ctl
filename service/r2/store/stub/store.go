@@ -696,5 +696,6 @@ func (s *store) FetchRollupRuleHistory(namespaceID, rollupRuleID string) ([]mode
 
 func (s *store) Close() {}
 
+// nolint: unparam
 func b(str string) []byte        { return []byte(str) }
 func bs(strs ...string) [][]byte { return bytes.ArraysFromStringArray(strs) }

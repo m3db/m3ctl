@@ -24,7 +24,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/m3db/m3metrics/rules/models"
+	"github.com/m3db/m3metrics/rules/view"
 
 	"github.com/gorilla/mux"
 )
@@ -38,7 +38,7 @@ func fetchNamespace(s *service, r *http.Request) (data interface{}, err error) {
 }
 
 func createNamespace(s *service, r *http.Request) (data interface{}, err error) {
-	var n models.Namespace
+	var n view.Namespace
 	if err := parseRequest(&n, r.Body); err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func createNamespace(s *service, r *http.Request) (data interface{}, err error) 
 
 func validateRuleSet(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
-	var ruleset models.RuleSet
+	var ruleset view.RuleSet
 	if err := parseRequest(&ruleset, r.Body); err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func fetchMappingRule(s *service, r *http.Request) (data interface{}, err error)
 
 func createMappingRule(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
-	var mr models.MappingRule
+	var mr view.MappingRule
 	if err := parseRequest(&mr, r.Body); err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func createMappingRule(s *service, r *http.Request) (data interface{}, err error
 func updateMappingRule(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
 
-	var mrj models.MappingRule
+	var mrj view.MappingRule
 	if err := parseRequest(&mrj, r.Body); err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func fetchMappingRuleHistory(s *service, r *http.Request) (data interface{}, err
 	if err != nil {
 		return nil, err
 	}
-	return models.MappingRuleSnapshots{MappingRules: snapshots}, nil
+	return view.MappingRuleSnapshots{MappingRules: snapshots}, nil
 }
 
 func fetchRollupRule(s *service, r *http.Request) (data interface{}, err error) {
@@ -179,7 +179,7 @@ func createRollupRule(s *service, r *http.Request) (data interface{}, err error)
 	vars := mux.Vars(r)
 	namespaceID := vars[namespaceIDVar]
 
-	var rrj models.RollupRule
+	var rrj view.RollupRule
 	if err := parseRequest(&rrj, r.Body); err != nil {
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func createRollupRule(s *service, r *http.Request) (data interface{}, err error)
 
 func updateRollupRule(s *service, r *http.Request) (data interface{}, err error) {
 	vars := mux.Vars(r)
-	var rrj models.RollupRule
+	var rrj view.RollupRule
 	if err := parseRequest(&rrj, r.Body); err != nil {
 		return nil, err
 	}
@@ -230,5 +230,5 @@ func fetchRollupRuleHistory(s *service, r *http.Request) (data interface{}, err 
 	if err != nil {
 		return nil, err
 	}
-	return models.RollupRuleSnapshots{RollupRules: snapshots}, nil
+	return view.RollupRuleSnapshots{RollupRules: snapshots}, nil
 }

@@ -24,8 +24,8 @@
 package store
 
 import (
-	"github.com/m3db/m3metrics/rules/models"
-	"github.com/m3db/m3metrics/rules/models/changes"
+	"github.com/m3db/m3metrics/rules/view"
+	"github.com/m3db/m3metrics/rules/view/changes"
 
 	"github.com/golang/mock/gomock"
 )
@@ -59,9 +59,9 @@ func (_mr *_MockStoreRecorder) Close() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Close")
 }
 
-func (_m *MockStore) CreateMappingRule(_param0 string, _param1 models.MappingRule, _param2 UpdateOptions) (models.MappingRule, error) {
+func (_m *MockStore) CreateMappingRule(_param0 string, _param1 view.MappingRule, _param2 UpdateOptions) (view.MappingRule, error) {
 	ret := _m.ctrl.Call(_m, "CreateMappingRule", _param0, _param1, _param2)
-	ret0, _ := ret[0].(models.MappingRule)
+	ret0, _ := ret[0].(view.MappingRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,9 +70,9 @@ func (_mr *_MockStoreRecorder) CreateMappingRule(arg0, arg1, arg2 interface{}) *
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "CreateMappingRule", arg0, arg1, arg2)
 }
 
-func (_m *MockStore) CreateNamespace(_param0 string, _param1 UpdateOptions) (models.Namespace, error) {
+func (_m *MockStore) CreateNamespace(_param0 string, _param1 UpdateOptions) (view.Namespace, error) {
 	ret := _m.ctrl.Call(_m, "CreateNamespace", _param0, _param1)
-	ret0, _ := ret[0].(models.Namespace)
+	ret0, _ := ret[0].(view.Namespace)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -81,9 +81,9 @@ func (_mr *_MockStoreRecorder) CreateNamespace(arg0, arg1 interface{}) *gomock.C
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "CreateNamespace", arg0, arg1)
 }
 
-func (_m *MockStore) CreateRollupRule(_param0 string, _param1 models.RollupRule, _param2 UpdateOptions) (models.RollupRule, error) {
+func (_m *MockStore) CreateRollupRule(_param0 string, _param1 view.RollupRule, _param2 UpdateOptions) (view.RollupRule, error) {
 	ret := _m.ctrl.Call(_m, "CreateRollupRule", _param0, _param1, _param2)
-	ret0, _ := ret[0].(models.RollupRule)
+	ret0, _ := ret[0].(view.RollupRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -122,9 +122,9 @@ func (_mr *_MockStoreRecorder) DeleteRollupRule(arg0, arg1, arg2 interface{}) *g
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "DeleteRollupRule", arg0, arg1, arg2)
 }
 
-func (_m *MockStore) FetchMappingRule(_param0 string, _param1 string) (models.MappingRule, error) {
+func (_m *MockStore) FetchMappingRule(_param0 string, _param1 string) (view.MappingRule, error) {
 	ret := _m.ctrl.Call(_m, "FetchMappingRule", _param0, _param1)
-	ret0, _ := ret[0].(models.MappingRule)
+	ret0, _ := ret[0].(view.MappingRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -133,9 +133,9 @@ func (_mr *_MockStoreRecorder) FetchMappingRule(arg0, arg1 interface{}) *gomock.
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchMappingRule", arg0, arg1)
 }
 
-func (_m *MockStore) FetchMappingRuleHistory(_param0 string, _param1 string) ([]models.MappingRule, error) {
+func (_m *MockStore) FetchMappingRuleHistory(_param0 string, _param1 string) ([]view.MappingRule, error) {
 	ret := _m.ctrl.Call(_m, "FetchMappingRuleHistory", _param0, _param1)
-	ret0, _ := ret[0].([]models.MappingRule)
+	ret0, _ := ret[0].([]view.MappingRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -144,9 +144,9 @@ func (_mr *_MockStoreRecorder) FetchMappingRuleHistory(arg0, arg1 interface{}) *
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchMappingRuleHistory", arg0, arg1)
 }
 
-func (_m *MockStore) FetchNamespaces() (models.Namespaces, error) {
+func (_m *MockStore) FetchNamespaces() (view.Namespaces, error) {
 	ret := _m.ctrl.Call(_m, "FetchNamespaces")
-	ret0, _ := ret[0].(models.Namespaces)
+	ret0, _ := ret[0].(view.Namespaces)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -155,9 +155,9 @@ func (_mr *_MockStoreRecorder) FetchNamespaces() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchNamespaces")
 }
 
-func (_m *MockStore) FetchRollupRule(_param0 string, _param1 string) (models.RollupRule, error) {
+func (_m *MockStore) FetchRollupRule(_param0 string, _param1 string) (view.RollupRule, error) {
 	ret := _m.ctrl.Call(_m, "FetchRollupRule", _param0, _param1)
-	ret0, _ := ret[0].(models.RollupRule)
+	ret0, _ := ret[0].(view.RollupRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -166,9 +166,9 @@ func (_mr *_MockStoreRecorder) FetchRollupRule(arg0, arg1 interface{}) *gomock.C
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRollupRule", arg0, arg1)
 }
 
-func (_m *MockStore) FetchRollupRuleHistory(_param0 string, _param1 string) ([]models.RollupRule, error) {
+func (_m *MockStore) FetchRollupRuleHistory(_param0 string, _param1 string) ([]view.RollupRule, error) {
 	ret := _m.ctrl.Call(_m, "FetchRollupRuleHistory", _param0, _param1)
-	ret0, _ := ret[0].([]models.RollupRule)
+	ret0, _ := ret[0].([]view.RollupRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -177,9 +177,9 @@ func (_mr *_MockStoreRecorder) FetchRollupRuleHistory(arg0, arg1 interface{}) *g
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRollupRuleHistory", arg0, arg1)
 }
 
-func (_m *MockStore) FetchRuleSetSnapshot(_param0 string) (models.RuleSet, error) {
+func (_m *MockStore) FetchRuleSetSnapshot(_param0 string) (view.RuleSet, error) {
 	ret := _m.ctrl.Call(_m, "FetchRuleSetSnapshot", _param0)
-	ret0, _ := ret[0].(models.RuleSet)
+	ret0, _ := ret[0].(view.RuleSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -188,9 +188,9 @@ func (_mr *_MockStoreRecorder) FetchRuleSetSnapshot(arg0 interface{}) *gomock.Ca
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "FetchRuleSetSnapshot", arg0)
 }
 
-func (_m *MockStore) UpdateMappingRule(_param0 string, _param1 string, _param2 models.MappingRule, _param3 UpdateOptions) (models.MappingRule, error) {
+func (_m *MockStore) UpdateMappingRule(_param0 string, _param1 string, _param2 view.MappingRule, _param3 UpdateOptions) (view.MappingRule, error) {
 	ret := _m.ctrl.Call(_m, "UpdateMappingRule", _param0, _param1, _param2, _param3)
-	ret0, _ := ret[0].(models.MappingRule)
+	ret0, _ := ret[0].(view.MappingRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -199,9 +199,9 @@ func (_mr *_MockStoreRecorder) UpdateMappingRule(arg0, arg1, arg2, arg3 interfac
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateMappingRule", arg0, arg1, arg2, arg3)
 }
 
-func (_m *MockStore) UpdateRollupRule(_param0 string, _param1 string, _param2 models.RollupRule, _param3 UpdateOptions) (models.RollupRule, error) {
+func (_m *MockStore) UpdateRollupRule(_param0 string, _param1 string, _param2 view.RollupRule, _param3 UpdateOptions) (view.RollupRule, error) {
 	ret := _m.ctrl.Call(_m, "UpdateRollupRule", _param0, _param1, _param2, _param3)
-	ret0, _ := ret[0].(models.RollupRule)
+	ret0, _ := ret[0].(view.RollupRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -210,9 +210,9 @@ func (_mr *_MockStoreRecorder) UpdateRollupRule(arg0, arg1, arg2, arg3 interface
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRollupRule", arg0, arg1, arg2, arg3)
 }
 
-func (_m *MockStore) UpdateRuleSet(_param0 changes.RuleSetChanges, _param1 int, _param2 UpdateOptions) (models.RuleSet, error) {
+func (_m *MockStore) UpdateRuleSet(_param0 changes.RuleSetChanges, _param1 int, _param2 UpdateOptions) (view.RuleSet, error) {
 	ret := _m.ctrl.Call(_m, "UpdateRuleSet", _param0, _param1, _param2)
-	ret0, _ := ret[0].(models.RuleSet)
+	ret0, _ := ret[0].(view.RuleSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -221,7 +221,7 @@ func (_mr *_MockStoreRecorder) UpdateRuleSet(arg0, arg1, arg2 interface{}) *gomo
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "UpdateRuleSet", arg0, arg1, arg2)
 }
 
-func (_m *MockStore) ValidateRuleSet(_param0 models.RuleSet) error {
+func (_m *MockStore) ValidateRuleSet(_param0 view.RuleSet) error {
 	ret := _m.ctrl.Call(_m, "ValidateRuleSet", _param0)
 	ret0, _ := ret[0].(error)
 	return ret0

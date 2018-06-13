@@ -31,8 +31,8 @@ import (
 	"github.com/m3db/m3metrics/pipeline"
 	"github.com/m3db/m3metrics/policy"
 	"github.com/m3db/m3metrics/rules"
-	"github.com/m3db/m3metrics/rules/models"
-	"github.com/m3db/m3metrics/rules/models/changes"
+	"github.com/m3db/m3metrics/rules/view"
+	"github.com/m3db/m3metrics/rules/view/changes"
 	"github.com/m3db/m3x/clock"
 
 	"github.com/golang/mock/gomock"
@@ -93,8 +93,8 @@ func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 	require.NoError(t, err)
 
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRules{},
-		models.RollupRules{},
+		view.MappingRules{},
+		view.RollupRules{},
 	)
 
 	ctrl := gomock.NewController(t)
@@ -119,8 +119,8 @@ func TestUpdateRuleSetVersionMisMatch(t *testing.T) {
 
 func TestUpdateRuleSetFetchFailure(t *testing.T) {
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRules{},
-		models.RollupRules{},
+		view.MappingRules{},
+		view.RollupRules{},
 	)
 
 	ctrl := gomock.NewController(t)
@@ -148,10 +148,10 @@ func TestUpdateRuleSetMutationFail(t *testing.T) {
 	initialRuleSet, err := newEmptyTestRuleSet(1, helper.NewUpdateMetadata(100, "validUser"))
 
 	rsChanges := newTestRuleSetChanges(
-		models.MappingRules{
-			"invalidMappingRule": []models.MappingRule{},
+		view.MappingRules{
+			"invalidMappingRule": []view.MappingRule{},
 		},
-		models.RollupRules{},
+		view.RollupRules{},
 	)
 	require.NoError(t, err)
 
@@ -224,7 +224,7 @@ func TestUpdateRuleSetWriteFailure(t *testing.T) {
 	require.IsType(t, r2.NewConflictError(""), err)
 }
 
-func newTestRuleSetChanges(mrs models.MappingRules, rrs models.RollupRules) changes.RuleSetChanges {
+func newTestRuleSetChanges(mrs view.MappingRules, rrs view.RollupRules) changes.RuleSetChanges {
 	mrChanges := make([]changes.MappingRuleChange, 0, len(mrs))
 	for uuid := range mrs {
 		mrChanges = append(
@@ -232,7 +232,7 @@ func newTestRuleSetChanges(mrs models.MappingRules, rrs models.RollupRules) chan
 			changes.MappingRuleChange{
 				Op:     changes.ChangeOp,
 				RuleID: &uuid,
-				RuleData: &models.MappingRule{
+				RuleData: &view.MappingRule{
 					ID:   uuid,
 					Name: "updateMappingRule",
 				},
@@ -247,7 +247,7 @@ func newTestRuleSetChanges(mrs models.MappingRules, rrs models.RollupRules) chan
 			changes.RollupRuleChange{
 				Op:     changes.ChangeOp,
 				RuleID: &uuid,
-				RuleData: &models.RollupRule{
+				RuleData: &view.RollupRule{
 					ID:   uuid,
 					Name: "updateRollupRule",
 				},
@@ -271,9 +271,9 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 			RollupRuleChanges: []changes.RollupRuleChange{
 				changes.RollupRuleChange{
 					Op: changes.AddOp,
-					RuleData: &models.RollupRule{
+					RuleData: &view.RollupRule{
 						Name: "rollupRule3",
-						Targets: []models.RollupTarget{
+						Targets: []view.RollupTarget{
 							{
 								Pipeline: pipeline.NewPipeline([]pipeline.OpUnion{
 									{
@@ -296,7 +296,7 @@ func testRuleSet(version int, meta rules.UpdateMetadata) (rules.RuleSet, error) 
 			MappingRuleChanges: []changes.MappingRuleChange{
 				changes.MappingRuleChange{
 					Op: changes.AddOp,
-					RuleData: &models.MappingRule{
+					RuleData: &view.MappingRule{
 						Name: "mappingRule3",
 						StoragePolicies: policy.StoragePolicies{
 							policy.MustParseStoragePolicy("1s:6h"),

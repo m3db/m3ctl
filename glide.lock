@@ -1,5 +1,5 @@
-hash: 9ff9125ee624b91d2513c2ff1bb0c40bc1305c8285718334bb6a4c2c20ee65f6
-updated: 2018-06-12T17:51:39.477053-04:00
+hash: dbf71d181ca042b0d7a90dc61742182656ae1203ba2c7813b4a0836d8efddb82
+updated: 2018-06-13T13:53:36.755497-04:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -82,7 +82,7 @@ imports:
   - services/leader/election
   - shard
 - name: github.com/m3db/m3metrics
-  version: e855471e4876e29058963742aab27136755cdf53
+  version: 7f583691525792425e599cf267e401ae56516891
   subpackages:
   - aggregation
   - errors
@@ -100,13 +100,13 @@ imports:
   - pipeline/applied
   - policy
   - rules
-  - rules/models
-  - rules/models/changes
   - rules/store/kv
   - rules/validator
   - rules/validator/namespace
   - rules/validator/namespace/kv
   - rules/validator/namespace/static
+  - rules/view
+  - rules/view/changes
   - transformation
   - x/bytes
 - name: github.com/m3db/m3x
@@ -165,7 +165,7 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: 88c71ae3d702167d7f8be42c0e0b68bfa4d1707e
+  version: eeedf312bc6c57391d84767a4cd413f02a917974
   subpackages:
   - buffer
   - internal/bufferpool

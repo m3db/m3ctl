@@ -28,11 +28,8 @@ import (
 )
 
 type serverConfig struct {
-	// Host is the host name the HTTP server shoud listen on.
-	Host string `yaml:"host" validate:"nonzero"`
-
-	// Port is the port the HTTP server should listen on.
-	Port int `yaml:"port"`
+	// ListenAddress is the HTTP server listen address.
+	ListenAddress string `yaml:"listenAddress" validate:"nonzero"`
 
 	// ReadTimeout is the HTTP server read timeout.
 	ReadTimeout time.Duration `yaml:"readTimeout"`

@@ -1,5 +1,5 @@
-hash: 2188e8171de40db684906745f31d13cb924de7f457c0d2572c225f1bdb1b8048
-updated: 2018-07-26T15:02:50.725265-04:00
+hash: f756a85d812fc9ec9ead2454426e4fd219ad179b9c4a0b296adb6b2b1504d5cb
+updated: 2018-08-04T22:48:40.114453-07:00
 imports:
 - name: github.com/apache/thrift
   version: 9549b25c77587b29be4e0b5c258221a4ed85d37a
@@ -82,7 +82,7 @@ imports:
   - services/leader/election
   - shard
 - name: github.com/m3db/m3metrics
-  version: 33eb82b45206ee5c22a53ae9aaf4ea8385ae70ff
+  version: 115abc5764862381dcba3ef30cd0b42026bd69fe
   subpackages:
   - aggregation
   - errors
@@ -136,6 +136,10 @@ imports:
   version: 195bde7883f7c39ea62b0d92ab7359b5327065cb
 - name: github.com/prometheus/procfs
   version: 1878d9fbb537119d24b21ca07effd591627cd160
+- name: github.com/rakyll/statik
+  version: 19b88da8fc15428620782ba18f68423130e7ac7d
+  subpackages:
+  - fs
 - name: github.com/shirou/gopsutil
   version: b62e301a8b9958eebb7299683eb57fab229a9501
   subpackages:
@@ -165,7 +169,7 @@ imports:
 - name: go.uber.org/multierr
   version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: eeedf312bc6c57391d84767a4cd413f02a917974
+  version: f85c78b1dd998214c5f2138155b320a4a43fbe36
   subpackages:
   - buffer
   - internal/bufferpool

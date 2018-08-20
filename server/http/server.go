@@ -35,7 +35,6 @@ import (
 
 const (
 	publicPathPrefix = "/public"
-	publicDirPath    = "public"
 	staticPathPrefix = "/static"
 	indexFile        = "/index.html"
 )

@@ -59,9 +59,12 @@ services-linux-amd64:
 	$(LINUX_AMD64_ENV) make services
 
 cmd-using-node-version:
-ifneq ($(shell type nvm 2>/dev/null || brew --prefix nvm 2>/dev/null),)
+ifneq ($(shell brew --prefix nvm 2>/dev/null),)
+	@echo "Using nvm from brew to select node version $(node_version)"
+	source $(shell brew --prefix nvm)/nvm.sh && nvm use $(node_version) && bash -c "$(node_cmd)"
+else ifneq ($(shell type nvm 2>/dev/null),)
 	@echo "Using nvm to select node version $(node_version)"
-	(type nvm 1>/dev/null 2>/dev/null || source $(shell brew --prefix nvm)/nvm.sh) && nvm use $(node_version) && bash -c "$(node_cmd)"
+	nvm use $(node_version) && bash -c "$(node_cmd)"
 else
 	@echo "Not using nvm, using node version $(shell node --version)"
 	bash -c "$(node_cmd)"

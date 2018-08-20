@@ -139,7 +139,7 @@ clean:
 	@rm -rf ./ui/build
 
 .PHONY: all
-all: services test-ci-unit lint metalint
+all: lint metalint test-ci-unit services
 	@echo Made all successfully
 
 .PHONY: install-licence-bin

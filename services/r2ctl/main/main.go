@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -40,9 +41,11 @@ import (
 )
 
 const (
+	hostEnvVar              = "R2CTL_HOST"
 	portEnvVar              = "R2CTL_PORT"
 	r2apiPrefix             = "/r2/v1/"
 	gracefulShutdownTimeout = 15 * time.Second
+	defaultListenHost       = "0.0.0.0"
 )
 
 func main() {
@@ -66,18 +69,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	envHost := os.Getenv(hostEnvVar)
 	envPort := os.Getenv(portEnvVar)
 	if envPort != "" {
+		// Host is optional when specifying port by environment variable, port
+		// is however required to use environment configuration
+		host := defaultListenHost
+		if envHost != "" {
+			logger.Infof("using env supplied listen host address: %s=%s", hostEnvVar, envHost)
+			host = envHost
+		}
+
+		host = strings.TrimSpace(host)
+
 		if p, err := strconv.Atoi(envPort); err == nil {
-			logger.Infof("using env supplied port var: %s=%d", portEnvVar, p)
-			cfg.HTTP.Port = p
+			logger.Infof("using env supplied listen port: %s=%d", portEnvVar, p)
+			cfg.HTTP.ListenAddress = fmt.Sprintf("%s:%d", host, p)
 		} else {
 			logger.Fatalf("%s (%s) is not a valid port number", envPort, portEnvVar)
 		}
 	}
 
-	if cfg.HTTP.Port == 0 {
-		logger.Fatalf("no valid port configured. Can't start.")
+	if cfg.HTTP.ListenAddress == "" {
+		logger.Fatalf("no valid listen address configured")
 	}
 
 	scope, closer, err := cfg.Metrics.NewRootScope()
@@ -124,7 +138,7 @@ func main() {
 	healthService := health.NewService(healthServiceInstrumentOpts)
 
 	// Create HTTP server.
-	listenAddr := fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
+	listenAddr := cfg.HTTP.ListenAddress
 	httpServerScope := scope.Tagged(map[string]string{
 		"server-type": "http",
 	})
